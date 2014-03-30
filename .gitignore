@@ -1,0 +1,18 @@
+## generic files to ignore
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
+*.bak
+*.tmp
+tags
+
+#c/c++ specific
+*.o
+
+#java specific
+*.class
+
+#python specific
+*.pyc
