@@ -3,7 +3,7 @@ easyOVS
 
 Provide easier and powerful operation on OpenvSwitch.
 
-version 0.1
+version 0.2
 
 #What is easyOVS
 easyOVS provides more convinient and fluent way to operation your OpenvSwitch bridges, such as list them, dump their flows and add/del some flows.
@@ -19,8 +19,12 @@ easyOVS will show an interactive CLI, which supports command suggestions and bea
 ###delflow  
 `[bridge|default] delflow id`
 
+Delete a flow with given id.
+
 ###dump
-`[bridge|default] dump`, the default output would look like
+`[bridge|default] dump`
+
+Dump flows in a bridge, the  output would look like
 
 ```
 EasyOVS> s1 dump
@@ -63,10 +67,23 @@ s3
 
 ###set  
 `[bridge set]`
-Set the default bridge.
+
+Set the default bridge. Then you can ignore the bridge parameter when using the command.
 
 ###show
-Show the current default bridge.
+Show the ports information of a given bridge. The output would look like
+```
+ EasyOVS> br-int show
+br-int
+Intf                Port        Tag     Type        vmIP            vmMAC                   
+int-br-eth0         15          0                                                           
+qvo260209fa-72      11          1                   192.168.0.4     fa:16:3e:0f:17:04       
+qvo583c7038-d3      2           1                   192.168.0.2     fa:16:3e:9c:dc:3a       
+qvo68af47bc-2a      3           4095                                                        
+qvo8bf9cba2-3f      9           1                   192.168.0.5     fa:16:3e:a2:2f:0e       
+qvod4de9fe0-6d      8           2                   10.0.0.2        fa:16:3e:38:2b:2e       
+br-int              LOCAL       0       internal                          
+```
 
 #Features
 
