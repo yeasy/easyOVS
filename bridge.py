@@ -3,11 +3,12 @@ __author__ = 'baohua'
 from subprocess import call,Popen
 import subprocess
 import sys
-import termios
 
+import termios
 from flow import Flow
 from log import output
-from util import fetchFieldNum,colorStr
+from util import fetchFieldNum
+
 
 class Bridge(object):
     """
@@ -86,8 +87,9 @@ class Bridge(object):
                         f.write('%s\n' %l)
         if to_file:
             f.close()
-        flows=sorted(flows,key=lambda flow: flow.priority,reverse=True)
-        flows=sorted(flows,key=lambda flow: flow.table)
+        #flows=sorted(flows,key=lambda flow: flow.priority,reverse=True)
+        #flows=sorted(flows,key=lambda flow: flow.table)
+        flows = sorted(flows, reverse=True)
         for flow in flows:
             flow.id = id
             id += 1
