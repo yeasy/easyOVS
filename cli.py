@@ -133,9 +133,8 @@ class CLI( Cmd ):
             output('flow_id is not valid.\n')
             return
         if brIsExisted(bridge):
-            brDelFlow(bridge,int(flow_id))
-        elif self.bridge:
-            brDelFlow(self.bridge,int(flow_id))
+            if not brDelFlow(bridge,int(flow_id)):
+                output('Delflow %u from %s failed.\n' %(int(flow_id),bridge))
 
     def emptyline( self ):
         "Don't repeat last command when you hit return."
