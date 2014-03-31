@@ -149,7 +149,11 @@ class CLI( Cmd ):
         ovs_ports = brGetPorts(br)
         output('%s\n' %br)
         neutron_ports = self.get_neutron_ports()
-        output('%-20s%-12s%-16s%-24s%-8s%-10s\n' %('Intf','Port','vmIP','vmMAC','Tag','Type'))
+        output('%-20s%-12s%-8s%-12s' %('Intf','Port','Tag','Type'))
+        if neutron_ports:
+            output('%-16s%-24s\n' %('vmIP','vmMAC'))
+        else:
+            output('\n')
         content=[]
         for intf in ovs_ports:
             port,tag,type = ovs_ports[intf]['port'],ovs_ports[intf]['tag'],ovs_ports[intf]['type']
@@ -157,12 +161,16 @@ class CLI( Cmd ):
                 vmIP, vmMac = neutron_ports[intf]['ip_address'],neutron_ports[intf]['mac']
             else:
                 vmIP,vmMac = '', ''
-            content.append((intf,port,vmIP,vmMac,tag,type))
+            content.append((intf,port,tag,type,vmIP,vmMac))
             #output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
         content.sort(key=lambda x:x[0])
-        content.sort(key=lambda x:x[5])
+        content.sort(key=lambda x:x[3])
         for _ in content:
-            output('%-20s%-12s%-16s%-24s%-8s%-10s\n' %(_[0],_[1],_[2],_[3],_[4],_[5]))
+            output('%-20s%-12s%-8s%-12s' %(_[0],_[1],_[2],_[3]))
+            if neutron_ports:
+                output('%-16s%-24s\n' %(_[4],_[5]))
+            else:
+                output('\n')
 
     def get_neutron_ports(self):
         """
