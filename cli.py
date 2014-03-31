@@ -143,18 +143,21 @@ class CLI( Cmd ):
 
     def default(self,line):
         #bridge, cmd, line = self.parseline( line )
-        if len(line.split()) != 2:
+        if len(line.split()) != 2 and len(line.split()) !=3:
             error( '*** Unknown command: %s\n' % line )
             return
-        else:
+        bridge,cmd,args='','',''
+        if len(line.split()) == 2:
             bridge,cmd = line.split()
-        if brIsExisted(bridge) and len(cmd.split())>=1:
-            if not cmd:
-                print "*** Enter a command for bridge: %s <cmd>" % bridge
-                return
-            try:
-                getattr(self,'do_%s' %(cmd))(bridge)
-            except AttributeError:
-                error( '*** Unknown command: %s: cmd=%s, bridge=%s\n' % (line,cmd,bridge) )
         else:
-            error( '*** Unknown command: %s\n' % line )
+            bridge,cmd,args = line.split()[0],line.split()[1],line.split()[2]
+        if brIsExisted(bridge):
+            try:
+                if args:
+                    getattr(self,'do_%s' %(cmd))(' '.join(bridge,args))
+                else:
+                    getattr(self,'do_%s' %(cmd))(bridge)
+            except AttributeError:
+                error( '*** Unknown command: %s: cmd=%s, bridge=%s, args=%s\n' % (line,cmd,bridge,args) )
+        else:
+            error( '*** Bridge %s is not existed\n' %bridge )
