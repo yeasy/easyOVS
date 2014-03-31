@@ -152,6 +152,7 @@ def brList():
             bridges[br]['Controller']=[]
             bridges[br]['Port']=[]
             bridges[br]['Interface']=[]
+            bridges[br]['fail_mode'] = ''
         else:
             if l.startswith('Controller '):
                 bridges[br]['Controller'].append(l.replace('Controller ',''))
