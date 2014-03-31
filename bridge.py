@@ -165,7 +165,7 @@ def brList():
     br_info = ''
     br_list = bridges.keys()
     for br in sorted(br_list):
-        br_info = "%s\n"  %(br)
+        br_info += "%s\n" %(br)
         if bridges[br]['Port']:
             br_info += " Port:\t\t%s\n"  %(' '.join(bridges[br]['Port']))
         if bridges[br]['Interface']:
