@@ -154,7 +154,7 @@ class CLI( Cmd ):
         if brIsExisted(bridge):
             try:
                 if args:
-                    getattr(self,'do_%s' %(cmd))(' '.join(bridge,args))
+                    getattr(self,'do_%s' %(cmd))(' '.join([bridge,args]))
                 else:
                     getattr(self,'do_%s' %(cmd))(bridge)
             except AttributeError:
