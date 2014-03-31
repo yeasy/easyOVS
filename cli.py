@@ -1,6 +1,7 @@
 __author__ = 'baohua'
 
 from cmd import Cmd
+from select import poll, POLLIN
 import sys
 
 from bridge import brDumpFlows,brIsExisted,brList,brDelFlow
