@@ -1,12 +1,14 @@
+#!/usr/bin/python
+
 __author__ = 'baohua'
 
-from optparse import OptionParser
 import sys
 import time
 
-from log import lg, LEVELS, info, debug, error,output
+from log import info, debug, error, output
 from clean import cleanup
 from cli import CLI
+
 
 class Platform( object ):
     "Build, setup, and run the platform."

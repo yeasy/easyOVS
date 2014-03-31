@@ -1,15 +1,12 @@
 __author__ = 'baohua'
 
-from subprocess import call
 from cmd import Cmd
-from os import isatty
-from select import poll, POLLIN
 import sys
-import time
 
 from bridge import brDumpFlows,brIsExisted,brList,brDelFlow
 from log import info, output, error
 from util import colorStr
+
 
 def checkArg(func):
     def wrapper(self,arg):

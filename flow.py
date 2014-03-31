@@ -2,13 +2,15 @@ __author__ = 'baohua'
 
 from log import output
 
-_format_str_ =  '%-3s%-4s%-10s%-6s%-60s%-20s\n'
+_format_str_ = '%-3s%-4s%-10s%-6s%-60s%-20s\n'
+
 
 class Flow(object):
     """
     An OpenvSwitch flow rule.
     """
-    def __init__( self, bridge=None,table=0,packet=0,priority=None,match=None,actions=None,id=0):
+
+    def __init__(self, bridge=None, table=0, packet=0, priority=None, match=None, actions=None, id=0):
         self.bridge = bridge
         self.table = table
         self.packet = packet
@@ -19,12 +21,12 @@ class Flow(object):
 
     @staticmethod
     def bannerOutput():
-        output(_format_str_ %('ID','TAB','PKT','PRI','MATCH','ACT'))
+        output(_format_str_ % ('ID', 'TAB', 'PKT', 'PRI', 'MATCH', 'ACT'))
 
     def fmtOutput(self):
-        output(_format_str_  %(self.id, self.table, self.packet,self.priority,self.match,self.actions))
+        output(_format_str_ % (self.id, self.table, self.packet, self.priority, self.match, self.actions))
 
-    def __eq__(self,other):
+    def __eq__(self, other):
         return self.table == other.table and \
                self.priority == other.priority and \
                self.match == other.match and \
