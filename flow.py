@@ -24,7 +24,9 @@ class Flow(object):
         output(_format_str_ % ('ID', 'TAB', 'PKT', 'PRI', 'MATCH', 'ACT'))
 
     def fmtOutput(self):
-        output(_format_str_ % (self.id, self.table, self.packet, self.priority, self.match, self.actions))
+        output(_format_str_ % (self.id, self.table, self.packet, self.priority,\
+                               self.match.replace('_port', '').replace('_tci',''),
+                               self.actions))
 
     def __eq__(self, other):
         return self.table == other.table and \

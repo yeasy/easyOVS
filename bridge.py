@@ -1,14 +1,22 @@
 __author__ = 'baohua'
 
-from subprocess import call,Popen
+from subprocess import call,Popen,PIPE
 import subprocess
 import sys
 
 import termios
 from flow import Flow
 from log import output
-from util import fetchFieldNum
+from util import fetchFollowingNum,fetchValueBefore,fetchValueBetween
 
+def checkBr(func):
+    def wrapper(self,*arg):
+        if not self.isExisted():
+            output('The bridge does not exist.\n You can check available bridges using list\n')
+            return None
+        else:
+            return func(self,*arg)
+    return wrapper
 
 class Bridge(object):
     """
@@ -20,9 +28,12 @@ class Bridge(object):
         self.flows_db= '/tmp/tmp_%s_flows' %self.bridge
 
     def isExisted(self):
+        if not self.bridge:
+            return False
         cmd="ovs-vsctl show|grep -q %s" %self.bridge
         return call(cmd,shell=True) == 0
 
+    @checkBr
     def delFlow(self,id):
         if not self.flows:
             self.updateFlows()
@@ -68,6 +79,7 @@ class Bridge(object):
         replace_cmd="ovs-ofctl replace-flows %s %s" %(self.bridge,flows_db_new)
         result = Popen(replace_cmd,stdout=subprocess.PIPE,shell=True).stdout.read()
 
+    @checkBr
     def updateFlows(self,to_file=False):
         """
         Update the self.flows variables with the OpenvSwitch Content.
@@ -95,11 +107,13 @@ class Bridge(object):
             id += 1
         self.flows = flows
 
+    @checkBr
     def dumpFlows(self):
         self.updateFlows()
-        Flow.bannerOutput()
-        for f in self.flows:
-            f.fmtOutput()
+        if len(self.flows)>0:
+            Flow.bannerOutput()
+            for f in self.flows:
+                f.fmtOutput()
 
     def extractFlow(self,line):
         """
@@ -108,13 +122,13 @@ class Bridge(object):
         line = line.strip()
         match,actions = '',''
         if line.startswith('cookie='):
-            table = fetchFieldNum(line,'table=')
-            packet = fetchFieldNum(line,'n_packets=')
+            table = fetchFollowingNum(line,'table=')
+            packet = fetchFollowingNum(line,'n_packets=')
             if table == None or packet == None:
                 return None
             for fields in line.split():
                 if fields.startswith('priority='):
-                    priority = fetchFieldNum(fields,'priority=')
+                    priority = fetchFollowingNum(fields,'priority=')
                     if priority == None:
                         return None
                     match = fields.replace('priority=%u' %priority,'').lstrip(',')
@@ -124,34 +138,82 @@ class Bridge(object):
         else:
             return None
 
-    def monitor(self):
-        pass
-
-def brIsExisted(bridge):
-    return Bridge(bridge).isExisted()
+    @checkBr
+    def getPorts(self):
+        """
+        Return the ports on the bridge, looks like
+        {
+            'qvoxxx':{
+                'port':2,
+                'addr':08:91:ff:ff:f3
+                'tag':1
+            }
+        }
+        """
+        result={}
+        cmd="ovs-ofctl show %s" %self.bridge
+        cmd_output= Popen(cmd, stdout=subprocess.PIPE,shell=True).stdout.read()
+        #output('%-8s%-16s%-16s\n' %('PORT','INTF','ADDR'))
+        br_list = brList()
+        for l in cmd_output.split('\n'):
+            if l.startswith(' ') and l.find('(')>=0 and l.find(')')>=0:
+                l=l.strip()
+                port = fetchValueBefore(l,'(')
+                intf = fetchValueBetween(l,'(',')')
+                addr = l[l.find('addr:')+len('addr:'):]
+                #output('%-8s%-16s%-16s\n' %(port,intf,addr))
+                if self.bridge in br_list:
+                    if intf in br_list[self.bridge]['Port']:
+                        tag = br_list[self.bridge]['Port'][intf].get('tag','0')
+                        type = br_list[self.bridge]['Port'][intf].get('type','0')
+                else:
+                    tag, type = '0',''
+                result[intf] = {'port':port,'addr':addr,'tag':tag,'type':type}
+        return result
 
 def brDelFlow(bridge,id):
     return Bridge(bridge).delFlow(id)
 
 def brDumpFlows(bridge):
-    return Bridge(bridge).dumpFlows()
+    try:
+        return Bridge(bridge).dumpFlows()
+    except Exception:
+        return None
 
-def brMon(bridge):
-    return Bridge(bridge).dumpFlows()
+def brIsExisted(bridge):
+    return Bridge(bridge).isExisted()
+
+def brGetPorts(bridge):
+    try:
+        return Bridge(bridge).getPorts()
+    except Exception:
+        return None
 
 def brList():
-    bridges={}
-    br=''
+    """
+    Return a dict of all available bridges, looks like
+    {
+        'br-int':{
+            'Controller':[],
+            'fail_mode':[],
+            'Port':{
+             'qvoxxx': {
+                'tag':'1', //tagid
+                'type':'internal', //tagid
+                }
+        },
+    }
+    """
+    bridges,br={},''
     cmd='ovs-vsctl show'
-    result= Popen(cmd, stdout=subprocess.PIPE,shell=True).stdout.read()
+    result= Popen(cmd, stdout=PIPE,shell=True).stdout.read()
     for l in result.split('\n'):
         l=l.strip().replace('"','')
         if l.startswith('Bridge '):
             br = l.lstrip('Bridge ')
             bridges[br]={}
             bridges[br]['Controller']=[]
-            bridges[br]['Port']=[]
-            bridges[br]['Interface']=[]
+            bridges[br]['Port']={}
             bridges[br]['fail_mode'] = ''
         else:
             if l.startswith('Controller '):
@@ -159,19 +221,12 @@ def brList():
             elif l.startswith('fail_mode: '):
                 bridges[br]['fail_mode']=l.replace('fail_mode: ','')
             elif l.startswith('Port '):
-                bridges[br]['Port'].append(l.replace('Port ',''))
+                phy_port = l.replace('Port ','') #e.g., br-eth0
+                bridges[br]['Port'][phy_port]={'tag':0,'type':''}
+            elif l.startswith('tag: '):
+                bridges[br]['Port'][phy_port]['tag'] = l.replace('tag: ','')
             elif l.startswith('Interface '):
-                bridges[br]['Interface'].append(l.replace('Interface ',''))
-    br_info = ''
-    br_list = bridges.keys()
-    for br in sorted(br_list):
-        br_info += "%s\n" %(br)
-        if bridges[br]['Port']:
-            br_info += " Port:\t\t%s\n"  %(' '.join(bridges[br]['Port']))
-        if bridges[br]['Interface']:
-            br_info += " Interface:\t%s\n" %(' '.join(bridges[br]['Interface']))
-        if bridges[br]['Controller']:
-            br_info += " Controller:\t%s\n"  %(' '.join(bridges[br]['Controller']))
-        if bridges[br]['fail_mode']:
-            br_info += " Fail_Mode:\t%s\n"  %(bridges[br]['fail_mode'])
-    return br_info
+                intf = l.replace('Interface ','')
+            elif l.startswith('type: '):
+                bridges[br]['Port'][phy_port]['type'] = l.replace('type: ','')
+    return bridges
