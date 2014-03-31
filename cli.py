@@ -147,6 +147,9 @@ class CLI( Cmd ):
             if not args:
                 print "*** Enter a command for bridge: %s <cmd>" % bridge
                 return
-            getattr(self,'do_%s' %(args))(bridge)
+            try:
+                getattr(self,'do_%s' %(args))(bridge)
+            except AttributeError:
+                error( '*** Unknown command: %s\n' % line )
         else:
             error( '*** Unknown command: %s\n' % line )
