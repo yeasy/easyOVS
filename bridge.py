@@ -165,7 +165,13 @@ def brList():
     br_info = ''
     br_list = bridges.keys()
     for br in sorted(br_list):
-        br_info += "%s\n Port:\t\t%s\n Interface:\t%s\n Controller:\t%s\n Fail_Mode:\t%s\n"\
-                   %(br,' '.join(bridges[br]['Port']), ' '.join(bridges[br]['Interface']),\
-                     ' '.join(bridges[br]['Controller']),bridges[br]['fail_mode'])
+        br_info = "%s\n"  %(br)
+        if bridges[br]['Port']:
+            br_info += " Port:\t\t%s\n"  %(' '.join(bridges[br]['Port']))
+        if bridges[br]['Interface']:
+            br_info += " Interface:\t%s\n" %(' '.join(bridges[br]['Interface']))
+        if bridges[br]['Controller']:
+            br_info += " Controller:\t%s\n"  %(' '.join(bridges[br]['Controller']))
+        if bridges[br]['fail_mode']:
+            br_info += " Fail_Mode:\t%s\n"  %(bridges[br]['fail_mode'])
     return br_info
