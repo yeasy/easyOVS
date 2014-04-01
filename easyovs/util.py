@@ -4,7 +4,6 @@ VERSION = "0.2"
 
 import re
 
-
 def fetchFollowingNum(line, field):
     """
     Return the Number value after given field
@@ -62,7 +61,6 @@ def colorStr(color, str):
         fore = 37
     color = "\x1B[%d;%dm" % (1, fore)
     return "%s %s\x1B[0m" % (color, str)
-
 
 if __name__ == '__main__':
     import doctest

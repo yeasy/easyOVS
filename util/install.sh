@@ -81,6 +81,7 @@ function eovs_deps {
 
     echo "Installing EasyOVS core"
     pushd $EASYOVS_DIR/easyOVS
+    chmod a+x $EASYOVS_DIR/util/easyovs
     sudo make install
     popd
 }

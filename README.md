@@ -114,7 +114,7 @@ Input `exit` or `quit` to exit it.
 * Support colorful output.
 
 #Installation
-Just run `sudo util/install.sh`.
+Just run `sudo easyOVS/util/install.sh`.
 More options can be found with `-h`.
 
 #Credits

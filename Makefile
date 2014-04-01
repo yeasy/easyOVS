@@ -47,8 +47,7 @@ develop: $(MANPAGES)
 man: $(MANPAGES)
 
 easyovs.1: $(EOVS)
-	PYTHONPATH=. help2man -N -n "Easy OpenvSwitch Bridge Operation Platform." \
-	--no-discard-stderr $< -o $@
+	PYTHONPATH=. help2man -N -n "Easy OpenvSwitch Bridge Operation Platform." $< -o $@
 
 .PHONY: doc
 
