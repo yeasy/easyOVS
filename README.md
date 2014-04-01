@@ -134,10 +134,17 @@ Input `exit` or `quit` to exit it.
 * Smart command completion, try tab everywhere.
 * Support colorful output.
 * Support run local system commands.
-* Support run individual command with `-m cmd`
+* Support run individual command with `-m 'cmd'`
 
 #Installation
-Just run `sudo easyOVS/util/install.sh`.
+Download the latest version by
+
+`git clone https://github.com/yeasy/easyOVS.git`
+
+Then run
+
+`sudo easyOVS/util/install.sh`
+
 More options can be found with `-h`.
 
 #Credits
