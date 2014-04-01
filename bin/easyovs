@@ -2,13 +2,17 @@
 
 __author__ = 'baohua'
 
+from easyovs.cli import CLI
+import os
 import sys
 import time
 
-from log import info, debug, error, output
-from clean import cleanup
-from cli import CLI
+from easyovs.log import info, debug, error, output
+from easyovs.clean import cleanup
 
+# Fix setuptools' evil madness, and open up (more?) security holes
+if 'PYTHONPATH' in os.environ:
+    sys.path = os.environ[ 'PYTHONPATH' ].split( ':' ) + sys.path
 
 class Platform( object ):
     "Build, setup, and run the platform."

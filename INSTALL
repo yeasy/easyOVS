@@ -1,0 +1,72 @@
+
+EasyOVS Installation/Configuration Notes
+----------------------------------------
+
+EasyOVS 0.2
+---
+
+The supported installation methods for EasyOVS are
+1) using a pre-built VM image, and
+2) native installation on common Linux distribution,
+such as Ubuntu, Debian, CentOS and Fedora.
+3) You can also easily create your own EasyOVS VM image
+4) Other distributions may be supported in the future - if you would
+like to contribute an installation script, we would welcome it!
+
+1. Easiest "installation" - use our pre-built VM image!
+
+   The easiest way to get EasyOVS running is to start with one of our
+   pre-built virtual machine images from <https://github.com/yeasy/easyOVS>
+
+   Boot up the VM image, log in, and follow the instructions on the
+   EasyOVS web site.
+
+   One advantage of using the VM image is that it doesn't mess with
+   your native OS installation or damage it in any way.
+
+2. Native installation from source
+
+2.1. Native installation from source on Ubuntu,Debian,CentOS and Fedora
+
+   If you're reading this, you've probably already done so, but the
+   command to download the EasyOVS source code is:
+
+        git clone git://github.com/yeasy/easyovs.git
+
+   If you are running Ubuntu, you may be able to use our handy
+   `install.sh` script, which is in `easyovs/util`.
+
+   *WARNING: USE AT YOUR OWN RISK!*
+
+   To install ALL of the software which is potentially useful software,
+   you may use:
+
+        sudo easyovs/util/install.sh -a
+
+   The time depends on the network quality and your machine performance.
+   This takes about 1 minutes on our test system.
+
+   You can change the directory where the dependencies are installed using
+   the -s <directory> flag.
+
+        sudo easyovs/util/install.sh -s <directory> -a
+
+3. Installation on other Linux distributions
+
+   Although we don't support other Linux distributions directly, it
+   should be possible to install and run EasyOVS with some degree of
+   manual effort.
+
+   In general, you must have:
+
+   * Python, `bash`, `git`, `make`, etc.
+
+   * Root privileges (required for network device access)
+
+   We encourage contribution of patches to the `install.sh` script to
+   support other Linux distributions.
+
+Good luck!
+
+EasyOVS Team
+---

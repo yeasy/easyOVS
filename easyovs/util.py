@@ -1,5 +1,7 @@
 __author__ = 'baohua'
 
+VERSION = "0.2"
+
 import re
 
 

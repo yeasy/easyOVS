@@ -1,6 +1,6 @@
 __author__ = 'baohua'
 
-from log import output
+from easyovs.log import output
 
 _format_str_ = '%-3s%-4s%-10s%-6s%-60s%-20s\n'
 

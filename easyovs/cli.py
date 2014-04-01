@@ -3,12 +3,12 @@ __author__ = 'baohua'
 from cmd import Cmd
 from select import poll, POLLIN
 from subprocess import call,Popen,PIPE
-import subprocess
 import sys
 
-from bridge import brDelFlow,brDumpFlows,brIsExisted,brList,brGetPorts
-from log import info, output, error
-from util import colorStr
+from easyovs.bridge import brDelFlow,brGetFlows,brIsExisted,brList,brGetPorts
+from flow import Flow
+from easyovs.log import info, output, error
+from easyovs.util import colorStr
 
 
 def checkArg(func):
@@ -67,11 +67,16 @@ class CLI( Cmd ):
         Dump the flows from a bridge.
         '''
         if arg:
-            brDumpFlows(arg)
+            flows=brGetFlows(arg)
         elif self.bridge:
-            brDumpFlows(self.bridge)
+            flows=brGetFlows(self.bridge)
         else:
             output("Please give a valid bridge.\n")
+            return
+        if flows:
+            Flow.bannerOutput()
+            for f in flows:
+                f.fmtOutput()
 
     def do_EOF( self, arg ):
         "Exit"
@@ -87,7 +92,7 @@ class CLI( Cmd ):
         Get current default bridge
         '''
         if self.bridge:
-            output('Default bridge is %s\n' %self.bridge)
+            output('Current default bridge is %s\n' %self.bridge)
         else:
             output('Default bridge is not set yet.\nPlease try <bridge> set.\n')
 
@@ -102,6 +107,9 @@ class CLI( Cmd ):
         Show available bridges in the system
         '''
         bridges = brList()
+        if not bridges:
+            output('None bridge exists.\n')
+            return
         br_info = ''
         for br in sorted(bridges.keys()):
             br_info += "%s\n" %(br)
@@ -129,7 +137,7 @@ class CLI( Cmd ):
         else:
             self.prompt = colorStr('g', PROMPT_KW[:-2]+':%s> ' % colorStr('b',arg))
             self.bridge = arg
-            output('Default bridge is %s.\n' %self.bridge)
+            output('Set the default bridge to %s.\n' %self.bridge)
 
     def do_sh( self, line ):
         "Run an external shell command"
@@ -137,7 +145,7 @@ class CLI( Cmd ):
 
     def do_show(self,arg):
         '''
-        Show details of a bridge.
+        Show port details of a bridge, with neutron information.
         '''
         if arg:
             br = arg

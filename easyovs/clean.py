@@ -1,5 +1,5 @@
 __author__ = 'baohua'
-from log import info
+from easyovs.log import info
 
 
 def cleanup():

@@ -6,8 +6,8 @@ import sys
 
 import termios
 from flow import Flow
-from log import output
-from util import fetchFollowingNum,fetchValueBefore,fetchValueBetween
+from easyovs.log import output
+from easyovs.util import fetchFollowingNum,fetchValueBefore,fetchValueBetween
 
 def checkBr(func):
     def wrapper(self,*arg):
@@ -108,12 +108,15 @@ class Bridge(object):
         self.flows = flows
 
     @checkBr
-    def dumpFlows(self):
+    def getFlows(self):
+        """
+        Return a dict of flows in the bridge.
+        """
         self.updateFlows()
         if len(self.flows)>0:
-            Flow.bannerOutput()
-            for f in self.flows:
-                f.fmtOutput()
+            return self.flows
+        else:
+            return {}
 
     def extractFlow(self,line):
         """
@@ -141,18 +144,22 @@ class Bridge(object):
     @checkBr
     def getPorts(self):
         """
-        Return the ports on the bridge, looks like
+        Return a dict of the ports (port, addr, tag, type) on the bridge, looks like
         {
             'qvoxxx':{
                 'port':2,
-                'addr':08:91:ff:ff:f3
-                'tag':1
+                'addr':08:91:ff:ff:f3,
+                'tag':1,
+                'type':internal,
             }
         }
         """
         result={}
         cmd="ovs-ofctl show %s" %self.bridge
-        cmd_output= Popen(cmd, stdout=subprocess.PIPE,shell=True).stdout.read()
+        try:
+            cmd_output= Popen(cmd, stdout=subprocess.PIPE,shell=True).stdout.read()
+        except Exception:
+            return {}
         #output('%-8s%-16s%-16s\n' %('PORT','INTF','ADDR'))
         br_list = brList()
         for l in cmd_output.split('\n'):
@@ -172,22 +179,34 @@ class Bridge(object):
         return result
 
 def brDelFlow(bridge,id):
-    return Bridge(bridge).delFlow(id)
-
-def brDumpFlows(bridge):
     try:
-        return Bridge(bridge).dumpFlows()
+        return Bridge(bridge).delFlow(id)
+    except Exception:
+        return None
+
+def brGetFlows(bridge):
+    try:
+        return Bridge(bridge).getFlows()
     except Exception:
         return None
 
 def brIsExisted(bridge):
-    return Bridge(bridge).isExisted()
+    """
+    Return True of False of a bridge's existence.
+    """
+    try:
+        return Bridge(bridge).isExisted()
+    except Exception:
+        return False
 
 def brGetPorts(bridge):
+    """
+    Return a dict of all available bridges, looks like
+    """
     try:
         return Bridge(bridge).getPorts()
     except Exception:
-        return None
+        return {}
 
 def brList():
     """
@@ -206,7 +225,10 @@ def brList():
     """
     bridges,br={},''
     cmd='ovs-vsctl show'
-    result= Popen(cmd, stdout=PIPE,shell=True).stdout.read()
+    try:
+        result= Popen(cmd, stdout=PIPE,shell=True).stdout.read()
+    except Exception:
+        return {}
     for l in result.split('\n'):
         l=l.strip().replace('"','')
         if l.startswith('Bridge '):
