@@ -8,6 +8,7 @@ import termios
 from flow import Flow
 from easyovs.log import output
 from easyovs.util import fetchFollowingNum,fetchValueBefore,fetchValueBetween
+from neutron import  get_neutron_ports
 
 def checkBr(func):
     def wrapper(self,*arg):
@@ -35,6 +36,9 @@ class Bridge(object):
 
     @checkBr
     def delFlow(self,id):
+        """
+        Return True or False to del the flow.
+        """
         if not self.flows:
             self.updateFlows()
         if id < 0 or id >= len(self.flows):
@@ -78,6 +82,7 @@ class Bridge(object):
         f_new.close()
         replace_cmd="ovs-ofctl replace-flows %s %s" %(self.bridge,flows_db_new)
         result = Popen(replace_cmd,stdout=subprocess.PIPE,shell=True).stdout.read()
+        return True
 
     @checkBr
     def updateFlows(self,to_file=False):
@@ -161,7 +166,7 @@ class Bridge(object):
         except Exception:
             return {}
         #output('%-8s%-16s%-16s\n' %('PORT','INTF','ADDR'))
-        br_list = brList()
+        br_list = getBridges()
         for l in cmd_output.split('\n'):
             if l.startswith(' ') and l.find('(')>=0 and l.find(')')>=0:
                 l=l.strip()
@@ -179,10 +184,12 @@ class Bridge(object):
         return result
 
 def brDelFlow(bridge,id):
-    try:
+    if type(id) == str and id.isdigit():
+        return Bridge(bridge).delFlow(int(id))
+    elif type(id) == int:
         return Bridge(bridge).delFlow(id)
-    except Exception:
-        return None
+    else:
+        return False
 
 def brGetFlows(bridge):
     try:
@@ -209,6 +216,67 @@ def brGetPorts(bridge):
         return {}
 
 def brList():
+    """
+    List available bridges.
+    """
+    bridges = getBridges()
+    if not bridges:
+        output('None bridge exists.\n')
+        return
+    br_info = ''
+    for br in sorted(bridges.keys()):
+        br_info += "%s\n" %(br)
+        if bridges[br]['Port']:
+            br_info += " Port:\t\t%s\n"  %(' '.join(bridges[br]['Port'].keys()))
+        if bridges[br]['Controller']:
+            br_info += " Controller:\t%s\n"  %(' '.join(bridges[br]['Controller']))
+        if bridges[br]['fail_mode']:
+            br_info += " Fail_Mode:\t%s\n"  %(bridges[br]['fail_mode'])
+    output(br_info)
+
+def brDump(bridge):
+    """
+    Dump the port information of a given bridges.
+    """
+    flows=brGetFlows(bridge)
+    if flows:
+        Flow.bannerOutput()
+        for f in flows:
+            f.fmtOutput()
+
+def brShow(bridge):
+    """
+    Show information of a given bridges.
+    """
+    ovs_ports = brGetPorts(bridge)
+    if not ovs_ports:
+        output('No port is found at bridge %s\n' %bridge)
+        return
+    neutron_ports = get_neutron_ports()
+    output('%-20s%-12s%-8s%-12s' %('Intf','Port','Tag','Type'))
+    if neutron_ports:
+        output('%-16s%-24s\n' %('vmIP','vmMAC'))
+    else:
+        output('\n')
+    content=[]
+    for intf in ovs_ports:
+        port,tag,type = ovs_ports[intf]['port'],ovs_ports[intf]['tag'],ovs_ports[intf]['type']
+        if neutron_ports and intf in neutron_ports:
+            vmIP, vmMac = neutron_ports[intf]['ip_address'],neutron_ports[intf]['mac']
+        else:
+            vmIP,vmMac = '', ''
+        content.append((intf,port,tag,type,vmIP,vmMac))
+        #output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
+    content.sort(key=lambda x:x[0])
+    content.sort(key=lambda x:x[3])
+    for _ in content:
+        output('%-20s%-12s%-8s%-12s' %(_[0],_[1],_[2],_[3]))
+        if neutron_ports:
+            output('%-16s%-24s\n' %(_[4],_[5]))
+        else:
+            output('\n')
+
+def getBridges():
     """
     Return a dict of all available bridges, looks like
     {

@@ -36,7 +36,7 @@ if [ "$DIST" = "Ubuntu" ] || [ "$DIST" = "Debian" ]; then
     pkginst='sudo dpkg -i'
     # Prereqs for this script
     if ! which lsb_release &> /dev/null; then
-        $install lsb-release
+        $install lsb-release > /dev/null
     fi
 fi
 test -e /etc/fedora-release && DIST="Fedora"
@@ -73,15 +73,15 @@ function eovs_deps {
     echo "Installing EasyOVS dependencies"
     if [ "$DIST" = "Fedora" -o "$DIST" = "CentOS" ]; then
         $install gcc make  python-setuptools help2man \
-         pyflakes pylint python-pep8
+         pyflakes pylint python-pep8 > /dev/null
     else
         $install gcc make python-setuptools help2man \
-            pyflakes pylint pep8
+            pyflakes pylint pep8 > /dev/null
     fi
 
     echo "Installing EasyOVS core"
     pushd $EASYOVS_DIR/easyOVS
-    chmod a+x $EASYOVS_DIR/util/easyovs
+    chmod a+x bin/easyovs
     sudo make install
     popd
 }

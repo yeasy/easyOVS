@@ -7,6 +7,7 @@ import os
 import sys
 import time
 
+from easyovs.bridge import brDelFlow,brDump,brList,brShow
 from easyovs.cli import CLI
 from easyovs.clean import cleanup
 from easyovs.log import info, debug, error, output, LEVELS, lg
@@ -20,6 +21,11 @@ def version( *_args ):
     "Print Mininet version and exit"
     print "%s" % VERSION
     exit()
+
+# optional tests to run
+CMDS_ONE = ['cli', 'list']
+CMDS_TWO = [ 'dump', 'show']
+CMDS_THREE = ['delflow']
 
 class Platform( object ):
     "Build, setup, and run the platform."
@@ -42,6 +48,8 @@ class Platform( object ):
         opts = OptionParser( description=desc, usage=usage )
         opts.add_option( '--clean', '-c', action='store_true',
                          default=False, help='clean and exit' )
+        opts.add_option( '--cmd', '-m', type='string', default='cli',
+                         help='Run customized commands for tests.' )
         opts.add_option( '--verbosity', '-v', type='choice',
                          choices=LEVELS.keys(), default = 'info',
                          help = '|'.join( LEVELS.keys() )  )
@@ -59,7 +67,7 @@ class Platform( object ):
         if LEVELS[self.options.verbosity] > LEVELS['output']:
             print ( '*** WARNING: selected verbosity level (%s) will hide CLI '
                     'output!\n'
-                    'Please restart Mininet with -v [debug, info, output].'
+                    'Please restart easyOVS with -v [debug, info, output].'
                     % self.options.verbosity )
         lg.setLogLevel( self.options.verbosity )
 
@@ -67,12 +75,48 @@ class Platform( object ):
         if self.options.clean:
             cleanup()
             exit()
-
         start = time.time()
-        output("***\n Welcome to EasyOVS, type help to see available commands.\n***\n")
-        CLI()
+
+        cmd = self.options.cmd
+        if len(cmd.split())==1 and cmd in CMDS_ONE:
+            if cmd == 'cli':
+                CLI()
+            elif cmd == 'list':
+                self.list()
+        elif len(cmd.split()) == 2:
+            if cmd.split()[1] in CMDS_TWO: # e.g., br0 show
+                br,func =cmd.split()[0],cmd.split()[1]
+                getattr( self, func )(br)
+            elif cmd.split()[0] in CMDS_TWO: # e.g., show br0
+                func,br =cmd.split()[0],cmd.split()[1]
+                getattr( self, func )(br)
+            else:
+                output('Wrong command format is given\n')
+        elif len(cmd.split())==3:
+            if cmd.split()[1] in CMDS_THREE: # e.g., br0 delflow 9
+                br,func,arg =cmd.split()[0],cmd.split()[1],cmd.split()[2]
+                getattr( self, func )(br,arg)
+            elif cmd.split()[0] in CMDS_THREE: # e.g., delflow br0 9
+                func,br,arg =cmd.split()[0],cmd.split()[1],cmd.split()[2]
+                getattr( self, func )(br,arg)
+            else:
+                output('Wrong command format is given\n')
+        else:
+            output('Wrong command format is given\n')
         elapsed = float( time.time() - start )
-        info( 'completed in %0.3f seconds\n' % elapsed )
+        info( '\n### Completed in %0.3f seconds ###\n' % elapsed )
+
+    def list(self):
+        brList()
+
+    def dump(self,br):
+        brDump(br)
+
+    def show(self,br):
+        brShow(br)
+
+    def delflow(self,br,flow_id):
+        brDelFlow(br,flow_id)
 
 if __name__ == "__main__":
     try:

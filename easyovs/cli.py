@@ -5,7 +5,7 @@ from select import poll, POLLIN
 from subprocess import call,Popen,PIPE
 import sys
 
-from easyovs.bridge import brDelFlow,brGetFlows,brIsExisted,brList,brGetPorts
+from easyovs.bridge import brDelFlow,brDump,brIsExisted,brList,brShow
 from flow import Flow
 from easyovs.log import info, output, error
 from easyovs.util import colorStr
@@ -39,6 +39,7 @@ class CLI( Cmd ):
         self.inPoller = poll()
         self.inPoller.register( stdin )
         Cmd.__init__( self )
+        output("***\n Welcome to EasyOVS, type help to see available commands.\n***\n")
         info( '*** Starting CLI:\n' )
         while True:
             try:
@@ -55,9 +56,11 @@ class CLI( Cmd ):
         Del a flow from a bridge.
         '''
         if len(arg.split())==2:
-            self._delflow(arg.split()[0],arg.split()[1])
+            if not brDelFlow(arg.split()[0],arg.split()[1]):
+                output('Del flow#%s from %s failed.\n' %(arg.split()[1],arg.split()[0]))
         elif len(arg.split())==1 and self.bridge:
-            self._delflow(self.bridge,arg)
+            if not brDelFlow(self.bridge,arg):
+                output('Del flow#%s from %s failed.\n' %(arg,self.bridge))
         else:
             output("Please use [bridge] delflow flow_id.\n")
 
@@ -67,16 +70,12 @@ class CLI( Cmd ):
         Dump the flows from a bridge.
         '''
         if arg:
-            flows=brGetFlows(arg)
+            brDump(arg)
         elif self.bridge:
-            flows=brGetFlows(self.bridge)
+            brDump(self.bridge)
         else:
             output("Please give a valid bridge.\n")
             return
-        if flows:
-            Flow.bannerOutput()
-            for f in flows:
-                f.fmtOutput()
 
     def do_EOF( self, arg ):
         "Exit"
@@ -104,22 +103,9 @@ class CLI( Cmd ):
 
     def do_list(self,_arg):
         '''
-        Show available bridges in the system
+        List available bridges in the system
         '''
-        bridges = brList()
-        if not bridges:
-            output('None bridge exists.\n')
-            return
-        br_info = ''
-        for br in sorted(bridges.keys()):
-            br_info += "%s\n" %(br)
-            if bridges[br]['Port']:
-                br_info += " Port:\t\t%s\n"  %(' '.join(bridges[br]['Port'].keys()))
-            if bridges[br]['Controller']:
-                br_info += " Controller:\t%s\n"  %(' '.join(bridges[br]['Controller']))
-            if bridges[br]['fail_mode']:
-                br_info += " Fail_Mode:\t%s\n"  %(bridges[br]['fail_mode'])
-        output(br_info)
+        brList()
 
     def do_quit( self, line ):
         "Exit"
@@ -149,67 +135,12 @@ class CLI( Cmd ):
         '''
         if arg:
             br = arg
+            brShow(arg)
         elif self.bridge:
-            br = self.bridge
+            brShow(self.bridge)
         else:
             output("Please give a valid bridge.\n")
             return
-        ovs_ports = brGetPorts(br)
-        output('%s\n' %br)
-        neutron_ports = self.get_neutron_ports()
-        output('%-20s%-12s%-8s%-12s' %('Intf','Port','Tag','Type'))
-        if neutron_ports:
-            output('%-16s%-24s\n' %('vmIP','vmMAC'))
-        else:
-            output('\n')
-        content=[]
-        for intf in ovs_ports:
-            port,tag,type = ovs_ports[intf]['port'],ovs_ports[intf]['tag'],ovs_ports[intf]['type']
-            if neutron_ports and intf in neutron_ports:
-                vmIP, vmMac = neutron_ports[intf]['ip_address'],neutron_ports[intf]['mac']
-            else:
-                vmIP,vmMac = '', ''
-            content.append((intf,port,tag,type,vmIP,vmMac))
-            #output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
-        content.sort(key=lambda x:x[0])
-        content.sort(key=lambda x:x[3])
-        for _ in content:
-            output('%-20s%-12s%-8s%-12s' %(_[0],_[1],_[2],_[3]))
-            if neutron_ports:
-                output('%-16s%-24s\n' %(_[4],_[5]))
-            else:
-                output('\n')
-
-    def get_neutron_ports(self):
-        """
-        Return the neutron port information, each line looks like
-        qvoxxxx:{'id':id,'name':name,'mac':mac,"subnet_id": subnet_id, "ip_address": ip}
-        """
-        result={}
-        try:
-            neutron_port_list= Popen('neutron port-list', stdout=PIPE,stderr=PIPE,shell=True).stdout.read()
-        except Exception:
-            return None
-        neutron_port_list = neutron_port_list.split('\n')
-        if len(neutron_port_list)>3:
-            for i in range(3,len(neutron_port_list)-1):
-                l = neutron_port_list[i]
-                if l.startswith('| '):
-                    l = l.strip(' |')
-                    l_value=map(lambda x: x.strip(),l.split('|'))
-                    if len(l_value) !=4:
-                        continue
-                    else:
-                        id,name,mac,ips = l_value
-                        result['qvo'+id[:11]] = {'id':id,'name':name,'mac':mac}
-                        result['qvo'+id[:11]].update(eval(ips))
-        return result
-
-    def _delflow(self,bridge,flow_id):
-        if not flow_id.isdigit():
-            output('flow_id is not valid.\n')
-        elif not brDelFlow(bridge,int(flow_id)):
-            output('Delflow %u from %s failed.\n' %(int(flow_id),bridge))
 
     def emptyline( self ):
         "Don't repeat last command when you hit return."

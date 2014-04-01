@@ -101,6 +101,27 @@ EasyOVS: br-int> get
 Current default bridge is br-int
 ```
 
+###sh
+`EasyOVS> sh cmd`
+
+Run the system cmd locally, e.g., using ls -l to show local directory's content.
+```
+EasyOVS> sh ls -l
+total 48
+drwxr-xr-x. 2 root root 4096 Apr  1 14:34 bin
+drwxr-xr-x. 5 root root 4096 Apr  1 14:56 build
+drwxr-xr-x. 2 root root 4096 Apr  1 14:56 dist
+drwxr-xr-x. 2 root root 4096 Apr  1 14:09 doc
+drwxr-xr-x. 4 root root 4096 Apr  1 14:56 easyovs
+-rw-r--r--. 1 root root  660 Apr  1 14:56 easyovs.1
+drwxr-xr-x. 2 root root 4096 Apr  1 14:56 easyovs.egg-info
+-rw-r--r--. 1 root root 2214 Apr  1 14:53 INSTALL
+-rw-r--r--. 1 root root 1194 Apr  1 14:53 Makefile
+-rw-r--r--. 1 root root 3836 Apr  1 14:53 README.md
+-rw-r--r--. 1 root root 1177 Apr  1 14:53 setup.py
+drwxr-xr-x. 2 root root 4096 Apr  1 14:09 util
+```
+
 ###exit|quit
 Input `exit` or `quit` to exit it.
 
@@ -112,6 +133,8 @@ Input `exit` or `quit` to exit it.
 * Delete a flow with its id.
 * Smart command completion, try tab everywhere.
 * Support colorful output.
+* Support run local system commands.
+* Support run individual command with `-m cmd`
 
 #Installation
 Just run `sudo easyOVS/util/install.sh`.
