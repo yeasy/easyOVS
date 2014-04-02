@@ -6,17 +6,29 @@ Provide easier and powerful operation on OpenvSwitch bridges.
 version 0.2
 
 #What is easyOVS
-easyOVS provides more convinient and fluent way to operation your OpenvSwitch bridges, such as list them, dump their flows and add/del some flows. The tool is also recommended to be utilized in OpenStack environment, which can show ports with the vm MAC/IP and VLAN Tag information.
+easyOVS provides more convenient and fluent way to operation your [OpenvSwitch](http://openvswitch.org) bridges,
+such as list them, dump their flows and add/del some flows in a smart style.
 
-After the installation, just run:
+The tool can also be utilized in OpenStack environment, where will show ports with the vm MAC/IP and VLAN Tag information.
+
+#Installation and Usage
+Download the latest version by
+
+`git clone https://github.com/yeasy/easyOVS.git`
+
+Then install with
+
+`sudo bash ./easyOVS/util/install.sh`
+
+After the installation, start easyovs with
 
 `sudo easyovs`
 
-easyOVS will show an interactive CLI, which supports command suggestions and formatted and colorful output.
+easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
   
 #Documentation
 
-##Commands
+##CLI Commands
 
 ###help
 Show the available commands and some usage examples.
@@ -28,19 +40,18 @@ List the available bridges. The output would look like
 s1
  Port:		s1-eth2 s1 s1-eth1
  Interface:	s1-eth2 s1 s1-eth1
- Controller:	ptcp:6634 tcp:127.0.0.1:6633
+ Controller:ptcp:6634 tcp:127.0.0.1:6633
  Fail_Mode:	secure
 s2
  Port:		s2 s2-eth3 s2-eth2 s2-eth1
  Interface:	s2 s2-eth3 s2-eth2 s2-eth1
- Controller:	tcp:127.0.0.1:6633 ptcp:6635
+ Controller:tcp:127.0.0.1:6633 ptcp:6635
  Fail_Mode:	secure
 s3
  Port:		s3-eth1 s3-eth3 s3-eth2 s3
  Interface:	s3-eth1 s3-eth3 s3-eth2 s3
- Controller:	ptcp:6636 tcp:127.0.0.1:6633
+ Controller:ptcp:6636 tcp:127.0.0.1:6633
  Fail_Mode:	secure
-
 ```
 
 ###show
@@ -125,8 +136,43 @@ drwxr-xr-x. 2 root root 4096 Apr  1 14:09 util
 ###exit|quit
 Input `exit` or `quit` to exit it.
 
+##Options
+###-h
+Show the help message on supported options, such as
+```
+$ easyovs -h
+Usage: easyovs [options]
+(type easyovs -h for details)
+
+The easyovs utility creates operation CLI from the command line. It can run
+given commands, invoke the EasyOVS CLI, and run tests.
+
+Options:
+  -h, --help            show this help message and exit
+  -c, --clean           clean and exit
+  -m CMD, --cmd=CMD     Run customized commands for tests.
+  -v VERBOSITY, --verbosity=VERBOSITY
+                        info|warning|critical|error|debug|output
+  --version
+```
+
+###-c
+Clean the env.
+
+###-m
+Run the given command in easyovs, show the output, and exit.
+
+E.g. `easyovs -m 'br-int dump'`.
+
+###-v
+Set verbosity level.
+
+###--version
+Show the version information.
+
 #Features
 * Support OpenvSwitch version 1.4.6 ~ 1.11.0.
+* Support most popular Linux distributions, e.g., Ubuntu,Debian, CentOS and Fedora.
 * Format the output to make it clear and easy to compare.
 * Integrate the OpenStack information
  with the bridge port (In OpenStack environment).
@@ -135,17 +181,6 @@ Input `exit` or `quit` to exit it.
 * Support colorful output.
 * Support run local system commands.
 * Support run individual command with `-m 'cmd'`
-
-#Installation
-Download the latest version by
-
-`git clone https://github.com/yeasy/easyOVS.git`
-
-Then run
-
-`sudo easyOVS/util/install.sh`
-
-More options can be found with `-h`.
 
 #Credits
 Thanks to the [OpenvSwitch](http://openvswitch.org) Team, [Mininet](http://mininet.org) Team and [OpenStack](http://openstack.org) Team, who gives helpful implementation example and useful tools.
