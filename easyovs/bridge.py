@@ -6,7 +6,7 @@ import sys
 
 import termios
 from flow import Flow
-from easyovs.log import output
+from easyovs.log import output,debug
 from easyovs.util import fetchFollowingNum,fetchValueBefore,fetchValueBetween
 from neutron import  get_neutron_ports
 
@@ -35,36 +35,57 @@ class Bridge(object):
         return call(cmd,shell=True) == 0
 
     @checkBr
-    def delFlow(self,id):
+    def addFlow(self, flow):
         """
-        Return True or False to del the flow.
+        Return True or False to add a flow.
         """
+        if not flow:
+            return False
+        addflow_cmd='ovs-ofctl add-flow %s "%s"' %(self.bridge,flow)
+        result = Popen(addflow_cmd,stdout=subprocess.PIPE,shell=True).stdout.read()
+        return True
+
+    @checkBr
+    def delFlow(self,ids):
+        """
+        Return True or False to del a flow from given list.
+        """
+        if len(ids) <= 0:
+            return False
         if not self.flows:
             self.updateFlows()
-        if id < 0 or id >= len(self.flows):
-            return False
-        del_flow = self.flows[id]
-        del_flow.fmtOutput()
-        output("Del the flow? Y/n ")
+        del_flows=[]
         fd = sys.stdin.fileno()
         old = termios.tcgetattr(fd)
-        new = termios.tcgetattr(fd)
-        new[3] = new[3] & ~termios.ICANON
-        try:
-           termios.tcsetattr(fd, termios.TCSADRAIN, new)
-           while True:
-               input = sys.stdin.read(1)
-               if input == 'n' or input == 'N':
-                   output('Canceled.\n')
-                   return False
-               elif input == 'y' or input == 'Y' or input != '\n':
-                   output('\n')
-                   break
-               else:
-                   output('\nWrong, please input [Y/n] ')
-                   continue
-        finally:
-           termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        for id in ids:
+            if type(id) == str and id.isdigit():
+                id = int(id)
+            else:
+                continue
+            if id >= len(self.flows):
+                continue
+            else:
+                del_flow = self.flows[id]
+                del_flow.fmtOutput()
+                output('Del the flow? [Y/n]: ')
+                new = termios.tcgetattr(fd)
+                new[3] = new[3] & ~termios.ICANON
+                try:
+                   termios.tcsetattr(fd, termios.TCSADRAIN, new)
+                   while True:
+                       input = sys.stdin.read(1)
+                       if input == 'n' or input == 'N':
+                           output('\tCancel the deletion.\n')
+                           break
+                       elif input == 'y' or input == 'Y' or input != '\n':
+                           del_flows.append(del_flow)
+                           output('\n')
+                           break
+                       else:
+                           output('\nWrong, please input [Y/n]: ')
+                           continue
+                finally:
+                   termios.tcsetattr(fd, termios.TCSADRAIN, old)
         self.updateFlows(True)
         flows_db_new = self.flows_db+'.new'
         f = open(self.flows_db,'r')
@@ -75,23 +96,26 @@ class Bridge(object):
                 break
             for line in lines:
                 flow = self.extractFlow(line)
-                output(flow)
-                if flow != del_flow:
+                if flow not in del_flows:
                     f_new.write('%s' %line)
+                else:
+                    debug("Del the flow:\n")
+                    #del_flow.fmtOutput()
         f.close()
         f_new.close()
         replace_cmd="ovs-ofctl replace-flows %s %s" %(self.bridge,flows_db_new)
         result = Popen(replace_cmd,stdout=subprocess.PIPE,shell=True).stdout.read()
+        self.updateFlows()
         return True
 
     @checkBr
-    def updateFlows(self,to_file=False):
+    def updateFlows(self,db=False):
         """
-        Update the self.flows variables with the OpenvSwitch Content.
+        Update the OpenvSwitch table rules into self.flows, and also to db if enabled.
         """
         cmd="ovs-ofctl dump-flows %s" %self.bridge
         id,flows = 0, []
-        if to_file:
+        if db:
             f = open(self.flows_db,'w')
         result= Popen(cmd, stdout=subprocess.PIPE,shell=True).stdout.read()
         for l in result.split('\n'):
@@ -100,17 +124,16 @@ class Bridge(object):
                 flow = self.extractFlow(l)
                 if flow:
                     flows.append(flow)
-                    if to_file:
+                    if db:
                         f.write('%s\n' %l)
-        if to_file:
+        if db:
             f.close()
-        #flows=sorted(flows,key=lambda flow: flow.priority,reverse=True)
-        #flows=sorted(flows,key=lambda flow: flow.table)
         flows = sorted(flows, reverse=True)
         for flow in flows:
             flow.id = id
             id += 1
         self.flows = flows
+        debug('updateFlows:len flows=%u\n' %len(self.flows))
 
     @checkBr
     def getFlows(self):
@@ -128,20 +151,24 @@ class Bridge(object):
         Return a Flow or None, converted from a line of original output
         """
         line = line.strip()
-        match,actions = '',''
+        table,packet,priority,match,actions ='','','','',''
         if line.startswith('cookie='):
             table = fetchFollowingNum(line,'table=')
             packet = fetchFollowingNum(line,'n_packets=')
             if table == None or packet == None:
                 return None
-            for fields in line.split():
-                if fields.startswith('priority='):
-                    priority = fetchFollowingNum(fields,'priority=')
+            for field in line.split():
+                if field.startswith('priority='):
+                    priority = fetchFollowingNum(field,'priority=')
                     if priority == None:
                         return None
-                    match = fields.replace('priority=%u' %priority,'').lstrip(',')
-                elif fields.startswith('actions='):
-                    actions=fields.replace('actions=','').rstrip('\n')
+                    match = field.replace('priority=%u' %priority,'').lstrip(',')
+                    if not match:
+                        match = r'*'
+                elif field.startswith('actions='):
+                    actions=field.replace('actions=','').rstrip('\n')
+            if priority == '': #There is no priority= field
+                match = line.split()[len(line.split())-2]
             return Flow(self.bridge,table,packet,priority,match,actions)
         else:
             return None
@@ -183,13 +210,18 @@ class Bridge(object):
                 result[intf] = {'port':port,'addr':addr,'tag':tag,'type':type}
         return result
 
-def brDelFlow(bridge,id):
-    if type(id) == str and id.isdigit():
-        return Bridge(bridge).delFlow(int(id))
-    elif type(id) == int:
-        return Bridge(bridge).delFlow(id)
+def brAddFlow(bridge,flow):
+    if 'actions=' in flow and len(flow.split())==2:
+        return Bridge(bridge).addFlow(flow)
     else:
         return False
+
+def brDelFlow(bridge,ids):
+    debug('brDelFlow: %s: %s\n' %(bridge,','.join(ids)))
+    if type(ids) == str and ids.isdigit():
+        return Bridge(bridge).delFlow([ids])
+    else:
+        return Bridge(bridge).delFlow(ids)
 
 def brGetFlows(bridge):
     try:
@@ -239,6 +271,7 @@ def brDump(bridge):
     Dump the port information of a given bridges.
     """
     flows=brGetFlows(bridge)
+    debug('brDump: len flows=%u\n' %len(flows))
     if flows:
         Flow.bannerOutput()
         for f in flows:

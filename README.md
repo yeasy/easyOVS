@@ -87,10 +87,17 @@ ID TAB PKT       PRI   MATCH                                                    
 5  0   2         800
 ```
 
-###delflow
-`EasyOVS> [bridge|default] delflow id`
+###addflow
+`EasyOVS> [bridge|default] addflow [match] actions=[action]`
 
-Delete a flow with given id (see the first column of the `dump` output).
+Add a flow into the bridge, e.g.,
+
+`EasyOVS> br-int addflow priority=3 ip actions=OUTPUT:1`
+
+###delflow
+`EasyOVS> [bridge|default] delflow id1 id2...`
+
+Delete flows with given ids (see the first column of the `dump` output).
 
 
 ###set

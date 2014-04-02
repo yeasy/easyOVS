@@ -5,7 +5,7 @@ from select import poll, POLLIN
 from subprocess import call,Popen,PIPE
 import sys
 
-from easyovs.bridge import brDelFlow,brDump,brIsExisted,brList,brShow
+from easyovs.bridge import brAddFlow,brDelFlow,brDump,brIsExisted,brList,brShow
 from flow import Flow
 from easyovs.log import info, output, error
 from easyovs.util import colorStr
@@ -50,17 +50,52 @@ class CLI( Cmd ):
             except KeyboardInterrupt:
                 info( '\nInterrupt\n' )
 
+    def do_addflow(self,arg):
+        '''
+        [bridge] addflow flow
+        Add a flow to a bridge.
+        '''
+        args = arg.replace('"','').replace("'","")
+        if 'actions=' not in args:
+            output('The flow is not valid.\n')
+            return
+        i = args.index('actions=')
+        actions = args[i:].split()
+        args = args[:i].split()
+        if len(args)>=2:
+            bridge,rule = args[0], args[1:]
+        elif self.bridge:
+            bridge,rule = self.bridge, args
+        else:
+            output("Please use [bridge] addflow flow.\n")
+        if not rule or not actions or len(actions)!=1:
+            output('The flow is not valid.\n')
+            return
+        rule = ','.join(rule)
+        actions = ','.join(actions)
+        flow = rule + ' ' + actions
+        if not brAddFlow(bridge,flow):
+            output('Add flow %s to %s failed.\n' %(bridge,flow))
+        else:
+            output('Add flow %s to %s done.\n' %(bridge,flow))
+
     def do_delflow(self,arg):
         '''
         [bridge] delflow flow_id
         Del a flow from a bridge.
         '''
-        if len(arg.split())==2:
-            if not brDelFlow(arg.split()[0],arg.split()[1]):
-                output('Del flow#%s from %s failed.\n' %(arg.split()[1],arg.split()[0]))
-        elif len(arg.split())==1 and self.bridge:
+        args = arg.split()
+        if len(args)>=2:
+            flow_ids = ' '.join(args[1:]).replace(',',' ').split()
+            if not brDelFlow(args[0],flow_ids):
+                output('Del flow#%s from %s failed.\n' %(' '.join(flow_ids),args[0]))
+            else:
+                output('Del flow#%s from %s done.\n' %(' '.join(flow_ids),args[0]))
+        elif len(args)==1 and self.bridge:
             if not brDelFlow(self.bridge,arg):
                 output('Del flow#%s from %s failed.\n' %(arg,self.bridge))
+            else:
+                output('Del flow#%s from %s done.\n' %(arg,self.bridge))
         else:
             output("Please use [bridge] delflow flow_id.\n")
 
@@ -148,14 +183,14 @@ class CLI( Cmd ):
 
     def default(self,line):
         #bridge, cmd, line = self.parseline( line )
-        if len(line.split()) != 2 and len(line.split()) !=3:
-            error( '*** Unknown command: %s\n' % line )
+        if len(line.split()) < 2:
+            error( '*** Unknown command: %s ***\n' % line )
             return
         bridge,cmd,args='','',''
         if len(line.split()) == 2:
             bridge,cmd = line.split()
         else:
-            bridge,cmd,args = line.split()[0],line.split()[1],line.split()[2]
+            bridge,cmd,args = line.split()[0],line.split()[1],' '.join(line.split()[2:])
         if brIsExisted(bridge):
             try:
                 if args:
@@ -163,6 +198,6 @@ class CLI( Cmd ):
                 else:
                     getattr(self,'do_%s' %(cmd))(bridge)
             except AttributeError:
-                error( '*** Unknown command: %s, cmd=%s, bridge=%s, args=%s\n' % (line,cmd,bridge,args) )
+                error( '*** Unknown command: %s, cmd=%s, bridge=%s, args=%s ***\n' % (line,cmd,bridge,args) )
         else:
             error( '*** Bridge %s is not existed\n' %bridge )

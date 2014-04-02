@@ -25,7 +25,7 @@ class Flow(object):
 
     def fmtOutput(self):
         output(_format_str_ % (self.id, self.table, self.packet, self.priority,\
-                               self.match.replace('_port', '').replace('_tci',''),
+                               self.match.replace('_port', '').replace('_tci','').replace('dl_vlan','vlan'),
                                self.actions))
 
     def __eq__(self, other):

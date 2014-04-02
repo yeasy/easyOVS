@@ -51,7 +51,7 @@ class Platform( object ):
         opts.add_option( '--cmd', '-m', type='string', default='cli',
                          help='Run customized commands for tests.' )
         opts.add_option( '--verbosity', '-v', type='choice',
-                         choices=LEVELS.keys(), default = 'info',
+                         choices=LEVELS.keys(), default = 'output',
                          help = '|'.join( LEVELS.keys() )  )
         opts.add_option( '--version', action='callback', callback=version )
         self.options, self.args = opts.parse_args()
@@ -64,7 +64,7 @@ class Platform( object ):
         "Setup and validate environment."
 
         # set logging verbosity
-        if LEVELS[self.options.verbosity] > LEVELS['output']:
+        if LEVELS[self.options.verbosity] > LEVELS['info']:
             print ( '*** WARNING: selected verbosity level (%s) will hide CLI '
                     'output!\n'
                     'Please restart easyOVS with -v [debug, info, output].'
@@ -92,13 +92,13 @@ class Platform( object ):
                 getattr( self, func )(br)
             else:
                 output('Wrong command format is given\n')
-        elif len(cmd.split())==3:
+        elif len(cmd.split())>=3:
             if cmd.split()[1] in CMDS_THREE: # e.g., br0 delflow 9
-                br,func,arg =cmd.split()[0],cmd.split()[1],cmd.split()[2]
-                getattr( self, func )(br,arg)
+                br,func,arg =cmd.split()[0],cmd.split()[1],' '.join(cmd.split()[2:])
+                getattr( self, func )(br,arg.replace(',',' '))
             elif cmd.split()[0] in CMDS_THREE: # e.g., delflow br0 9
-                func,br,arg =cmd.split()[0],cmd.split()[1],cmd.split()[2]
-                getattr( self, func )(br,arg)
+                br,func,arg =cmd.split()[1],cmd.split()[0],' '.join(cmd.split()[2:])
+                getattr( self, func )(br,arg.replace(',',' '))
             else:
                 output('Wrong command format is given\n')
         else:
