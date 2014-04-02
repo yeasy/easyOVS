@@ -282,7 +282,7 @@ def getBridges():
     {
         'br-int':{
             'Controller':[],
-            'fail_mode':[],
+            'fail_mode':'',
             'Port':{
              'qvoxxx': {
                 'tag':'1', //tagid
