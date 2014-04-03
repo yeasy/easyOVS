@@ -1,315 +1,335 @@
 __author__ = 'baohua'
 
-from subprocess import call,Popen,PIPE
-import subprocess
+from subprocess import call, Popen, PIPE
 import sys
-
 import termios
-from flow import Flow
-from easyovs.log import output,debug
-from easyovs.util import fetchFollowingNum,fetchValueBefore,fetchValueBetween
-from neutron import  get_neutron_ports
 
-def checkBr(func):
-    def wrapper(self,*arg):
-        if not self.isExisted():
+from easyovs.log import output, debug
+from easyovs.util import get_numstr_after, get_str_before, get_str_between
+from flow import Flow
+from neutron import get_neutron_ports
+
+
+def check_exist(func):
+    def wrapper(self, *arg):
+        if not self.exists():
             output('The bridge does not exist.\n You can check available bridges using list\n')
             return None
         else:
-            return func(self,*arg)
+            return func(self, *arg)
     return wrapper
+
 
 class Bridge(object):
     """
     An OpenvSwitch bridge, typically is a datapath, e.g., br-int
     """
-    def __init__( self, bridge):
+
+    def __init__(self, bridge):
         self.bridge = bridge
         self.flows = []
-        self.flows_db= '/tmp/tmp_%s_flows' %self.bridge
+        self.flows_db = '/tmp/tmp_%s_flows' % self.bridge
 
-    def isExisted(self):
+    def exists(self):
         if not self.bridge:
             return False
-        cmd="ovs-vsctl show|grep -q %s" %self.bridge
-        return call(cmd,shell=True) == 0
+        cmd = "ovs-vsctl show|grep -q %s" % self.bridge
+        return call(cmd, shell=True) == 0
 
-    @checkBr
-    def addFlow(self, flow):
+    @check_exist
+    def add_flow(self, flow):
         """
         Return True or False to add a flow.
         """
         if not flow:
             return False
-        addflow_cmd='ovs-ofctl add-flow %s "%s"' %(self.bridge,flow)
-        result = Popen(addflow_cmd,stdout=subprocess.PIPE,shell=True).stdout.read()
-        return True
+        addflow_cmd = 'ovs-ofctl add-flow %s "%s"' % (self.bridge, flow)
+        error = Popen(addflow_cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()[1]
+        if error:
+            output(error)
+            return False
+        else:
+            return True
 
-    @checkBr
-    def delFlow(self,ids):
+    @check_exist
+    def del_flow(self, flow_ids):
         """
         Return True or False to del a flow from given list.
         """
-        if len(ids) <= 0:
+        if len(flow_ids) <= 0:
             return False
         if not self.flows:
-            self.updateFlows()
-        del_flows=[]
+            self.load_flows()
+        del_flows = []
         fd = sys.stdin.fileno()
         old = termios.tcgetattr(fd)
-        for id in ids:
-            if type(id) == str and id.isdigit():
-                id = int(id)
+        for flow_id in flow_ids:
+            if isinstance(flow_id, str) and flow_id.isdigit():
+                flow_id = int(flow_id)
             else:
                 continue
-            if id >= len(self.flows):
+            if flow_id >= len(self.flows):
                 continue
             else:
-                del_flow = self.flows[id]
-                del_flow.fmtOutput()
+                del_flow = self.flows[flow_id]
+                del_flow.fmt_output()
                 output('Del the flow? [Y/n]: ')
                 new = termios.tcgetattr(fd)
                 new[3] = new[3] & ~termios.ICANON
                 try:
-                   termios.tcsetattr(fd, termios.TCSADRAIN, new)
-                   while True:
-                       input = sys.stdin.read(1)
-                       if input == 'n' or input == 'N':
-                           output('\tCancel the deletion.\n')
-                           break
-                       elif input == 'y' or input == 'Y' or input != '\n':
-                           del_flows.append(del_flow)
-                           output('\n')
-                           break
-                       else:
-                           output('\nWrong, please input [Y/n]: ')
-                           continue
+                    termios.tcsetattr(fd, termios.TCSADRAIN, new)
+                    while True:
+                        in_ch = sys.stdin.read(1)
+                        if in_ch == 'n' or in_ch == 'N':
+                            output('\tCancel the deletion.\n')
+                            break
+                        elif in_ch == 'y' or in_ch == 'Y' or in_ch != '\n':
+                            del_flows.append(del_flow)
+                            output('\n')
+                            break
+                        else:
+                            output('\nWrong, please input [Y/n]: ')
+                            continue
                 finally:
-                   termios.tcsetattr(fd, termios.TCSADRAIN, old)
-        self.updateFlows(True)
-        flows_db_new = self.flows_db+'.new'
-        f = open(self.flows_db,'r')
-        f_new = open(flows_db_new,'w')
+                    termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        if not del_flows:
+            return False
+        self.load_flows(True)
+        flows_db_new = self.flows_db + '.new'
+        f, f_new = open(self.flows_db, 'r'), open(flows_db_new, 'w')
         while True:
             lines = f.readlines(1000)
             if not lines:
                 break
             for line in lines:
-                flow = self.extractFlow(line)
+                flow = self.parse_flow(line)
                 if flow not in del_flows:
-                    f_new.write('%s' %line)
+                    f_new.write('%s' % line)
                 else:
                     debug("Del the flow:\n")
-                    #del_flow.fmtOutput()
+                    #del_flow.fmt_output()
         f.close()
         f_new.close()
-        replace_cmd="ovs-ofctl replace-flows %s %s" %(self.bridge,flows_db_new)
-        result = Popen(replace_cmd,stdout=subprocess.PIPE,shell=True).stdout.read()
-        self.updateFlows()
-        return True
+        replace_cmd = "ovs-ofctl replace-flows %s %s" % (self.bridge, flows_db_new)
+        error = Popen(replace_cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()[1]
+        if error:
+            output(error)
+            return False
+        else:
+            self.load_flows()
+            return True
 
-    @checkBr
-    def updateFlows(self,db=False):
+    @check_exist
+    def load_flows(self, db=False):
         """
-        Update the OpenvSwitch table rules into self.flows, and also to db if enabled.
+        Load the OpenvSwitch table rules into self.flows, and also to db if enabled.
         """
-        cmd="ovs-ofctl dump-flows %s" %self.bridge
-        id,flows = 0, []
+        debug('load_flows:\n')
+        cmd = "ovs-ofctl dump-flows %s" % self.bridge
+        flow_id, flows, f = 0, [], None
         if db:
-            f = open(self.flows_db,'w')
-        result= Popen(cmd, stdout=subprocess.PIPE,shell=True).stdout.read()
+            f = open(self.flows_db, 'w')
+        result, error = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
+        if error:
+            return
         for l in result.split('\n'):
-            l=l.strip()
+            l = l.strip()
             if l.startswith('cookie='):
-                flow = self.extractFlow(l)
+                flow = self.parse_flow(l)
                 if flow:
                     flows.append(flow)
                     if db:
-                        f.write('%s\n' %l)
+                        f.write('%s\n' % l)
         if db:
             f.close()
-        flows = sorted(flows, reverse=True)
-        for flow in flows:
-            flow.id = id
-            id += 1
+        flows.sort(reverse=True)
+        for i in range(len(flows)):
+            flows[i].id = i
         self.flows = flows
-        debug('updateFlows:len flows=%u\n' %len(self.flows))
+        debug('load_flows:len flows=%u\n' % len(self.flows))
 
-    @checkBr
-    def getFlows(self):
+    @check_exist
+    def get_flows(self):
         """
         Return a dict of flows in the bridge.
         """
-        self.updateFlows()
-        if len(self.flows)>0:
+        debug('Bridge:get_flow()\n')
+        self.load_flows()
+        if len(self.flows) > 0:
             return self.flows
         else:
             return {}
 
-    def extractFlow(self,line):
+    def parse_flow(self, line):
         """
-        Return a Flow or None, converted from a line of original output
+        Return a Flow or None, converted from a given line of original flow.
         """
         line = line.strip()
-        table,packet,priority,match,actions ='','','','',''
+        table, packet, priority, match, actions = '', '', '', '', ''
         if line.startswith('cookie='):
-            table = fetchFollowingNum(line,'table=')
-            packet = fetchFollowingNum(line,'n_packets=')
-            if table == None or packet == None:
+            table = get_numstr_after(line, 'table=')
+            packet = get_numstr_after(line, 'n_packets=')
+            if not table or not packet:
                 return None
             for field in line.split():
                 if field.startswith('priority='):
-                    priority = fetchFollowingNum(field,'priority=')
-                    if priority == None:
+                    priority = get_numstr_after(field, 'priority=')
+                    if not priority:
                         return None
-                    match = field.replace('priority=%u' %priority,'').lstrip(',')
+                    match = field.replace('priority=%s' % priority, '').lstrip(',').strip()
                     if not match:
                         match = r'*'
                 elif field.startswith('actions='):
-                    actions=field.replace('actions=','').rstrip('\n')
-            if priority == '': #There is no priority= field
-                match = line.split()[len(line.split())-2]
-            return Flow(self.bridge,table,packet,priority,match,actions)
+                    actions = field.replace('actions=', '').rstrip('\n')
+            if priority is '':  # There is no priority= field
+                match = line.split()[len(line.split()) - 2]
+            return Flow(self.bridge, table, packet, priority, match, actions)
         else:
             return None
 
-    @checkBr
-    def getPorts(self):
+    @check_exist
+    def get_ports(self):
         """
         Return a dict of the ports (port, addr, tag, type) on the bridge, looks like
         {
             'qvoxxx':{
                 'port':2,
                 'addr':08:91:ff:ff:f3,
-                'tag':1,
+                'vlan':1,
                 'type':internal,
             }
         }
         """
-        result={}
-        cmd="ovs-ofctl show %s" %self.bridge
-        try:
-            cmd_output= Popen(cmd, stdout=subprocess.PIPE,shell=True).stdout.read()
-        except Exception:
+        ports = {}
+        cmd = "ovs-ofctl show %s" % self.bridge
+        result, error = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
+        if error:
             return {}
         #output('%-8s%-16s%-16s\n' %('PORT','INTF','ADDR'))
-        br_list = getBridges()
-        for l in cmd_output.split('\n'):
-            if l.startswith(' ') and l.find('(')>=0 and l.find(')')>=0:
-                l=l.strip()
-                port = fetchValueBefore(l,'(')
-                intf = fetchValueBetween(l,'(',')')
-                addr = l[l.find('addr:')+len('addr:'):]
+        bridges = get_bridges()
+        for l in result.split('\n'):
+            if l.startswith(' ') and l.find('(') >= 0 and l.find(')') >= 0:
+                l = l.strip()
+                port = get_str_before(l, '(')
+                intf = get_str_between(l, '(', ')')
+                addr = l[l.find('addr:') + len('addr:'):]
                 #output('%-8s%-16s%-16s\n' %(port,intf,addr))
-                if self.bridge in br_list:
-                    if intf in br_list[self.bridge]['Port']:
-                        tag = br_list[self.bridge]['Port'][intf].get('vlan','')
-                        type = br_list[self.bridge]['Port'][intf].get('type','')
+                if self.bridge in bridges and intf in bridges[self.bridge]['Port']:
+                    tag = bridges[self.bridge]['Port'][intf].get('vlan', '')
+                    intf_type = bridges[self.bridge]['Port'][intf].get('type', '')
                 else:
-                    tag, type = '',''
-                result[intf] = {'port':port,'addr':addr,'vlan':tag,'type':type}
-        return result
+                    tag, intf_type = '', ''
+                ports[intf] = {'port': port, 'addr': addr, 'vlan': tag, 'type': intf_type}
+        return ports
 
-def brAddFlow(bridge,flow):
-    if 'actions=' in flow and len(flow.split())==2:
-        return Bridge(bridge).addFlow(flow)
+
+def br_addflow(bridge, flow):
+    if 'actions=' in flow and len(flow.split()) == 2:
+        return Bridge(bridge).add_flow(flow)
     else:
         return False
 
-def brDelFlow(bridge,ids):
-    debug('brDelFlow: %s: %s\n' %(bridge,','.join(ids)))
-    if type(ids) == str and ids.isdigit():
-        return Bridge(bridge).delFlow([ids])
-    else:
-        return Bridge(bridge).delFlow(ids)
 
-def brGetFlows(bridge):
-    try:
-        return Bridge(bridge).getFlows()
-    except Exception:
+def br_delflow(bridge, ids):
+    debug('br_delflow: %s: %s\n' % (bridge, ','.join(ids)))
+    if type(ids) == str and ids.isdigit():
+        return Bridge(bridge).del_flow([ids])
+    else:
+        return Bridge(bridge).del_flow(ids)
+
+
+def br_getflows(bridge):
+    if isinstance(bridge, str):
+        return Bridge(bridge).get_flows()
+    else:
         return None
 
-def brIsExisted(bridge):
+
+def br_exists(bridge):
     """
     Return True of False of a bridge's existence.
     """
-    try:
-        return Bridge(bridge).isExisted()
-    except Exception:
+    if isinstance(bridge, str):
+        return Bridge(bridge).exists()
+    else:
         return False
 
-def brGetPorts(bridge):
+
+def br_getports(bridge):
     """
-    Return a dict of all available bridges, looks like
+    Return a dict of all available bridges.
     """
-    try:
-        return Bridge(bridge).getPorts()
-    except Exception:
+    if isinstance(bridge, str):
+        return Bridge(bridge).get_ports()
+    else:
         return {}
 
-def brList():
+
+def br_list():
     """
     List available bridges.
     """
-    bridges = getBridges()
+    bridges = get_bridges()
     if not bridges:
         output('None bridge exists.\n')
         return
     br_info = ''
     for br in sorted(bridges.keys()):
-        br_info += "%s\n" %(br)
+        br_info += "%s\n" % br
         if bridges[br]['Port']:
-            br_info += " Port:\t\t%s\n"  %(' '.join(bridges[br]['Port'].keys()))
+            br_info += " Port:\t\t%s\n" % (' '.join(bridges[br]['Port'].keys()))
         if bridges[br]['Controller']:
-            br_info += " Controller:\t%s\n"  %(' '.join(bridges[br]['Controller']))
+            br_info += " Controller:\t%s\n" % (' '.join(bridges[br]['Controller']))
         if bridges[br]['fail_mode']:
-            br_info += " Fail_Mode:\t%s\n"  %(bridges[br]['fail_mode'])
+            br_info += " Fail_Mode:\t%s\n" % (bridges[br]['fail_mode'])
     output(br_info)
 
-def brDump(bridge):
+
+def br_dump(bridge):
     """
     Dump the port information of a given bridges.
     """
-    flows=brGetFlows(bridge)
-    debug('brDump: len flows=%u\n' %len(flows))
+    flows = br_getflows(bridge)
+    debug('br_dump: len flows=%u\n' % len(flows))
     if flows:
-        Flow.bannerOutput()
+        Flow.banner_output()
         for f in flows:
-            f.fmtOutput()
+            f.fmt_output()
 
-def brShow(bridge):
+
+def br_show(bridge):
     """
     Show information of a given bridges.
     """
-    ovs_ports = brGetPorts(bridge)
+    ovs_ports = br_getports(bridge)
     if not ovs_ports:
-        output('No port is found at bridge %s\n' %bridge)
         return
     neutron_ports = get_neutron_ports()
-    output('%-20s%-12s%-8s%-12s' %('Intf','Port','Vlan','Type'))
+    output('%-20s%-12s%-8s%-12s' % ('Intf', 'Port', 'Vlan', 'Type'))
     if neutron_ports:
-        output('%-16s%-24s\n' %('vmIP','vmMAC'))
+        output('%-16s%-24s\n' % ('vmIP', 'vmMAC'))
     else:
         output('\n')
-    content=[]
+    content = []
     for intf in ovs_ports:
-        port,tag,type = ovs_ports[intf]['port'],ovs_ports[intf]['vlan'],ovs_ports[intf]['type']
+        port, tag, intf_type = ovs_ports[intf]['port'], ovs_ports[intf]['vlan'], ovs_ports[intf]['type']
         if neutron_ports and intf in neutron_ports:
-            vmIP, vmMac = neutron_ports[intf]['ip_address'],neutron_ports[intf]['mac']
+            vm_ip, vm_mac = neutron_ports[intf]['ip_address'], neutron_ports[intf]['mac']
         else:
-            vmIP,vmMac = '', ''
-        content.append((intf,port,tag,type,vmIP,vmMac))
+            vm_ip, vm_mac = '', ''
+        content.append((intf, port, tag, intf_type, vm_ip, vm_mac))
         #output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
-    content.sort(key=lambda x:x[0])
-    content.sort(key=lambda x:x[3])
+    content.sort(key=lambda x: x[0])
+    content.sort(key=lambda x: x[3])
     for _ in content:
-        output('%-20s%-12s%-8s%-12s' %(_[0],_[1],_[2],_[3]))
+        output('%-20s%-12s%-8s%-12s' % (_[0], _[1], _[2], _[3]))
         if neutron_ports:
-            output('%-16s%-24s\n' %(_[4],_[5]))
+            output('%-16s%-24s\n' % (_[4], _[5]))
         else:
             output('\n')
 
-def getBridges():
+
+def get_bridges():
     """
     Return a dict of all available bridges, looks like
     {
@@ -324,32 +344,31 @@ def getBridges():
         },
     }
     """
-    bridges,br={},''
-    cmd='ovs-vsctl show'
-    try:
-        result= Popen(cmd, stdout=PIPE,shell=True).stdout.read()
-    except Exception:
+    bridges, br = {}, ''
+    cmd = 'ovs-vsctl show'
+    result, error = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
+    if error:
         return {}
     for l in result.split('\n'):
-        l=l.strip().replace('"','')
+        l = l.strip().replace('"', '')
         if l.startswith('Bridge '):
             br = l.lstrip('Bridge ')
-            bridges[br]={}
-            bridges[br]['Controller']=[]
-            bridges[br]['Port']={}
+            bridges[br] = {}
+            bridges[br]['Controller'] = []
+            bridges[br]['Port'] = {}
             bridges[br]['fail_mode'] = ''
         else:
             if l.startswith('Controller '):
-                bridges[br]['Controller'].append(l.replace('Controller ',''))
+                bridges[br]['Controller'].append(l.replace('Controller ', ''))
             elif l.startswith('fail_mode: '):
-                bridges[br]['fail_mode']=l.replace('fail_mode: ','')
+                bridges[br]['fail_mode'] = l.replace('fail_mode: ', '')
             elif l.startswith('Port '):
-                phy_port = l.replace('Port ','') #e.g., br-eth0
-                bridges[br]['Port'][phy_port]={'vlan':'','type':''}
+                phy_port = l.replace('Port ', '')  # e.g., br-eth0
+                bridges[br]['Port'][phy_port] = {'vlan': '', 'type': ''}
             elif l.startswith('tag: '):
-                bridges[br]['Port'][phy_port]['vlan'] = l.replace('tag: ','')
+                bridges[br]['Port'][phy_port]['vlan'] = l.replace('tag: ', '')
             elif l.startswith('Interface '):
-                intf = l.replace('Interface ','')
+                bridges[br]['Port'][phy_port]['intf'] = l.replace('Interface ', '')
             elif l.startswith('type: '):
-                bridges[br]['Port'][phy_port]['type'] = l.replace('type: ','')
+                bridges[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
     return bridges

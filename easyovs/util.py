@@ -4,51 +4,56 @@ VERSION = "0.2"
 
 import re
 
-def fetchFollowingNum(line, field):
+
+def get_numstr_after(line, field):
     """
     Return the Number value after given field
-    >>> fetchFollowingNum("abc=99,xx","abc=") == 99
+    >>> get_numstr_after("abc=99,xx","abc=") == 99
     True
     """
-    result = None
+    result = ''
     r = re.search(field + '\d+', line)
     if r:
-        result = int(r.group(0).replace(field, ''))
+        result = r.group(0).replace(field, '').strip()
     return result
 
-def fetchValueBefore(line,ch):
+
+def get_str_before(line, ch):
     """
     Fetch the string before a sign
-    >>> fetchValueBefore('  abc (xx)','(')=='  abc '
+    >>> get_str_before('  abc (xx)','(')=='  abc '
     True
     """
-    result = None
-    ch = r'%s' %ch
+    result = ''
     if ch.startswith('\\') or ch.startswith('(') or ch.startswith(')'):
-        r = re.search(r'.*\%s' %ch, line)
+        _ch = '\%s' % ch
     else:
-        r = re.search(r'.*%s' %ch, line)
-    result= r.group(0).replace(ch,'')
+        _ch = ch
+    r = re.search(r'.*%s' % _ch, line)
+    if r:
+        result = r.group(0).replace(ch, '')
     return result
 
 
-def fetchValueBetween(line,start,end):
+def get_str_between(line, start, end):
     """
     Fetch the string before a sign
-    >>> fetchValueBetween('  abc (xx): he','(',')') == 'xx'
+    >>> get_str_between('  abc (xx): he','(',')') == 'xx'
     True
     """
-    result = None
-    start,end = r'%s' %start, r'%s' %end
-    if not start.startswith('\\') and not start.startswith('(') and not start.startswith(')')\
-    and not end.startswith('\\') and not end.startswith('(') and not end.startswith(')')    :
-        r = re.search(r'%s.*%s' %(start,end), line)
+    result = ''
+    start, end = r'%s' % start, r'%s' % end
+    if not start.startswith('\\') and not start.startswith('(') and not start.startswith(')') \
+            and not end.startswith('\\') and not end.startswith('(') and not end.startswith(')'):
+        r = re.search(r'%s.*%s' % (start, end), line)
     else:
-        r = re.search(r'\%s.*\%s' %(start,end), line)
-    result= r.group(0).replace(start,'').replace(end,'')
+        r = re.search(r'\%s.*\%s' % (start, end), line)
+    if r:
+        result = r.group(0).replace(start, '').replace(end, '')
     return result
 
-def colorStr(color, str):
+
+def color_str(color, raw_str):
     if color == 'r':
         fore = 31
     elif color == 'g':
@@ -60,10 +65,10 @@ def colorStr(color, str):
     else:
         fore = 37
     color = "\x1B[%d;%dm" % (1, fore)
-    return "%s %s\x1B[0m" % (color, str)
+    return "%s %s\x1B[0m" % (color, raw_str)
+
 
 if __name__ == '__main__':
     import doctest
 
     doctest.testmod()
-

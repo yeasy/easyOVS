@@ -19,6 +19,7 @@ LOGLEVELDEFAULT = LEVELS['output']
 #default: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 LOGMSGFORMAT = '%(message)s'
 
+
 # Modified from python2.5/__init__.py
 class StreamHandlerNoNewline(logging.StreamHandler):
     """StreamHandler that doesn't print newlines by default.
@@ -44,7 +45,7 @@ class StreamHandlerNoNewline(logging.StreamHandler):
                 except UnicodeError:
                     self.stream.write(fs % msg.encode('UTF-8'))
             self.flush()
-        except ( KeyboardInterrupt, SystemExit ):
+        except (KeyboardInterrupt, SystemExit):
             raise
         except:
             self.handleError(record)
@@ -83,19 +84,18 @@ class OVSLogger(Logger, object):
         # add ch to lg
         self.addHandler(ch)
 
-        self.setLogLevel()
+        self.set_log_level()
 
-    def setLogLevel(self, levelname=None):
+    def set_log_level(self, levelname=None):
         level = LOGLEVELDEFAULT
         if levelname is not None:
             if levelname not in LEVELS:
-                raise Exception('unknown levelname seen in setLogLevel')
+                raise Exception('unknown levelname seen in set_log_level')
             else:
                 level = LEVELS.get(levelname, level)
 
         self.setLevel(level)
         self.handlers[0].setLevel(level)
-
 
     def output(self, msg, *args, **kwargs):
         """Log 'msg % args' with severity 'OUTPUT'.
@@ -114,12 +114,14 @@ class OVSLogger(Logger, object):
 lg = OVSLogger()
 
 
-def makeListCompatible(fn):
+def make_list_compatible(fn):
     """Return a new function allowing fn( 'a 1 b' ) to be called as
        newfn( 'a', 1, 'b' )"""
 
     def newfn(*args):
-        "Generated function. Closure-ish."
+        """
+        Generated function. Closure-ish.
+        """
         if len(args) == 1:
             return fn(*args)
         args = ' '.join([str(arg) for arg in args])
@@ -132,8 +134,7 @@ def makeListCompatible(fn):
 
 
 info, output, warn, error, debug = (
-    lg.info, lg.output, lg.warn, lg.error, lg.debug ) = [
-    makeListCompatible(f) for f in
-    lg.info, lg.output, lg.warn, lg.error, lg.debug]
+    lg.info, lg.output, lg.warn, lg.error, lg.debug) = \
+    [make_list_compatible(f) for f in lg.info, lg.output, lg.warn, lg.error, lg.debug]
 
-setLogLevel = lg.setLogLevel
+setLogLevel = lg.set_log_level

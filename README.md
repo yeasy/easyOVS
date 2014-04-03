@@ -61,14 +61,13 @@ Show the ports information of a given bridge. The output would look like
 ```
  EasyOVS> br-int show
 br-int
-Intf                Port        Tag     Type        vmIP            vmMAC                   
-int-br-eth0         15          0                                                           
+Intf                Port        Vlan    Type        vmIP            vmMAC
+int-br-eth0         15
 qvo260209fa-72      11          1                   192.168.0.4     fa:16:3e:0f:17:04       
 qvo583c7038-d3      2           1                   192.168.0.2     fa:16:3e:9c:dc:3a       
-qvo68af47bc-2a      3           4095                                                        
-qvo8bf9cba2-3f      9           1                   192.168.0.5     fa:16:3e:a2:2f:0e       
+qvo8bf9cba2-3f      9           1                   192.168.0.5     fa:16:3e:a2:2f:0e
 qvod4de9fe0-6d      8           2                   10.0.0.2        fa:16:3e:38:2b:2e       
-br-int              LOCAL       0       internal                          
+br-int              LOCAL               internal
 ```
 
 ###dump
