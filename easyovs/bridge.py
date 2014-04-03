@@ -203,11 +203,11 @@ class Bridge(object):
                 #output('%-8s%-16s%-16s\n' %(port,intf,addr))
                 if self.bridge in br_list:
                     if intf in br_list[self.bridge]['Port']:
-                        tag = br_list[self.bridge]['Port'][intf].get('tag','0')
-                        type = br_list[self.bridge]['Port'][intf].get('type','0')
+                        tag = br_list[self.bridge]['Port'][intf].get('vlan','')
+                        type = br_list[self.bridge]['Port'][intf].get('type','')
                 else:
-                    tag, type = '0',''
-                result[intf] = {'port':port,'addr':addr,'tag':tag,'type':type}
+                    tag, type = '',''
+                result[intf] = {'port':port,'addr':addr,'vlan':tag,'type':type}
         return result
 
 def brAddFlow(bridge,flow):
@@ -286,14 +286,14 @@ def brShow(bridge):
         output('No port is found at bridge %s\n' %bridge)
         return
     neutron_ports = get_neutron_ports()
-    output('%-20s%-12s%-8s%-12s' %('Intf','Port','Tag','Type'))
+    output('%-20s%-12s%-8s%-12s' %('Intf','Port','Vlan','Type'))
     if neutron_ports:
         output('%-16s%-24s\n' %('vmIP','vmMAC'))
     else:
         output('\n')
     content=[]
     for intf in ovs_ports:
-        port,tag,type = ovs_ports[intf]['port'],ovs_ports[intf]['tag'],ovs_ports[intf]['type']
+        port,tag,type = ovs_ports[intf]['port'],ovs_ports[intf]['vlan'],ovs_ports[intf]['type']
         if neutron_ports and intf in neutron_ports:
             vmIP, vmMac = neutron_ports[intf]['ip_address'],neutron_ports[intf]['mac']
         else:
@@ -345,9 +345,9 @@ def getBridges():
                 bridges[br]['fail_mode']=l.replace('fail_mode: ','')
             elif l.startswith('Port '):
                 phy_port = l.replace('Port ','') #e.g., br-eth0
-                bridges[br]['Port'][phy_port]={'tag':0,'type':''}
+                bridges[br]['Port'][phy_port]={'vlan':'','type':''}
             elif l.startswith('tag: '):
-                bridges[br]['Port'][phy_port]['tag'] = l.replace('tag: ','')
+                bridges[br]['Port'][phy_port]['vlan'] = l.replace('tag: ','')
             elif l.startswith('Interface '):
                 intf = l.replace('Interface ','')
             elif l.startswith('type: '):
