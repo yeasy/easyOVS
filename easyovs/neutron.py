@@ -9,7 +9,7 @@ import cPickle
 def get_neutron_ports(fresh=False):
     """
     Return the neutron port information, each line looks like
-    qvoxxxx:{'id':id,'name':name,'mac':mac,"subnet_id": subnet_id, "ip_address": ip}
+    first11bitid:{'id':id,'name':name,'mac':mac,"subnet_id": subnet_id, "ip_address": ip}
     """
     result = {}
     cache_file = '/tmp/tmp_neutron_port'
@@ -35,8 +35,8 @@ def get_neutron_ports(fresh=False):
                     continue
                 else:
                     port_id, name, mac, ips = l_value
-                    result['qvo' + port_id[:11]] = {'id': port_id, 'name': name, 'mac': mac}
-                    result['qvo' + port_id[:11]].update(eval(ips))
+                    result[port_id[:11]] = {'id': port_id, 'name': name, 'mac': mac}
+                    result[port_id[:11]].update(eval(ips))
     if result:
         cPickle.dump(result, open(cache_file, 'w'), True)
     return result

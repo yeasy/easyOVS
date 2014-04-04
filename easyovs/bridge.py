@@ -305,25 +305,27 @@ def br_show(bridge):
     if not ovs_ports:
         return
     neutron_ports = get_neutron_ports()
-    output('%-20s%-12s%-8s%-12s' % ('Intf', 'Port', 'Vlan', 'Type'))
-    if neutron_ports:
-        output('%-16s%-24s\n' % ('vmIP', 'vmMAC'))
-    else:
-        output('\n')
     content = []
-    for intf in ovs_ports:
+    mac_ip_show = False
+    for intf in ovs_ports: # e.g., qvo-xxx, int-br-eth0, qr-xxx, tapxxx
         port, tag, intf_type = ovs_ports[intf]['port'], ovs_ports[intf]['vlan'], ovs_ports[intf]['type']
-        if neutron_ports and intf in neutron_ports:
-            vm_ip, vm_mac = neutron_ports[intf]['ip_address'], neutron_ports[intf]['mac']
+        if neutron_ports and intf[3:] in neutron_ports:
+            vm_ip, vm_mac = neutron_ports[intf[3:]]['ip_address'], neutron_ports[intf[3:]]['mac']
+            mac_ip_show = True
         else:
             vm_ip, vm_mac = '', ''
         content.append((intf, port, tag, intf_type, vm_ip, vm_mac))
         #output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
     content.sort(key=lambda x: x[0])
     content.sort(key=lambda x: x[3])
+    output('%-20s%-12s%-8s%-12s' % ('Intf', 'Port', 'Vlan', 'Type'))
+    if mac_ip_show:
+        output('%-16s%-24s\n' % ('vmIP', 'vmMAC'))
+    else:
+        output('\n')
     for _ in content:
         output('%-20s%-12s%-8s%-12s' % (_[0], _[1], _[2], _[3]))
-        if neutron_ports:
+        if mac_ip_show:
             output('%-16s%-24s\n' % (_[4], _[5]))
         else:
             output('\n')
