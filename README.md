@@ -1,7 +1,7 @@
 easyOVS
 =======
 
-Provide easier and powerful operation on OpenvSwitch bridges.
+Provide smarter and powerful operation on OpenvSwitch bridges.
 
 version 0.2
 
@@ -25,6 +25,10 @@ After the installation, start easyovs with
 `sudo easyovs`
 
 easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
+
+If you wanna upgrade easyOVS from a previous version, just run
+
+`sudo bash ./easyOVS/util/install.sh -u`
   
 #Documentation
 
@@ -180,8 +184,7 @@ Show the version information.
 * Support OpenvSwitch version 1.4.6 ~ 1.11.0.
 * Support most popular Linux distributions, e.g., Ubuntu,Debian, CentOS and Fedora.
 * Format the output to make it clear and easy to compare.
-* Integrate the OpenStack information
- with the bridge port (In OpenStack environment).
+* Show the OpenStack information with the bridge port (In OpenStack environment).
 * Delete a flow with its id.
 * Smart command completion, try tab everywhere.
 * Support colorful output.

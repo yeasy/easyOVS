@@ -68,6 +68,15 @@ else
     exit 1
 fi
 
+# Install EasyOVS core
+function eovs_core {
+    echo "Installing EasyOVS core files"
+    pushd $EASYOVS_DIR/easyOVS
+    chmod a+x bin/easyovs
+    sudo make install
+    popd
+}
+
 # Install EasyOVS deps
 function eovs_deps {
     echo "Installing EasyOVS dependencies"
@@ -78,12 +87,6 @@ function eovs_deps {
         $install gcc make python-setuptools help2man \
             pyflakes pylint pep8 > /dev/null
     fi
-
-    echo "Installing EasyOVS core"
-    pushd $EASYOVS_DIR/easyOVS
-    chmod a+x bin/easyovs
-    sudo make install
-    popd
 }
 
 # Install EasyOVS developer dependencies
@@ -93,8 +96,9 @@ function eovs_dev {
 }
 
 function all {
-    echo "Installing all packages except for -e (Developer dependencies such as doxypy)..."
+    echo "Installing the dependencies and the core packages)..."
     eovs_deps
+    eovs_core
     # Skip eovs_dev (doxypy) because it's huge
     # eovs_dev
     echo "EasyOVS Installation Done!"
@@ -102,20 +106,20 @@ function all {
 }
 
 function usage {
-    printf '\nUsage: %s [-abcdfhikmnprtvwx03]\n\n' $(basename $0) >&2
+    printf '\nUsage: %s [-aehpsu]\n\n' $(basename $0) >&2
 
     printf 'This install script attempts to install useful packages\n' >&2
     printf 'for EasyOVS. It should work on Ubuntu 11.10+ or CentOS 6.5+\n' >&2
-    printf 'If you run into trouble, try\n' >&2
-    printf 'installing one thing at a time, and looking at the \n' >&2
-    printf 'specific installation function in this script.\n\n' >&2
+    printf 'If run into trouble, try installing one thing at a time,\n' >&2
+    printf 'and looking at the specific function in this script.\n\n' >&2
 
     printf 'options:\n' >&2
     printf -- ' -a: (default) install (A)ll packages - good luck!\n' >&2
     printf -- ' -e: install EasyOVS d(E)veloper dependencies\n' >&2
     printf -- ' -h: print this (H)elp message\n' >&2
-    printf -- ' -o: install Easy(O)VS dependencies + core files\n' >&2
+    printf -- ' -p: install EasyOVS de(P)endencies\n' >&2
     printf -- ' -s <dir>: place dependency (S)ource/build trees in <dir>\n' >&2
+    printf -- ' -u: (U)pgrade, only install EasyOVS core files\n' >&2
     exit 2
 }
 
@@ -123,16 +127,17 @@ if [ $# -eq 0 ]
 then
     all
 else
-    while getopts 'abcdefhikmnprs:tvwx03' OPTION
+    while getopts 'aehpsu' OPTION
     do
       case $OPTION in
       a)    all;;
       e)    eovs_dev;;
       h)    usage;;
-      o)    eovs_deps;;
+      p)    eovs_deps;;
       s)    mkdir -p $OPTARG; # ensure the directory is created
             BUILD_DIR="$( cd -P "$OPTARG" && pwd )"; # get the full path
             echo "Dependency installation directory: $BUILD_DIR";;
+      u)    eovs_core;;
       ?)    usage;;
       esac
     done
