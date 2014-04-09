@@ -4,6 +4,8 @@ VERSION = "0.2"
 
 import re
 
+from easyovs.log import debug
+
 
 def get_numstr_after(line, field):
     """
@@ -52,6 +54,31 @@ def get_str_between(line, start, end):
         result = r.group(0).replace(start, '').replace(end, '')
     return result
 
+def fmt_flow_str(raw_str):
+    """
+    Return a valid flow string or None based on given string.
+    >>> fmt_flow_str('  ip udp, proto=2,actions=OUTPUT:2')
+    'ip,udp,proto=2 actions=OUTPUT:2'
+    >>> fmt_flow_str('  "ip,proto=2 actions=OUTPUT:2,NORMAL,"')
+    'ip,proto=2 actions=OUTPUT:2,NORMAL'
+    >>> fmt_flow_str(' ip proto=2 actions=OUTPUT:2 NORMAL')
+    'ip,proto=2 actions=OUTPUT:2,NORMAL'
+    """
+    if 'actions=' not in raw_str:
+        debug(raw_str)
+        return None
+    fmt_str = raw_str.replace('"', '').replace("'", "").strip()
+    i = fmt_str.index('actions=')
+    actions = fmt_str[i:].strip(',').replace(',', ' ').split()
+    match = fmt_str[:i].strip(',').replace(',', ' ').split()
+    if not match or not actions:
+        debug(match)
+        debug(actions)
+        return None
+    match = ','.join(match)
+    actions = ','.join(actions)
+    flow = match + ' ' + actions
+    return flow
 
 def color_str(color, raw_str):
     if color == 'r':

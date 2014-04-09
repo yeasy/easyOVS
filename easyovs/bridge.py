@@ -72,6 +72,7 @@ class Bridge(object):
                 continue
             else:
                 del_flow = self.flows[flow_id]
+                Flow.banner_output()
                 del_flow.fmt_output()
                 output('Del the flow? [Y/n]: ')
                 new = termios.tcgetattr(fd)

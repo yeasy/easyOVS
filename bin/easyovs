@@ -7,11 +7,11 @@ import os
 import sys
 import time
 
-from easyovs.bridge import br_delflow, br_dump, br_list, br_show
+from easyovs.bridge import br_addflow, br_delflow, br_dump, br_list, br_show
 from easyovs.cli import CLI
 from easyovs.clean import cleanup
 from easyovs.log import info, debug, error, output, LEVELS, lg
-from easyovs.util import VERSION
+from easyovs.util import fmt_flow_str, VERSION
 
 
 # Fix setuptools' evil madness, and open up (more?) security holes
@@ -29,7 +29,7 @@ def version(*_args):
 # optional tests to run
 CMDS_ONE = ['cli', 'list']
 CMDS_TWO = ['dump', 'show']
-CMDS_THREE = ['delflow']
+CMDS_OTHER = ['addflow','delflow']
 
 
 class Platform(object):
@@ -100,10 +100,10 @@ class Platform(object):
             else:
                 output('Wrong command format is given\n')
         elif len(cmd.split()) >= 3:
-            if cmd.split()[1] in CMDS_THREE:  # e.g., br0 delflow 9
+            if cmd.split()[1] in CMDS_OTHER:  # e.g., br0 delflow 9
                 br, func, arg = cmd.split()[0], cmd.split()[1], ' '.join(cmd.split()[2:])
                 getattr(self, func)(br, arg.replace(',', ' '))
-            elif cmd.split()[0] in CMDS_THREE:  # e.g., delflow br0 9
+            elif cmd.split()[0] in CMDS_OTHER:  # e.g., delflow br0 9
                 br, func, arg = cmd.split()[1], cmd.split()[0], ' '.join(cmd.split()[2:])
                 getattr(self, func)(br, arg.replace(',', ' '))
             else:
@@ -121,6 +121,9 @@ class Platform(object):
 
     def show(self, br):
         br_show(br)
+
+    def addflow(self, br, flow_str):
+        br_addflow(br, fmt_flow_str(flow_str))
 
     def delflow(self, br, flow_id):
         br_delflow(br, flow_id)

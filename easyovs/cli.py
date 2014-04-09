@@ -7,7 +7,7 @@ import sys
 
 from easyovs.bridge import br_addflow, br_delflow, br_dump, br_exists, br_list, br_show
 from easyovs.log import info, output, error
-from easyovs.util import color_str
+from easyovs.util import color_str, fmt_flow_str
 
 
 PROMPT_KW = 'EasyOVS> '
@@ -55,29 +55,17 @@ class CLI(Cmd):
 
     def do_addflow(self, arg):
         """
-        [bridge] addflow flow
+        addflow [bridge] flow
         Add a flow to a bridge.
         """
-        args = arg.replace('"', '').replace("'", "")
-        if 'actions=' not in args:
+        args = arg.replace('"', '').replace("'", "").split()
+        bridge, flow_str = args[0], ' '.join(args[1:])
+        if not br_exists(bridge):
+            bridge, flow_str = self.bridge, ' '.join(args)
+        flow = fmt_flow_str(flow_str)
+        if not flow:
             output('Please give a valid flow.\n')
             return
-        i = args.index('actions=')
-        actions = args[i:].split()
-        args = args[:i].split()
-        if len(args) >= 2:
-            bridge, rule = args[0], args[1:]
-        elif self.bridge:
-            bridge, rule = self.bridge, args
-        else:
-            output("Please use [bridge] addflow flow.\n")
-            return
-        if not rule or not actions or len(actions) != 1:
-            output('The flow is not valid.\n')
-            return
-        rule = ','.join(rule)
-        actions = ','.join(actions)
-        flow = rule + ' ' + actions
         if not br_addflow(bridge, flow):
             output('Add flow <%s> to %s failed.\n' % (flow, bridge))
         else:
