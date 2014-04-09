@@ -13,7 +13,7 @@ from neutron import get_neutron_ports
 def check_exist(func):
     def wrapper(self, *arg):
         if not self.exists():
-            output('The bridge does not exist.\n You can check available bridges using list\n')
+            output('The bridge does not exist.\nPlease check available bridges using list\n')
             return None
         else:
             return func(self, *arg)

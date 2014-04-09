@@ -1,6 +1,7 @@
 __author__ = 'baohua'
 
 from easyovs.log import output
+from easyovs.util import compress_mac_str
 
 
 class Flow(object):
@@ -25,7 +26,7 @@ class Flow(object):
 
     def fmt_output(self):
         output(self._format_str_ % (self.id, self.table, self.packet, self.priority,
-                               self.match.replace('_port', '').replace('_tci', '').replace('dl_vlan', 'vlan'),
+                               compress_mac_str(self.match),
                                self.actions))
 
     def __eq__(self, other):

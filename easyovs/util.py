@@ -54,6 +54,7 @@ def get_str_between(line, start, end):
         result = r.group(0).replace(start, '').replace(end, '')
     return result
 
+
 def fmt_flow_str(raw_str):
     """
     Return a valid flow string or None based on given string.
@@ -93,6 +94,21 @@ def color_str(color, raw_str):
         fore = 37
     color = "\x1B[%d;%dm" % (1, fore)
     return "%s%s\x1B[0m" % (color, raw_str)
+
+def compress_mac_str(raw_str):
+    """
+    Compress the show of a redundant mac string.
+    >>> compress_mac_str('00:00:02:01:01:02')
+    '00:00:02:01:01:02'
+    >>> compress_mac_str('00:00:00:01:01:02')
+    '00::01:01:02'
+    >>> compress_mac_str('00:00:00:01:01:01')
+    '00::01:01:01'
+    """
+    if re.search(r'(\d\d:)\1{2,}',raw_str):
+        return re.sub(r'(\d\d:)\1{2,}',r'\1:',raw_str)
+    else:
+        return raw_str
 
 
 if __name__ == '__main__':

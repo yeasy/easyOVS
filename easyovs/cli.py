@@ -60,8 +60,11 @@ class CLI(Cmd):
         """
         args = arg.replace('"', '').replace("'", "").split()
         bridge, flow_str = args[0], ' '.join(args[1:])
-        if not br_exists(bridge):
+        if not br_exists(bridge) and self.bridge:
             bridge, flow_str = self.bridge, ' '.join(args)
+        else:
+            output('Please give a valid bridge.\n')
+            return
         flow = fmt_flow_str(flow_str)
         if not flow:
             output('Please give a valid flow.\n')
