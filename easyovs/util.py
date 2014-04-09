@@ -8,7 +8,7 @@ import re
 def get_numstr_after(line, field):
     """
     Return the Number value after given field
-    >>> get_numstr_after("abc=99,xx","abc=") == 99
+    >>> get_numstr_after("abc=99,xx","abc=") == '99'
     True
     """
     result = ''
@@ -65,7 +65,7 @@ def color_str(color, raw_str):
     else:
         fore = 37
     color = "\x1B[%d;%dm" % (1, fore)
-    return "%s %s\x1B[0m" % (color, raw_str)
+    return "%s%s\x1B[0m" % (color, raw_str)
 
 
 if __name__ == '__main__':
