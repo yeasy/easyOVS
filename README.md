@@ -106,12 +106,18 @@ Delete flows with given ids (see the first column of the `dump` output).
 ###set
 `EasyOVS> bridge set`
 
-Set the default bridge. Then you can ignore the bridge parameter when using the command.
+Set the default bridge. Then you will go into a bridge mode, and can ignore the bridge parameter when using the
+command.
 ```
 EasyOVS> set br-int
 Set the default bridge to br-int.
 EasyOVS: br-int> 
 ```
+
+###exit
+`EasyOVS> exit`
+
+Exit from the bridge mode, or quit EasyOVS if already at the top level.
 
 ###get
 `EasyOVS> get`
@@ -184,8 +190,8 @@ drwxr-xr-x. 2 root root 4096 Apr  1 14:56 easyovs.egg-info
 drwxr-xr-x. 2 root root 4096 Apr  1 14:09 util
 ```
 
-###exit|quit
-Input `exit` or `quit` to exit it.
+###quit
+Input `^d` or `quit` to exit EasyOVS.
 
 ##Options
 ###-h

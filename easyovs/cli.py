@@ -113,13 +113,19 @@ class CLI(Cmd):
         Exit.
         """
         output('\n')
-        return self.do_exit(arg)
+        return self.do_quit(arg)
 
     def do_exit(self, _arg):
         """
-        Exit.
+        Go up one level in the command mode structure. If
+        already at the top level, exit from the command line
+        interface and log out.
         """
-        return 'exited by user command\n'
+        if self.bridge:
+            self.bridge = None
+            self.prompt = color_str('g', PROMPT_KW)
+        else:
+            return self.do_quit(_arg)
 
     def do_get(self, _arg):
         """
@@ -154,7 +160,8 @@ class CLI(Cmd):
         """
         Exit
         """
-        return self.do_exit(line)
+        output('***\n Quit by user command.***\n')
+        return True
 
     def do_set(self, arg):
         """
