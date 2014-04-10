@@ -13,7 +13,7 @@ def get_neutron_ports(fresh=False):
     """
     result = {}
     cache_file = '/tmp/tmp_neutron_port'
-    if not fresh and exists(cache_file):  # not quite fresh, then try to read local cache
+    if not fresh and exists(cache_file):  # not quite fresh, then try to read recent local cache
         if time() - getmtime(cache_file) < 60:  # the cache is updated within 60s
             try:
                 result = cPickle.load(open(cache_file, 'r'))
@@ -40,3 +40,15 @@ def get_neutron_ports(fresh=False):
     if result:
         cPickle.dump(result, open(cache_file, 'w'), True)
     return result
+
+
+def get_port_id_from_ip(ip):
+    """
+    Return the port 11bit id from a given ip, or None.
+    e.g., qvod4de9fe0-6d from 192.168.0.2
+    """
+    ports = get_neutron_ports()
+    for k in ports:
+        if ports[k]['ip_address'] == ip:
+            return k
+    return None

@@ -10,6 +10,7 @@ import time
 from easyovs.bridge import br_addflow, br_delflow, br_dump, br_list, br_show
 from easyovs.cli import CLI
 from easyovs.clean import cleanup
+from easyovs.iptables import show_iptables_rules
 from easyovs.log import info, debug, error, output, LEVELS, lg
 from easyovs.util import fmt_flow_str, VERSION
 
@@ -28,8 +29,8 @@ def version(*_args):
 
 # optional tests to run
 CMDS_ONE = ['cli', 'list']
-CMDS_TWO = ['dump', 'show']
-CMDS_OTHER = ['addflow','delflow']
+CMDS_TWO = ['dump', 'show', 'ipt']
+CMDS_OTHER = ['addflow', 'delflow']
 
 
 class Platform(object):
@@ -46,10 +47,10 @@ class Platform(object):
 
     def parse_args(self):
         desc = ("The %prog utility creates operation CLI from the\n"
-                 "command line. It can run given commands,\n"
-                 "invoke the EasyOVS CLI, and run tests.")
+                "command line. It can run given commands,\n"
+                "invoke the EasyOVS CLI, and run tests.")
         usage = ('%prog [options]\n'
-                  '(type %prog -h for details)')
+                 '(type %prog -h for details)')
         opts = OptionParser(description=desc, usage=usage)
         opts.add_option('--clean', '-c', action='store_true',
                         default=False, help='clean and exit')
@@ -92,11 +93,11 @@ class Platform(object):
                 self.list()
         elif len(cmd.split()) == 2:
             if cmd.split()[1] in CMDS_TWO:  # e.g., br0 show
-                br, func = cmd.split()[0], cmd.split()[1]
-                getattr(self, func)(br)
+                arg, func = cmd.split()[0], cmd.split()[1]
+                getattr(self, func)(arg)
             elif cmd.split()[0] in CMDS_TWO:  # e.g., show br0
-                func, br = cmd.split()[0], cmd.split()[1]
-                getattr(self, func)(br)
+                func, arg = cmd.split()[0], cmd.split()[1]
+                getattr(self, func)(arg)
             else:
                 output('Wrong command format is given\n')
         elif len(cmd.split()) >= 3:
@@ -106,6 +107,9 @@ class Platform(object):
             elif cmd.split()[0] in CMDS_OTHER:  # e.g., delflow br0 9
                 br, func, arg = cmd.split()[1], cmd.split()[0], ' '.join(cmd.split()[2:])
                 getattr(self, func)(br, arg.replace(',', ' '))
+            elif cmd.split()[0] == 'ipt':  # e.g., ipt 10.0.0.1, 10.0.0.2
+                func, arg = cmd.split()[0], ' '.join(cmd.split()[1:])
+                getattr(self, func)(arg)
             else:
                 output('Wrong command format is given\n')
         else:
@@ -113,11 +117,14 @@ class Platform(object):
         elapsed = float(time.time() - start)
         info('\n### Completed in %0.3f seconds ###\n' % elapsed)
 
-    def list(self):
-        br_list()
-
     def dump(self, br):
         br_dump(br)
+
+    def ipt(self, ips):
+        show_iptables_rules(ips)
+
+    def list(self):
+        br_list()
 
     def show(self, br):
         br_show(br)

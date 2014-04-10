@@ -122,6 +122,47 @@ EasyOVS: br-int> get
 Current default bridge is br-int
 ```
 
+###ipt
+`EasyOVS> ipt vm_ip1, vm_ip2...`
+
+Show the related iptables rules of the given vms.
+```
+EasyOVS> ipt 192.168.0.2 192.168.0.4
+## IP = 192.168.0.2, port = qvo583c7038-d ##
+    PKTS	SOURCE          DESTINATION     PROT  OTHER               
+#IN:
+     672	all             all             all   state RELATED,ESTABLISHED
+       0	all             all             tcp   tcp dpt:22          
+       0	all             all             icmp                      
+       0	192.168.0.4     all             all                       
+       3	192.168.0.5     all             all                       
+       8	10.0.0.2        all             all                       
+   85784	192.168.0.3     all             udp   udp spt:67 dpt:68   
+#OUT:
+    196K	all             all             udp   udp spt:68 dpt:67   
+   86155	all             all             all   state RELATED,ESTABLISHED
+    1241	all             all             all                       
+#SRC_FILTER:
+   59163	192.168.0.2     all             all   MAC FA:16:3E:9C:DC:3A
+## IP = 192.168.0.4, port = qvo260209fa-7 ##
+    PKTS	SOURCE          DESTINATION     PROT  OTHER               
+#IN:
+      73	all             all             all   state RELATED,ESTABLISHED
+       0	all             all             tcp   tcp dpt:22          
+       0	all             all             icmp                      
+       0	192.168.0.2     all             all                       
+       0	192.168.0.5     all             all                       
+       0	10.0.0.2        all             all                       
+   11331	192.168.0.3     all             udp   udp spt:67 dpt:68   
+#OUT:
+   30034	all             all             udp   udp spt:68 dpt:67   
+   11377	all             all             all   state RELATED,ESTABLISHED
+      12	all             all             all                       
+#SRC_FILTER:
+    9859	192.168.0.4     all             all   MAC FA:16:3E:0F:17:04
+
+```
+
 ###sh
 `EasyOVS> sh cmd`
 
@@ -186,6 +227,7 @@ Show the version information.
 * Format the output to make it clear and easy to compare.
 * Show the OpenStack information with the bridge port (In OpenStack environment).
 * Delete a flow with its id.
+* Show iptables in formated way of given vm IPs.
 * Smart command completion, try tab everywhere.
 * Support colorful output.
 * Support run local system commands.

@@ -6,6 +6,7 @@ from subprocess import call
 import sys
 
 from easyovs.bridge import br_addflow, br_delflow, br_dump, br_exists, br_list, br_show
+from easyovs.iptables import show_iptables_rules
 from easyovs.log import info, output, error
 from easyovs.util import color_str, fmt_flow_str
 
@@ -136,6 +137,12 @@ class CLI(Cmd):
         Cmd.do_help(self, line)
         if line is '':
             output(self.helpStr)
+
+    def do_ipt(self, line):
+        """
+        Show the iptables rules of a given vm.
+        """
+        show_iptables_rules(line)
 
     def do_list(self, _arg):
         """
