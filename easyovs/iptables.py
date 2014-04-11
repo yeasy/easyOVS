@@ -37,17 +37,16 @@ def get_iptables_rules(port_id):
     if port_id.startswith('qvo'):  # local vm at Computer Node
         port_id_used = port_id[3:13]
         try:
-            in_rules = Popen('iptables --line-numbers -nvL %s' % 'neutron-openvswi-i'+port_id_used,
+            cmd = 'iptables --line-numbers -vnL'
+            in_rules = Popen('%s %s' % (cmd, 'neutron-openvswi-i'+port_id_used),
                              stdout=PIPE, stderr=PIPE, shell=True).stdout.read()
-            out_rules = Popen('iptables --line-numbers -nvL %s' % 'neutron-openvswi-o'+port_id_used,
+            out_rules = Popen('%s %s' % (cmd, 'neutron-openvswi-o'+port_id_used),
                               stdout=PIPE, stderr=PIPE, shell=True).stdout.read()
-            s_rules = Popen('iptables --line-numbers -nvL %s' % 'neutron-openvswi-s'+port_id_used,
+            s_rules = Popen('%s %s' % (cmd, 'neutron-openvswi-s'+port_id_used),
                             stdout=PIPE, stderr=PIPE, shell=True).stdout.read()
         except Exception:
             return None
-        in_rule_list = convert_iptables_rules(in_rules)
-        out_rule_list = convert_iptables_rules(out_rules)
-        s_rule_list = convert_iptables_rules(s_rules)
+        in_rule_list, out_rule_list, s_rule_list = map(convert_iptables_rules, [in_rules, out_rules, s_rules])
         return {'IN':in_rule_list, 'OUT':out_rule_list, 'SRC_FILTER':s_rule_list}
     else:  # maybe at Network Node
         in_ns = ''
