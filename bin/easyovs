@@ -7,7 +7,7 @@ import os
 import sys
 import time
 
-from easyovs.bridge import br_addflow, br_delflow, br_dump, br_list, br_show
+from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_list, br_show
 from easyovs.cli import CLI
 from easyovs.clean import cleanup
 from easyovs.iptables import show_iptables_rules

@@ -5,7 +5,7 @@ from select import poll, POLLIN
 from subprocess import call
 import sys
 
-from easyovs.bridge import br_addflow, br_delflow, br_dump, br_exists, br_list, br_show
+from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_exists, br_list, br_show
 from easyovs.iptables import show_iptables_rules
 from easyovs.log import info, output, error
 from easyovs.util import color_str, fmt_flow_str

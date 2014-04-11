@@ -2,9 +2,11 @@ __author__ = 'baohua'
 
 VERSION = "0.2"
 
+from subprocess import Popen, PIPE
 import re
 
 from easyovs.log import debug
+from easyovs.neutron import get_neutron_ports
 
 
 def get_numstr_after(line, field):
@@ -111,6 +113,66 @@ def compress_mac_str(raw_str):
     else:
         return raw_str
 
+
+def get_bridges():
+    """
+    Return a dict of all available bridges, looks like
+    {
+        'br-int':{
+            'Controller':[],
+            'fail_mode':'',
+            'Port':{
+             'qvoxxx': {
+                'tag':'1', //tagid
+                'type':'internal', //tagid
+                },
+        },
+    }
+    """
+    bridges, br = {}, ''
+    cmd = 'ovs-vsctl show'
+    result, error = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
+    if error:
+        return {}
+    for l in result.split('\n'):
+        l = l.strip().replace('"', '')
+        if l.startswith('Bridge '):
+            br = l.lstrip('Bridge ')
+            bridges[br] = {}
+            bridges[br]['Controller'] = []
+            bridges[br]['Port'] = {}
+            bridges[br]['fail_mode'] = ''
+        else:
+            if l.startswith('Controller '):
+                bridges[br]['Controller'].append(l.replace('Controller ', ''))
+            elif l.startswith('fail_mode: '):
+                bridges[br]['fail_mode'] = l.replace('fail_mode: ', '')
+            elif l.startswith('Port '):
+                phy_port = l.replace('Port ', '')  # e.g., br-eth0
+                bridges[br]['Port'][phy_port] = {'vlan': '', 'type': ''}
+            elif l.startswith('tag: '):
+                bridges[br]['Port'][phy_port]['vlan'] = l.replace('tag: ', '')
+            elif l.startswith('Interface '):
+                bridges[br]['Port'][phy_port]['intf'] = l.replace('Interface ', '')
+            elif l.startswith('type: '):
+                bridges[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
+    return bridges
+
+
+def get_port_id_from_ip(ip):
+    """
+    Return the port 11bit id from a given ip, or None.
+    e.g., d4de9fe0-6d from 192.168.0.2
+    """
+    bridges = get_bridges()
+    ports = get_neutron_ports()
+    for k in ports:
+        if ports[k]['ip_address'] == ip:
+            for br in sorted(bridges.keys()):
+                for port in bridges[br]['Port'].keys():
+                    if port[3:] == k:
+                        return port
+    return None
 
 if __name__ == '__main__':
     import doctest
