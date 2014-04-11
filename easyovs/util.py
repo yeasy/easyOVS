@@ -95,6 +95,7 @@ def color_str(color, raw_str):
     color = "\x1B[%d;%dm" % (1, fore)
     return "%s%s\x1B[0m" % (color, raw_str)
 
+
 def compress_mac_str(raw_str):
     """
     Compress the show of a redundant mac string.
@@ -113,5 +114,4 @@ def compress_mac_str(raw_str):
 
 if __name__ == '__main__':
     import doctest
-
     doctest.testmod()

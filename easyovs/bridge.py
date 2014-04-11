@@ -278,7 +278,7 @@ def br_list():
     for br in sorted(bridges.keys()):
         br_info += "%s\n" % br
         if bridges[br]['Port']:
-            br_info += " Port:\t\t%s\n" % (' '.join(bridges[br]['Port'].keys()))
+            br_info += " Port:\t\t%s\n" % (' '.join(sorted(bridges[br]['Port'].keys())))
         if bridges[br]['Controller']:
             br_info += " Controller:\t%s\n" % (' '.join(bridges[br]['Controller']))
         if bridges[br]['fail_mode']:
