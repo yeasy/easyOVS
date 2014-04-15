@@ -117,22 +117,28 @@ class Platform(object):
         elapsed = float(time.time() - start)
         info('\n### Completed in %0.3f seconds ###\n' % elapsed)
 
-    def dump(self, br):
+    @staticmethod
+    def dump(br):
         br_dump(br)
 
-    def ipt(self, ips):
+    @staticmethod
+    def ipt(ips):
         show_iptables_rules(ips)
 
-    def list(self):
+    @staticmethod
+    def list():
         br_list()
 
-    def show(self, br):
+    @staticmethod
+    def show(br):
         br_show(br)
 
-    def addflow(self, br, flow_str):
+    @staticmethod
+    def addflow(br, flow_str):
         br_addflow(br, fmt_flow_str(flow_str))
 
-    def delflow(self, br, flow_id):
+    @staticmethod
+    def delflow(br, flow_id):
         br_delflow(br, flow_id)
 
 

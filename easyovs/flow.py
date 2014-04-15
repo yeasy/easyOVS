@@ -26,11 +26,11 @@ class Flow(object):
 
     def fmt_output(self):
         output(self._format_str_ % (self.id, self.table, self.packet, self.priority,
-                               compress_mac_str(self.match),
-                               self.actions))
+                                    compress_mac_str(self.match),
+                                    self.actions))
 
     def __eq__(self, other):
-        return self.table == other.table and self.priority == other.priority and\
+        return self.table == other.table and self.priority == other.priority and \
                self.match == other.match and self.actions == other.actions
 
     def __ne__(self, other):
