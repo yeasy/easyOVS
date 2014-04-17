@@ -22,7 +22,7 @@ if 'PYTHONPATH' in os.environ:
 
 def version(*_args):
     """
-    Print Mininet version and exit.
+    Print version and exit.
     """
     print "%s" % VERSION
     exit()

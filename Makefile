@@ -32,8 +32,6 @@ errcheck: $(PYSRC)
 
 test: $(EASYOVS) $(TEST)
 	-echo "Running tests"
-	mininet/test/test_nets.py
-	mininet/test/test_hifi.py
 
 install: $(MANPAGES)
 	install $(MANPAGES) $(MANDIR)
