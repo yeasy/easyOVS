@@ -29,7 +29,11 @@ easyOVS will show an interactive CLI, which supports command suggestions and for
 If you wanna upgrade easyOVS from a previous version, just run
 
 `sudo bash ./easyOVS/util/install.sh -u`
-  
+
+To integrate the port information collected from OpenStack, please source the admin keystone credentials, e.g.,
+
+`source ~/keystonerc_admin`
+
 #Documentation
 
 ##CLI Commands
