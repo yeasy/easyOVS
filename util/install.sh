@@ -102,6 +102,11 @@ function all {
     # Skip eovs_dev (doxypy) because it's huge
     # eovs_dev
     echo "EasyOVS Installation Done!"
+    if [ -f ~/keystonerc_admin ]; then
+     source ~/keystonerc_admin
+    else
+     echo "To enable the OpenStack feature, please source your keystonerc_admin credentials."
+    fi
     echo "Enjoy EasyOVS!"
 }
 

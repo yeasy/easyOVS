@@ -12,13 +12,9 @@ such as list them, dump their flows and add/del some flows in a smart style.
 The tool can also be utilized in OpenStack environment, where will show ports with the vm MAC/IP and VLAN Tag information.
 
 #Installation and Usage
-Download the latest version by
+Download the latest version and install.
 
-`git clone https://github.com/yeasy/easyOVS.git`
-
-Then install with
-
-`sudo bash ./easyOVS/util/install.sh`
+`git clone https://github.com/yeasy/easyOVS.git && sudo bash ./easyOVS/util/install.sh`
 
 After the installation, start easyovs with
 
@@ -26,13 +22,16 @@ After the installation, start easyovs with
 
 easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
 
-If you wanna upgrade easyOVS from a previous version, just run
-
-`sudo bash ./easyOVS/util/install.sh -u`
+##Enable OpenStack Feature
 
 To integrate the port information collected from OpenStack, please source the admin keystone credentials, e.g.,
 
-`source ~/keystonerc_admin`
+`source ./keystonerc_admin`
+
+##Upgrade
+If you wanna upgrade easyOVS from a previous version, just run
+
+`sudo bash ./easyOVS/util/install.sh -u`
 
 #Documentation
 
