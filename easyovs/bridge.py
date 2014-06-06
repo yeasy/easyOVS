@@ -1,6 +1,7 @@
 __author__ = 'baohua'
 
 from subprocess import call, Popen, PIPE
+import re
 import sys
 import termios
 
@@ -174,7 +175,7 @@ class Bridge(object):
             if not table or not packet:
                 return None
             for field in line.split():
-                if field.startswith('priority='):
+                if field.startswith('priority='): #priority of priority+match
                     priority = get_numstr_after(field, 'priority=')
                     if not priority:
                         return None
@@ -185,6 +186,9 @@ class Bridge(object):
                     actions = field.replace('actions=', '').rstrip('\n')
             if priority is '':  # There is no priority= field
                 match = line.split()[len(line.split()) - 2]
+            if len(match)>=30:
+                match.replace('vlan_tci','vlan')
+                match = re.compile('0x0{1,}').sub('0x',match)
             return Flow(self.bridge, table, packet, priority, match, actions)
         else:
             return None

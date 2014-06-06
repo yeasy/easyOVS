@@ -35,7 +35,14 @@ test: $(EASYOVS) $(TEST)
 
 install: $(MANPAGES)
 	install $(MANPAGES) $(MANDIR)
-	python setup.py install
+	python setup.py install  --record install.log
+
+uninstall:
+	[ -e install.log] && cat install.log | xargs rm -rf
+
+clean:
+	rm -rf build dist *.egg-info *.1
+	find . -name "*.pyc"|xargs rm -f
 
 develop: $(MANPAGES)
 	# Perhaps we should link these as well

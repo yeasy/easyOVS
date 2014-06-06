@@ -6,7 +6,7 @@ from easyovs.bridge import Bridge
 from easyovs.flow import Flow
 from easyovs.log import debug, output
 from easyovs.neutron import get_neutron_ports
-from easyovs.util import get_bridges
+from easyovs.util import get_bridges, color_str
 
 
 def br_addflow(bridge, flow):
@@ -112,14 +112,17 @@ def br_show(bridge):
         #output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
     content.sort(key=lambda x: x[0])
     content.sort(key=lambda x: x[3])
-    output('%-20s%-12s%-8s%-12s' % ('Intf', 'Port', 'Vlan', 'Type'))
+    output(color_str('b','%-20s%-12s%-8s%-12s' % ('Intf', 'Port', 'Vlan', 'Type')))
     if mac_ip_show:
-        output('%-16s%-24s\n' % ('vmIP', 'vmMAC'))
+        output(color_str('b', '%-16s%-24s\n' % ('vmIP', 'vmMAC')))
     else:
         output('\n')
+    i = 0
     for _ in content:
-        output('%-20s%-12s%-8s%-12s' % (_[0], _[1], _[2], _[3]))
+        color = ['w','g'][i%2]
+        output(color_str(color, '%-20s%-12s%-8s%-12s' % (_[0], _[1], _[2], _[3])))
         if mac_ip_show:
-            output('%-16s%-24s\n' % (_[4], _[5]))
+            output(color_str(color, '%-16s%-24s\n' % (_[4], _[5])))
         else:
             output('\n')
+        i += 1

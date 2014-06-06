@@ -1,7 +1,8 @@
 __author__ = 'baohua'
 
 from easyovs.log import output
-from easyovs.util import compress_mac_str
+from easyovs.util import compress_mac_str, color_str
+
 
 
 class Flow(object):
@@ -21,13 +22,17 @@ class Flow(object):
 
     @staticmethod
     def banner_output():
-        output('%-3s%-4s%-10s%-6s%-60s%-20s\n'
-               % ('ID', 'TAB', 'PKT', 'PRI', 'MATCH', 'ACT'))
+        output(color_str('b','%-3s%-4s%-10s%-6s%-60s%-20s\n'
+               % ('ID', 'TAB', 'PKT', 'PRI', 'MATCH', 'ACT')))
 
     def fmt_output(self):
-        output(self._format_str_ % (self.id, self.table, self.packet, self.priority,
-                                    compress_mac_str(self.match),
-                                    self.actions))
+        if self.packet != '0':
+            result = color_str('g',self._format_str_ % (self.id, self.table, self.packet, self.priority,
+                                    compress_mac_str(self.match), self.actions))
+        else:
+            result = self._format_str_ % (self.id, self.table, self.packet, self.priority, compress_mac_str(self.match),
+                                          self.actions)
+        output(result)
 
     def __eq__(self, other):
         return self.table == other.table and self.priority == other.priority and \

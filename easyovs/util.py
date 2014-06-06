@@ -88,10 +88,14 @@ def color_str(color, raw_str):
         fore = 31
     elif color == 'g':
         fore = 32
-    elif color == 'b':
-        fore = 36
     elif color == 'y':
         fore = 33
+    elif color == 'b':
+        fore = 34
+    elif color == 'p':
+        fore = 35
+    elif color == 'light_blue':
+        fore = 36
     else:
         fore = 37
     color = "\x1B[%d;%dm" % (1, fore)

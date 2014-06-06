@@ -41,7 +41,8 @@ if [ "$DIST" = "Ubuntu" ] || [ "$DIST" = "Debian" ]; then
 fi
 test -e /etc/fedora-release && DIST="Fedora"
 test -e /etc/centos-release && DIST="CentOS"
-if [ "$DIST" = "Fedora" -o  "$DIST" = "CentOS" ]; then
+test -e /etc/redhat-release && DIST="Redhat"
+if [ "$DIST" = "Fedora" -o  "$DIST" = "CentOS"  -o  "$DIST" = "Redhat" ]; then
     install='sudo yum -y install'
     remove='sudo yum -y erase'
     pkginst='sudo rpm -ivh'
@@ -64,12 +65,12 @@ elif [ "$DIST" = "Fedora" -o  "$DIST" = "CentOS" ]; then
     KERNEL_NAME=`uname -r`
     KERNEL_HEADERS=kernel-headers-${KERNEL_NAME}
 else
-    echo "Install.sh currently supports Ubuntu, Debian, CentOS and Fedora."
+    echo "Install.sh currently supports Ubuntu, Debian, CentOS, Redhat and Fedora."
     exit 1
 fi
 
 # Install EasyOVS core
-function eovs_core {
+function core {
     echo "Installing EasyOVS core files"
     pushd $EASYOVS_DIR/easyOVS
     chmod a+x bin/easyovs
@@ -78,29 +79,27 @@ function eovs_core {
 }
 
 # Install EasyOVS deps
-function eovs_deps {
+function dep {
     echo "Installing EasyOVS dependencies"
     if [ "$DIST" = "Fedora" -o "$DIST" = "CentOS" ]; then
-        $install gcc make  python-setuptools help2man \
-         pyflakes pylint python-pep8 > /dev/null
+        $install gcc make  python-setuptools help2man pyflakes pylint python-pep8 > /dev/null
     else
-        $install gcc make python-setuptools help2man \
-            pyflakes pylint pep8 > /dev/null
+        $install gcc make python-setuptools help2man pyflakes pylint pep8 > /dev/null
     fi
 }
 
 # Install EasyOVS developer dependencies
-function eovs_dev {
+function dev {
     echo "Installing EasyOVS developer dependencies"
     $install doxygen doxypy
 }
 
 function all {
     echo "Installing the dependencies and the core packages)..."
-    eovs_deps
-    eovs_core
-    # Skip eovs_dev (doxypy) because it's huge
-    # eovs_dev
+    dep
+    core
+    # Skip dev (doxypy) because it's huge
+    # dev
     echo "EasyOVS Installation Done!"
     if [ -f ~/keystonerc_admin ]; then
      source ~/keystonerc_admin
@@ -136,13 +135,13 @@ else
     do
       case $OPTION in
       a)    all;;
-      e)    eovs_dev;;
+      e)    dev;;
       h)    usage;;
-      p)    eovs_deps;;
+      p)    dep;;
       s)    mkdir -p $OPTARG; # ensure the directory is created
             BUILD_DIR="$( cd -P "$OPTARG" && pwd )"; # get the full path
             echo "Dependency installation directory: $BUILD_DIR";;
-      u)    eovs_core;;
+      u)    core;;
       ?)    usage;;
       esac
     done
