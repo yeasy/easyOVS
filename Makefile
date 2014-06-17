@@ -30,17 +30,6 @@ errcheck: $(PYSRC)
 test: $(EASYOVS) $(TEST)
 	-echo "Running tests"
 
-install: $(MANPAGES)
-	install $(MANPAGES) $(MANDIR)
-	python setup.py install  --record install.log
-
-uninstall:
-	[ -e install.log ] && cat install.log | xargs rm -rf
-
-clean:
-	rm -rf build dist *.egg-info *.1 $(MANPAGES) $(DOCDIRS)
-	find . -name "*.pyc"|xargs rm -f
-
 develop: $(MANPAGES)
 	# Perhaps we should link these as well
 	install $(MANPAGES) $(MANDIR)
@@ -52,6 +41,17 @@ easyovs.1: $(EOVS)
 	PYTHONPATH=. help2man -N -n "Easy OpenvSwitch Bridge Operation Platform." $< -o $@
 
 .PHONY: doc clean install uninstall
+
+install: $(MANPAGES)
+	install $(MANPAGES) $(MANDIR)
+	python setup.py install  --record install.log
+
+uninstall:
+	[ -e install.log ] && cat install.log | xargs rm -rf
+
+clean:
+	rm -rf build dist *.egg-info *.1 $(MANPAGES) $(DOCDIRS)
+	find . -name "*.pyc"|xargs rm -f
 
 doc: man
 	doxygen doc/doxygen.cfg
