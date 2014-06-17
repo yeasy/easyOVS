@@ -110,8 +110,9 @@ def br_show(bridge):
             vm_ip, vm_mac = '', ''
         content.append((intf, port, tag, intf_type, vm_ip, vm_mac))
         #output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
-    content.sort(key=lambda x: x[0])
-    content.sort(key=lambda x: x[3])
+    content.sort(key=lambda x: x[1]) #sort by port
+    content.sort(key=lambda x: x[4]) #sort by vm_ip
+    content.sort(key=lambda x: x[3]) #sort by type
     output(color_str('b','%-20s%-12s%-8s%-12s' % ('Intf', 'Port', 'Vlan', 'Type')))
     if mac_ip_show:
         output(color_str('b', '%-16s%-24s\n' % ('vmIP', 'vmMAC')))
