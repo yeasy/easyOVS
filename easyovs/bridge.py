@@ -9,7 +9,7 @@ from easyovs.util import get_bridges
 from easyovs.flow import Flow
 from easyovs.log import output, debug
 from easyovs.neutron import get_neutron_ports
-from easyovs.util import get_numstr_after, get_str_before, get_str_between
+from easyovs.util import get_num_after, get_str_before, get_str_between
 
 
 def check_exist(func):
@@ -127,7 +127,7 @@ class Bridge(object):
         """
         Load the OpenvSwitch table rules into self.flows, and also to db if enabled.
         """
-        debug('load_flows:\n')
+        debug('load_flows():\n')
         cmd = "ovs-ofctl dump-flows %s" % self.bridge
         flow_id, flows, f = 0, [], None
         if db:
@@ -138,6 +138,7 @@ class Bridge(object):
         for l in result.split('\n'):
             l = l.strip()
             if l.startswith('cookie='):
+                debug('%s\n' % l)
                 flow = self.parse_flow(l)
                 if flow:
                     flows.append(flow)
@@ -170,21 +171,21 @@ class Bridge(object):
         line = line.strip()
         table, packet, priority, match, actions = '', '', '', '', ''
         if line.startswith('cookie='):
-            table = get_numstr_after(line, 'table=')
-            packet = get_numstr_after(line, 'n_packets=')
-            if not table or not packet:
+            table = get_num_after(line, 'table=')
+            packet = get_num_after(line, 'n_packets=')
+            if table is None or packet is None:
                 return None
             for field in line.split():
                 if field.startswith('priority='): #priority of priority+match
-                    priority = get_numstr_after(field, 'priority=')
-                    if not priority:
+                    priority = get_num_after(field, 'priority=')
+                    if priority is None:
                         return None
-                    match = field.replace('priority=%s' % priority, '').lstrip(',').strip()
+                    match = field.replace('priority=%u' % priority, '').lstrip(',').strip()
                     if not match:
                         match = r'*'
                 elif field.startswith('actions='):
                     actions = field.replace('actions=', '').rstrip('\n')
-            if priority is '':  # There is no priority= field
+            if priority is None:  # There is no priority= field
                 match = line.split()[len(line.split()) - 2]
             if len(match)>=30:
                 match.replace('vlan_tci','vlan')

@@ -15,9 +15,6 @@ CFLAGS += -Wall -Wextra
 
 all: codecheck test
 
-clean:
-	rm -rf build dist *.egg-info *.pyc $(MANPAGES) $(DOCDIRS)
-
 codecheck: $(PYSRC)
 	-echo "Running code check"
 	util/versioncheck.py
@@ -38,10 +35,10 @@ install: $(MANPAGES)
 	python setup.py install  --record install.log
 
 uninstall:
-	[ -e install.log] && cat install.log | xargs rm -rf
+	[ -e install.log ] && cat install.log | xargs rm -rf
 
 clean:
-	rm -rf build dist *.egg-info *.1
+	rm -rf build dist *.egg-info *.1 $(MANPAGES) $(DOCDIRS)
 	find . -name "*.pyc"|xargs rm -f
 
 develop: $(MANPAGES)
@@ -54,7 +51,7 @@ man: $(MANPAGES)
 easyovs.1: $(EOVS)
 	PYTHONPATH=. help2man -N -n "Easy OpenvSwitch Bridge Operation Platform." $< -o $@
 
-.PHONY: doc
+.PHONY: doc clean install uninstall
 
 doc: man
 	doxygen doc/doxygen.cfg

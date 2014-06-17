@@ -11,7 +11,7 @@ from easyovs.neutron import get_neutron_ports
 
 def get_numstr_after(line, field):
     """
-    Return the Number value after given field
+    Return the Number value in string after given field or ''
     >>> get_numstr_after("abc=99,xx","abc=") == '99'
     True
     """
@@ -21,6 +21,17 @@ def get_numstr_after(line, field):
         result = r.group(0).replace(field, '').strip()
     return result
 
+def get_num_after(line,field):
+    """
+    Return the Number value after given field or None
+    >>> get_numstr_after("abc=19,xx","abc=") == 19
+    True
+    """
+    result = get_numstr_after(line,field)
+    if result:
+        return int(result)
+    else:
+        return None
 
 def get_str_before(line, ch):
     """

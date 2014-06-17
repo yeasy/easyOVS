@@ -52,16 +52,16 @@ if [ "$DIST" = "Fedora" -o  "$DIST" = "CentOS"  -o  "$DIST" = "Redhat" ]; then
     fi
 fi
 if which lsb_release &> /dev/null; then
-    DIST=`lsb_release -is`
+    DIST_FULL=`lsb_release -is`
     RELEASE=`lsb_release -rs`
     CODENAME=`lsb_release -cs`
 fi
-echo "Detected Linux distribution: $DIST $RELEASE $CODENAME $ARCH"
+echo "Detected Linux distribution: $DIST_FULL $RELEASE $CODENAME $ARCH"
 
 if [ "$DIST" = "Ubuntu" -o "$DIST" = "Debian" ]; then
     KERNEL_NAME=`uname -r`
     KERNEL_HEADERS=linux-headers-${KERNEL_NAME}
-elif [ "$DIST" = "Fedora" -o  "$DIST" = "CentOS" ]; then
+elif [ "$DIST" = "Fedora" -o  "$DIST" = "CentOS" -o  "$DIST" = "Redhat" ]; then
     KERNEL_NAME=`uname -r`
     KERNEL_HEADERS=kernel-headers-${KERNEL_NAME}
 else

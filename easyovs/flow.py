@@ -18,7 +18,8 @@ class Flow(object):
         self.match = match
         self.actions = actions
         self.id = flow_id
-        self._format_str_ = '%-3u%-4s%-10s%-6s%-60s%-20s\n'
+        self._format_str_ = '%-3u%-4u%-10u%-6u%-60s%-20s\n'
+        #self.id, self.table, self.packet, self.priority, self.match, self.actions
 
     @staticmethod
     def banner_output():
@@ -26,7 +27,7 @@ class Flow(object):
                % ('ID', 'TAB', 'PKT', 'PRI', 'MATCH', 'ACT')))
 
     def fmt_output(self):
-        if self.packet != '0':
+        if self.packet > 0:
             result = color_str('g',self._format_str_ % (self.id, self.table, self.packet, self.priority,
                                     compress_mac_str(self.match), self.actions))
         else:
@@ -36,17 +37,21 @@ class Flow(object):
 
     def __eq__(self, other):
         return self.table == other.table and self.priority == other.priority and \
-               self.match == other.match and self.actions == other.actions
+               self.packet == self.packet and self.match == other.match and self.actions == other.actions
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __gt__(self, other):
+        if self.packet > 0 and other.packet == 0:
+            return True
+        if self.packet == 0 and other.packet > 0:
+            return False
         return self.table < other.table or \
                (self.table == other.table and self.priority > other.priority) or \
                (self.table == other.table and self.priority == other.priority and len(self.match) > len(other.match))
 
     def __lt__(self, other):
-        return self.table > other.table or \
-               (self.table == other.table and self.priority < other.priority) or \
-               (self.table == other.table and self.priority == other.priority and len(self.match) < len(other.match))
+        return not self.__eq__(other) and not self.__gt__(other)
+
+
