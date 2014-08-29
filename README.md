@@ -6,7 +6,7 @@ Provide smarter and powerful operation on OpenvSwitch bridges in OpenStack.
 version 0.3
 
 #What is easyOVS
-easyOVS provides a more convenient and fluent way to operation your 
+easyOVS provides a more convenient and fluent way to operate your 
 [OpenvSwitch](http://openvswitch.org) bridges in OpenStack platform,
 such as list their ports, dump their flows and add/del some flows in a smart 
 style with color!
