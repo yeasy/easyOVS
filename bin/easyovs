@@ -7,12 +7,13 @@ import os
 import sys
 import time
 
+from easyovs import VERSION
 from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_list, br_show
 from easyovs.cli import CLI
 from easyovs.clean import cleanup
 from easyovs.iptables import show_iptables_rules
 from easyovs.log import info, debug, error, output, LEVELS, lg
-from easyovs.util import fmt_flow_str, VERSION
+from easyovs.util import fmt_flow_str
 
 
 # Fix setuptools' evil madness, and open up (more?) security holes

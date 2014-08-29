@@ -1,10 +1,13 @@
-EASYOVS = easyovs/*.py
-TEST = easyovs/test/*.py
-EXAMPLES = easyovs/examples/*.py
-EOVS = bin/easyovs
-BIN = $(EOVS)
-PYSRC = $(EASYOVS) $(TEST) $(EXAMPLES) $(BIN)
-MANPAGES = easyovs.1
+PROJ = easyovs
+
+#DO NOT CHANGE THE FOLLOWING PART
+
+SRCFILES = $(PROJ)/*.py
+TESTFILES = $(PROJ)/test/*.py
+EXAMPLES = $(PROJ)/examples/*.py
+EXEC = bin/$(PROJ)
+MANPAGES = $(PROJ).1
+PYSRC = $(SRCFILES) $(TESTFILES) $(EXAMPLES) $(EXEC)
 P8IGN = E251,E201,E302,E202
 BINDIR = /usr/bin
 MANDIR = /usr/share/man/man1
@@ -27,7 +30,7 @@ errcheck: $(PYSRC)
 	pyflakes $(PYSRC)
 	pylint -E --rcfile=.pylint $(PYSRC)
 
-test: $(EASYOVS) $(TEST)
+test: $(SRCFILES) $(TESTFILES)
 	-echo "Running tests"
 
 develop: $(MANPAGES)
@@ -37,13 +40,13 @@ develop: $(MANPAGES)
 
 man: $(MANPAGES)
 
-easyovs.1: $(EOVS)
-	PYTHONPATH=. help2man -N -n "Easy OpenvSwitch Bridge Operation Platform." $< -o $@
+$(MANPAGES): $(EXEC)
+	PYTHONPATH=. help2man -N -n "Manpages." $< -o $@
 
 .PHONY: doc clean install uninstall
 
-install: $(MANPAGES)
-	install $(MANPAGES) $(MANDIR)
+install: #$(MANPAGES)
+	#install $(MANPAGES) $(MANDIR)
 	python setup.py install  --record install.log
 
 uninstall:

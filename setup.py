@@ -2,13 +2,13 @@
 
 """Setuptools params"""
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from os.path import join
 
 # Get version number from source tree
 import sys
 sys.path.append('.')
-from easyovs.util import VERSION
+from easyovs import VERSION
 
 scripts = [join('bin', filename) for filename in ['easyovs']]
 
@@ -20,7 +20,8 @@ setup(
     description='A easier platform to manage OpenvSwitch bridges',
     author='Baohua Yang',
     author_email='yangbaohua@gmail.com',
-    packages=['easyovs'],
+    #packages=['easyovs'],
+    packages=find_packages(),
     long_description="""
         EasyOVS provides more convinient and fluent way to operation your OpenvSwitch bridges,
         such as list them, dump their flows and add/del some flows.
@@ -36,7 +37,7 @@ setup(
     keywords='Cloud OpenStack OpenvSwitch SDN',
     license='BSD',
     install_requires=[
-        'setuptools'
+        'setuptools>=1.0',
     ],
     scripts=scripts,
 )

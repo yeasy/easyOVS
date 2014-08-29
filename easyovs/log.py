@@ -110,7 +110,6 @@ class OVSLogger(Logger, object):
         if self.isEnabledFor(OUTPUT):
             self._log(OUTPUT, msg, args, kwargs)
 
-
 lg = OVSLogger()
 
 

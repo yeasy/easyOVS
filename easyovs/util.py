@@ -1,7 +1,5 @@
 __author__ = 'baohua'
 
-VERSION = "0.2"
-
 from subprocess import Popen, PIPE
 import re
 

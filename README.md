@@ -1,15 +1,18 @@
 easyOVS
 =======
 
-Provide smarter and powerful operation on OpenvSwitch bridges.
+Provide smarter and powerful operation on OpenvSwitch bridges in OpenStack.
 
-version 0.2
+version 0.3
 
 #What is easyOVS
-easyOVS provides more convenient and fluent way to operation your [OpenvSwitch](http://openvswitch.org) bridges,
-such as list them, dump their flows and add/del some flows in a smart style.
+easyOVS provides a more convenient and fluent way to operation your 
+[OpenvSwitch](http://openvswitch.org) bridges in OpenStack platform,
+such as list their ports, dump their flows and add/del some flows in a smart 
+style with color!
 
-The tool can also be utilized in OpenStack environment, where will show ports with the vm MAC/IP and VLAN Tag information.
+If using in OpenStack environment, easyOVS will associate the ports with the vm 
+MAC/IP and VLAN Tag information, and the iptables rules for vm.
 
 #Installation and Usage
 Download the latest version and install.
@@ -23,15 +26,18 @@ After the installation, start easyovs with
 easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
 
 ##Enable OpenStack Feature
-
 To integrate the port information collected from OpenStack, please source the admin keystone credentials, e.g.,
 
 `source ./keystonerc_admin`
 
-##Upgrade
+##Upgrade or Delete
 If you wanna upgrade easyOVS from a previous version, just run
 
 `sudo bash ./easyOVS/util/install.sh -u`
+
+If you wanna to remove the package from the system
+
+`sudo bash ./easyOVS/util/install.sh -d`
 
 #Documentation
 
