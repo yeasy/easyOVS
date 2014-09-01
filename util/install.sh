@@ -41,9 +41,7 @@ if [ "$DIST" = "Ubuntu" ] || [ "$DIST" = "Debian" ]; then
     install='sudo apt-get -y install'
     remove='sudo apt-get -y remove'
     pkginst='sudo dpkg -i'
-    if ! which lsb_release &> /dev/null; then
-        $install lsb-release > /dev/null
-    fi
+    [ -z `which lsb_release 2>/dev/null` ] &&  $install lsb-release >/dev/null
 fi
 [ -e /etc/fedora-release ] && DIST="Fedora"
 [ -e /etc/centos-release ] && DIST="CentOS"
@@ -53,9 +51,8 @@ if [ "$DIST" = "Fedora" -o  "$DIST" = "CentOS"  -o  "$DIST" = "Redhat" ]; then
     remove='sudo yum -y erase'
     pkginst='sudo rpm -ivh'
     # Prereqs for this script
-    if ! which lsb_release &> /dev/null; then
-        $install redhat-lsb-core
-    fi
+    [ -z `which lsb_release 2>/dev/null` ] &&  $install redhat-lsb-core
+    >/dev/null
 fi
 
 if [ "$DIST" = "Ubuntu" -o "$DIST" = "Debian" -o "$DIST" = "Fedora" -o "$DIST" = "CentOS" -o  "$DIST" = "Redhat" ]; then
