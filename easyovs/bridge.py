@@ -169,7 +169,7 @@ class Bridge(object):
         Return a Flow or None, converted from a given line of original flow.
         """
         line = line.strip()
-        table, packet, priority, match, actions = '', '', '', '', ''
+        table, packet, priority, match, actions = 0, 0, 0, '', ''
         if line.startswith('cookie='):
             table = get_num_after(line, 'table=')
             packet = get_num_after(line, 'n_packets=')

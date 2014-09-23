@@ -10,7 +10,7 @@ class Flow(object):
     An OpenvSwitch flow rule.
     """
 
-    def __init__(self, bridge='', table='', packet='', priority='', match='', actions='', flow_id=0):
+    def __init__(self, bridge='', table=0, packet=0, priority=0, match='', actions='', flow_id=0):
         self.bridge = bridge
         self.table = table
         self.packet = packet
@@ -53,5 +53,4 @@ class Flow(object):
 
     def __lt__(self, other):
         return not self.__eq__(other) and not self.__gt__(other)
-
 
