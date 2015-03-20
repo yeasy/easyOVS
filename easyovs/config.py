@@ -2,6 +2,7 @@ __author__ = 'baohua'
 
 from gettext import gettext as _
 
+import os
 from oslo.config import cfg
 from easyovs import VERSION
 from easyovs.log import LEVELS, LOGLEVELDEFAULT
@@ -16,17 +17,17 @@ cfg.CONF.register_opts(default_opts)
 
 admin_opts = [
     cfg.StrOpt('auth_url',
-               default='http://127.0.0.1:5000/v2.0',
-               help='authentication url in keystone'),
+               default=os.getenv('OS_AUTH_URL', 'http://127.0.0.1:5000/v2.0'),
+               help='Authentication URL, defaults to env[OS_AUTH_URL].'),
     cfg.StrOpt('username',
-               default='admin',
-               help='username in keystone'),
+               default=os.getenv('OS_USERNAME', 'admin'),
+               help='Authentication username, defaults to env[OS_USERNAME].'),
     cfg.StrOpt('password',
-               default='admin',
-               help='username in keystone'),
+               default=os.getenv('OS_PASSWORD', 'admin'),
+               help=' Authentication password, defaults to env[OS_PASSWORD].'),
     cfg.StrOpt('tenant_name',
-               default='admin',
-               help='the tenant name to check'),
+               default=os.getenv('OS_TENANT_NAME', 'admin'),
+               help='Authentication tenant name, defaults to env[OS_TENANT_NAME].'),
 ]
 cfg.CONF.register_opts(admin_opts, "ADMIN")
 cfg.CONF.register_opts(admin_opts, "PROJECT")

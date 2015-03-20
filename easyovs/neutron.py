@@ -1,5 +1,7 @@
 __author__ = 'baohua'
 
+from oslo.config import cfg
+
 from os.path import exists, getmtime
 from subprocess import Popen, PIPE
 from time import time
