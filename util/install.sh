@@ -97,7 +97,7 @@ function dev {
 }
 
 function all {
-    echo "Installing the dependencies and the core packages)..."
+    echo "Installing the dependencies and the core packages..."
     dep
     core
     # Skip dev (doxypy) because it's huge

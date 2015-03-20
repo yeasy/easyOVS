@@ -16,3 +16,6 @@ tags
 
 #python specific
 *.pyc
+
+#idea
+.idea
