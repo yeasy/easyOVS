@@ -1,13 +1,14 @@
 __author__ = 'baohua'
 
 from cmd import Cmd
+from oslo.config import cfg
 from select import poll, POLLIN
 from subprocess import call
 import sys
 
 from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_exists, br_list, br_show
 from easyovs.iptables import show_iptables_rules
-from easyovs.log import info, output, error
+from easyovs.log import info, output, error, debug
 from easyovs.util import color_str, fmt_flow_str
 
 
@@ -45,6 +46,11 @@ class CLI(Cmd):
         Cmd.__init__(self)
         output("***\n Welcome to EasyOVS, type help to see available commands.\n***\n")
         info('*** Starting CLI:\n')
+        debug("==cfg.ADMIN==\n")
+        debug("auth_url = %s\n" % cfg.CONF.ADMIN.auth_url)
+        debug("username = %s\n" % cfg.CONF.ADMIN.username)
+        debug("password = %s\n" % cfg.CONF.ADMIN.password)
+        debug("tenant_name = %s\n" % cfg.CONF.ADMIN.tenant_name)
         while True:
             try:
                 #if self.isatty():

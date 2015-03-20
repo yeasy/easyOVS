@@ -3,10 +3,26 @@ __author__ = 'baohua'
 from subprocess import Popen, PIPE
 import re
 
-from easyovs.log import debug
+from easyovs.log import debug, info
 from easyovs.neutron import get_neutron_ports
 
+def sh(cmd):
+    """
+    Print a command and send it to the shell
+    """
+    info(cmd + '\n')
+    return Popen(['/bin/sh', '-c', cmd], stdout=PIPE).communicate()[0]
 
+
+def cleanup():
+    """Clean up junk which might be left over from old runs;
+    """
+    sh('pkill -9 -f "neutron port-list"')
+
+    debug("*** Removing junk from /tmp\n")
+    sh('rm -f /tmp/tmp_switch_* /tmp/vlogs* /tmp/*.out /tmp/*.log')
+
+    debug("*** Cleanup complete.\n")
 def get_numstr_after(line, field):
     """
     Return the Number value in string after given field or ''

@@ -72,7 +72,7 @@ echo "Detected Linux distribution: $DIST_FULL $RELEASE $CODENAME $ARCH"
 
 # Install core
 function core {
-    echo "Installing ${PROJ} core files"
+    echo "Installing ${PROJ} core files, working dir is $WORK_DIR"
     pushd $WORK_DIR
     chmod a+x ${EXEC}
     [ -e $WORK_DIR/etc ] && cp $WORK_DIR/etc/* /etc/

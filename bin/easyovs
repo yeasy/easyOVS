@@ -2,37 +2,23 @@
 
 __author__ = 'baohua'
 
-from optparse import OptionParser
 import os
+from oslo.config import cfg
 import sys
 import time
 
-from easyovs import VERSION
+from easyovs import VERSION, config
 from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_list, br_show
 from easyovs.cli import CLI
-from easyovs.clean import cleanup
+from easyovs.common import CMDS_ONE, CMDS_TWO, CMDS_OTHER
 from easyovs.iptables import show_iptables_rules
 from easyovs.log import info, debug, error, output, LEVELS, lg
-from easyovs.util import fmt_flow_str
+from easyovs.util import cleanup, fmt_flow_str
 
 
 # Fix setuptools' evil madness, and open up (more?) security holes
 if 'PYTHONPATH' in os.environ:
     sys.path = os.environ['PYTHONPATH'].split(':') + sys.path
-
-
-def version(*_args):
-    """
-    Print version and exit.
-    """
-    print "%s" % VERSION
-    exit()
-
-# optional tests to run
-CMDS_ONE = ['cli', 'list']
-CMDS_TWO = ['dump', 'show', 'ipt']
-CMDS_OTHER = ['addflow', 'delflow']
-
 
 class Platform(object):
     """
@@ -47,25 +33,7 @@ class Platform(object):
         self.begin()
 
     def parse_args(self):
-        desc = ("The %prog utility creates operation CLI from the\n"
-                "command line. It can run given commands,\n"
-                "invoke the EasyOVS CLI, and run tests.")
-        usage = ('%prog [options]\n'
-                 '(type %prog -h for details)')
-        opts = OptionParser(description=desc, usage=usage)
-        opts.add_option('--clean', '-c', action='store_true',
-                        default=False, help='clean and exit')
-        opts.add_option('--cmd', '-m', type='string', default='cli',
-                        help='Run customized commands for tests.')
-        opts.add_option('--verbosity', '-v', type='choice',
-                        choices=LEVELS.keys(), default='output',
-                        help='|'.join(LEVELS.keys()))
-        opts.add_option('--version', action='callback', callback=version)
-        self.options, self.args = opts.parse_args()
-
-        if self.args:
-            opts.print_help()
-            exit()
+        config.init(sys.argv[1:])
 
     def setup(self):
         """
@@ -73,20 +41,23 @@ class Platform(object):
         """
 
         # set logging verbosity
-        if LEVELS[self.options.verbosity] > LEVELS['output']:
+        if LEVELS[cfg.CONF.verbosity] > LEVELS['output']:
             print ('*** WARNING: selected verbosity level (%s) will hide CLI '
                    'output!\n'
                    'Please restart easyOVS with -v [debug, info, output].'
-                   % self.options.verbosity)
-        lg.set_log_level(self.options.verbosity)
+                   % cfg.CONF.verbosity)
+        lg.set_log_level(cfg.CONF.verbosity)
+        info("Set log level to %s\n" % cfg.CONF.verbosity)
 
     def begin(self):
-        if self.options.clean:
+        if cfg.CONF.clean:
+            info("Cleaning environment\n")
             cleanup()
             exit()
-        start = time.time()
 
-        cmd = self.options.cmd
+        start = time.time()
+        cmd = cfg.CONF.cmd
+        info("cmd = %s\n" % cmd)
         if len(cmd.split()) == 1 and cmd in CMDS_ONE:
             if cmd == 'cli':
                 CLI()

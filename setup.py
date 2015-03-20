@@ -17,15 +17,15 @@ modname = distname = 'easyovs'
 setup(
     name=distname,
     version=VERSION,
-    description='A easier platform to manage OpenvSwitch bridges',
+    description='Easy way to manage OpenvSwitch bridges',
     author='Baohua Yang',
     author_email='yangbaohua@gmail.com',
     #packages=['easyovs'],
     packages=find_packages(),
     long_description="""
-        EasyOVS provides more convinient and fluent way to operation your OpenvSwitch bridges,
-        such as list them, dump their flows and add/del some flows.
-        https://github.com/yeasy/easyOVS
+        EasyOVS provides more convenient and fluent way to operation your OpenvSwitch bridges,
+        such as list them, show the port, dump their flows and add/del some flows.
+        See https://github.com/yeasy/easyOVS
         """,
     classifiers=[
         "License :: OSI Approved :: BSD License",
@@ -38,6 +38,7 @@ setup(
     license='BSD',
     install_requires=[
         'setuptools>=1.0',
+        'oslo.config>=1.2',
     ],
     scripts=scripts,
 )

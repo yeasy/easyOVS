@@ -14,7 +14,7 @@ LEVELS = {'debug': logging.DEBUG,
           'error': logging.ERROR,
           'critical': logging.CRITICAL}
 
-LOGLEVELDEFAULT = LEVELS['output']
+LOGLEVELDEFAULT = 'output'
 
 #default: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 LOGMSGFORMAT = '%(message)s'
@@ -86,13 +86,8 @@ class OVSLogger(Logger, object):
 
         self.set_log_level()
 
-    def set_log_level(self, levelname=None):
-        level = LOGLEVELDEFAULT
-        if levelname is not None:
-            if levelname not in LEVELS:
-                raise Exception('unknown levelname seen in set_log_level')
-            else:
-                level = LEVELS.get(levelname, level)
+    def set_log_level(self, levelname=LOGLEVELDEFAULT):
+        level = LEVELS.get(levelname)
 
         self.setLevel(level)
         self.handlers[0].setLevel(level)
