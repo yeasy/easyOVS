@@ -11,10 +11,10 @@ easyOVS provides a more convenient and fluent way to operate your
 such as list their ports, dump their flows and add/del some flows in a smart 
 style with color!
 
-If using in OpenStack environment (Currently tested from the Havana to Juno 
+If using in OpenStack environment (Currently tested from the Havana to the Juno 
 release), easyOVS will associate the ports with the vm MAC/IP and VLAN Tag information, and the iptables rules for vm.
 
-#Installation and Usage
+# Installation and Usage
 Download the latest version and install.
 
 `git clone https://github.com/yeasy/easyOVS.git && sudo bash ./easyOVS/util/install.sh`
@@ -25,14 +25,14 @@ After the installation, start easyovs with
 
 easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
 
-##Enable OpenStack Feature
+## Enable OpenStack Feature
 To integrate the port information collected from OpenStack, 
 please set the authentication information in your environment:
 e.g., 
 ```sh
 export OS_USERNAME=demo
 export OS_TENANT_NAME=demo
-export OS_PASSWORD=demo
+export OS_PASSWORD=admin
 export OS_AUTH_URL=http://127.0.0.1:5000/v2.0/
 ```
 Otherwise, set the information into etc/easyovs.conf files.
@@ -42,10 +42,9 @@ auth_url = http://127.0.0.1:5000/v2.0
 username = demo
 password = admin
 tenant_name = demo
-```sh
+```
 
-
-##Upgrade or Delete
+## Upgrade or Delete
 If you wanna upgrade easyOVS from a previous version, just run
 
 `sudo bash ./easyOVS/util/install.sh -u`
@@ -54,14 +53,14 @@ If you wanna to remove the package from the system
 
 `sudo bash ./easyOVS/util/install.sh -d`
 
-#Documentation
+# Documentation
 
-##CLI Commands
+## CLI Commands
 
-###help
+### help
 Show the available commands and some usage examples.
 
-###list
+### list
 List the available bridges. The output would look like
 ```
  EasyOVS> list
@@ -82,7 +81,7 @@ s3
  Fail_Mode:	secure
 ```
 
-###show
+### show
 `EasyOVS> [bridge|default] show`
 
 Show the ports information of a given bridge. The output would look like
@@ -98,7 +97,7 @@ qvod4de9fe0-6d      8           2                   10.0.0.2        fa:16:3e:38:
 br-int              LOCAL               internal
 ```
 
-###dump
+### dump
 `EasyOVS> [bridge|default] dump`
 
 Dump flows in a bridge. The output would look like
@@ -114,20 +113,20 @@ ID TAB PKT       PRI   MATCH                                                    
 5  0   2         800
 ```
 
-###addflow
+### addflow
 `EasyOVS> [bridge|default] addflow [match] actions=[action]`
 
 Add a flow into the bridge, e.g.,
 
 `EasyOVS> br-int addflow priority=3 ip actions=OUTPUT:1`
 
-###delflow
+### delflow
 `EasyOVS> [bridge|default] delflow id1 id2...`
 
 Delete flows with given ids (see the first column of the `dump` output).
 
 
-###set
+### set
 `EasyOVS> bridge set`
 
 Set the default bridge. Then you will go into a bridge mode, and can ignore the bridge parameter when using the
@@ -138,12 +137,12 @@ Set the default bridge to br-int.
 EasyOVS: br-int> 
 ```
 
-###exit
+### exit
 `EasyOVS> exit`
 
 Exit from the bridge mode, or quit EasyOVS if already at the top level.
 
-###get
+### get
 `EasyOVS> get`
 
 Get the current default bridge.
@@ -152,7 +151,7 @@ EasyOVS: br-int> get
 Current default bridge is br-int
 ```
 
-###ipt
+### ipt
 `EasyOVS> ipt vm_ip1, vm_ip2...`
 
 Show the related iptables rules of the given vms.
@@ -193,7 +192,7 @@ EasyOVS> ipt 192.168.0.2 192.168.0.4
 
 ```
 
-###sh
+### sh
 `EasyOVS> sh cmd`
 
 Run the system cmd locally, e.g., using ls -l to show local directory's content.
@@ -214,13 +213,13 @@ drwxr-xr-x. 2 root root 4096 Apr  1 14:56 easyovs.egg-info
 drwxr-xr-x. 2 root root 4096 Apr  1 14:09 util
 ```
 
-###quit
+### quit
 Input `^d` or `quit` to exit EasyOVS.
 
 ##Options
-###-h
+### -h
 Show the help message on supported options, such as
-```
+```sh
 $ easyovs -h
 Usage: easyovs [options]
 (type easyovs -h for details)
@@ -237,27 +236,27 @@ Options:
   --version
 ```
 
-###-c
+### -c
 Clean the env.
 
-###-m
+### -m
 Run the given command in easyovs, show the output, and exit.
 
 E.g. `easyovs -m 'br-int dump'`.
 
-###-v
+### -v
 Set verbosity level.
 
-###--version
+### --version
 Show the version information.
 
-#Features
-* Support OpenvSwitch version 1.4.6 ~ 1.11.0.
+# Features
+* Support OpenvSwitch version 1.4.6 ~ 2.0.0.
 * Support most popular Linux distributions, e.g., Ubuntu,Debian, CentOS and Fedora.
 * Format the output to make it clear and easy to compare.
 * Show the OpenStack information with the bridge port (In OpenStack environment).
 * Delete a flow with its id.
-* Show iptables in formated way of given vm IPs.
+* Show formatted iptables rules with given vm IPs.
 * Smart command completion, try tab everywhere.
 * Support colorful output.
 * Support run local system commands.
