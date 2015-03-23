@@ -75,7 +75,7 @@ function core {
     echo "Installing ${PROJ} core files, working dir is $WORK_DIR"
     pushd $WORK_DIR
     chmod a+x ${EXEC}
-    [ -e $WORK_DIR/etc ] && cp $WORK_DIR/etc/* /etc/
+    [ -f /etc/easyovs.conf ] || cp $WORK_DIR/etc/easyovs.conf /etc/
     sudo make install
     popd
 }

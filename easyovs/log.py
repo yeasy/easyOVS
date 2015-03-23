@@ -2,6 +2,7 @@ __author__ = 'baohua'
 
 from logging import Logger
 import logging
+import sys
 import types
 
 
@@ -18,7 +19,6 @@ LOGLEVELDEFAULT = 'output'
 
 #default: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 LOGMSGFORMAT = '%(message)s'
-
 
 # Modified from python2.5/__init__.py
 class StreamHandlerNoNewline(logging.StreamHandler):
@@ -76,7 +76,7 @@ class OVSLogger(Logger, object):
         Logger.__init__(self, "EasyOVS")
 
         # create console handler
-        ch = StreamHandlerNoNewline()
+        ch = StreamHandlerNoNewline(sys.stdout)
         # create formatter
         formatter = logging.Formatter(LOGMSGFORMAT)
         # add formatter to ch

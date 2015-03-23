@@ -47,10 +47,10 @@ class CLI(Cmd):
         output("***\n Welcome to EasyOVS, type help to see available commands.\n***\n")
         info('*** Starting CLI:\n')
         debug("==cfg.ADMIN==\n")
-        debug("auth_url = %s\n" % cfg.CONF.ADMIN.auth_url)
-        debug("username = %s\n" % cfg.CONF.ADMIN.username)
-        debug("password = %s\n" % cfg.CONF.ADMIN.password)
-        debug("tenant_name = %s\n" % cfg.CONF.ADMIN.tenant_name)
+        debug("auth_url = %s\n" % cfg.CONF.OS.auth_url)
+        debug("username = %s\n" % cfg.CONF.OS.username)
+        debug("password = %s\n" % cfg.CONF.OS.password)
+        debug("tenant_name = %s\n" % cfg.CONF.OS.tenant_name)
         while True:
             try:
                 #if self.isatty():

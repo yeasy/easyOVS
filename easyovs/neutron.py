@@ -24,10 +24,10 @@ def get_neutron_ports(fresh=False):
             return result
     try:
         cmd = 'neutron --os-auth-url %s --os-tenant-name %s --os-username %s ' \
-              '--os-password %s port-list' % (cfg.CONF.auth_url,
-                                              cfg.CONF.tenant_name,
-                                              cfg.CONF.username,
-                                              cfg.CONF.password)
+              '--os-password %s port-list' % (cfg.CONF.OS.auth_url,
+                                              cfg.CONF.OS.tenant_name,
+                                              cfg.CONF.OS.username,
+                                              cfg.CONF.OS.password)
         neutron_port_list = Popen(cmd, stdout=PIPE, stderr=PIPE,
                                   shell=True).stdout.read()
     except Exception:

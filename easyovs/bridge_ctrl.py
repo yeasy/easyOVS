@@ -65,7 +65,7 @@ def br_list():
     """
     bridges = get_bridges()
     if not bridges:
-        output('None bridge exists.\n')
+        output('None bridge exists. Might try using root privilege?\n')
         return
     br_info = ''
     for br in sorted(bridges.keys()):
