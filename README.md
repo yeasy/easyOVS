@@ -1,4 +1,4 @@
-easyOVS[![Build Status](https://travis-ci.org/yeasy/easyOVS.svg?style=flat-square)](https://travis-ci.org/yeasy/easyOVS)
+easyOVS [![Build Status](https://travis-ci.org/yeasy/easyOVS.svg?style=flat-square)](https://travis-ci.org/yeasy/easyOVS)
 ===
 
 Provide smarter and powerful operation on OpenvSwitch bridges in OpenStack.
