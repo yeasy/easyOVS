@@ -73,7 +73,7 @@ echo "Detected Linux distribution: $DIST_FULL $RELEASE $CODENAME $ARCH"
 
 # Install core
 function core {
-    echo "Installing ${PROJ} core files, working dir is $WORK_DIR"
+    echo "###Installing ${PROJ} core files, working dir is $WORK_DIR"
     pushd $WORK_DIR
     chmod a+x ${EXEC}
     [ -f /etc/easyovs.conf ] || cp $WORK_DIR/etc/easyovs.conf /etc/
@@ -83,7 +83,7 @@ function core {
 
 # Install deps
 function dep {
-    echo "Installing ${PROJ} dependencies"
+    echo "###Installing ${PROJ} dependencies"
 	if [ "$DIST" = "Fedora" -o "$DIST" = "CentOS" -o  "$DIST" = "Redhat" ]; then
         $install gcc make python-devel python-setuptools python-pip pyflakes
         pylint python-pep8 > /dev/null
@@ -95,12 +95,12 @@ function dep {
 
 # Install ${PROJ} developer dependencies
 function dev {
-    echo "Installing ${PROJ} developer dependencies"
+    echo "###Installing ${PROJ} developer dependencies"
     $install doxygen doxypy
 }
 
 function all {
-    echo "Installing the dependencies and the core packages..."
+    echo "###Installing the dependencies and the core packages..."
     dep
     core
     # Skip dev (doxypy) because it's huge
