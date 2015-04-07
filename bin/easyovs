@@ -3,7 +3,7 @@
 __author__ = 'baohua'
 
 import os
-from oslo.config import cfg
+from oslo_config import cfg
 import sys
 import time
 

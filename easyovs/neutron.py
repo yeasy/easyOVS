@@ -1,9 +1,10 @@
 __author__ = 'baohua'
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 import keystoneclient.v2_0.client as ksclient
-from keystoneclient.openstack.common.apiclient.exceptions import AuthorizationFailure
+from keystoneclient.openstack.common.apiclient.exceptions import \
+    AuthorizationFailure, Unauthorized
 import neutronclient.v2_0.client as neutronclient
 import sys
 
@@ -12,7 +13,7 @@ from time import time
 import cPickle
 
 from easyovs import config
-from easyovs.log import output
+from easyovs.log import output, warn
 from easyovs.util import color_str
 
 class NeutronHandler(object):
@@ -31,8 +32,8 @@ class NeutronHandler(object):
                 service_type='network')
             self.neutron = neutronclient.Client(endpoint_url=neutron_endpoint_url,
                                             token=self.token)
-        except AuthorizationFailure:
-            output("No valid openstack authencation information is found")
+        except AuthorizationFailure, Unauthorized:
+            warn("No valid OpenStack authentication information is found\n")
             self.neutron = None
 
     def get_neutron_ports(self, fresh=False):
