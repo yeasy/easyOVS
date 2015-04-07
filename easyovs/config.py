@@ -3,7 +3,7 @@ __author__ = 'baohua'
 from gettext import gettext as _
 
 import os
-from oslo.config import cfg
+from oslo_config import cfg
 from easyovs import VERSION
 from easyovs.log import LEVELS, LOGLEVELDEFAULT
 

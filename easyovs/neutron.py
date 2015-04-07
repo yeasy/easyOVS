@@ -32,7 +32,10 @@ class NeutronHandler(object):
                 service_type='network')
             self.neutron = neutronclient.Client(endpoint_url=neutron_endpoint_url,
                                             token=self.token)
-        except AuthorizationFailure, Unauthorized:
+        except AuthorizationFailure:
+            warn("OpenStack Authorization Failed\n")
+            self.neutron = None
+        except Unauthorized:
             warn("No valid OpenStack authentication information is found\n")
             self.neutron = None
 
