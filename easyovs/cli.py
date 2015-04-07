@@ -1,7 +1,7 @@
 __author__ = 'baohua'
 
 from cmd import Cmd
-from oslo.config import cfg
+from oslo_config import cfg
 from select import poll, POLLIN
 from subprocess import call
 import sys
