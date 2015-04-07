@@ -69,7 +69,7 @@ if which lsb_release &> /dev/null; then
     RELEASE=`lsb_release -rs`
     CODENAME=`lsb_release -cs`
 fi
-echo "Detected Linux distribution: $DIST_FULL $RELEASE $CODENAME $ARCH"
+echo "Detected Linux distribution: $DIST_FLL $RELEASE $CODENAME $ARCH"
 
 # Install core
 function core {
@@ -85,9 +85,11 @@ function core {
 function dep {
     echo "Installing ${PROJ} dependencies"
     if [ "$DIST" = "Fedora" -o "$DIST" = "CentOS" ]; then
-        $install gcc make  python-setuptools python-pip help2man pyflakes pylint python-pep8 > /dev/null
+        $install gcc make python-dev python-setuptools python-pip help2man pyflakes
+        pylint python-pep8 > /dev/null
     else
-        $install gcc make python-setuptools python-pip help2man pyflakes pylint pep8 >  /dev/null
+        $install gcc make python-dev python-setuptools python-pip help2man
+        pyflakes pylint pep8 >  /dev/null
     fi
 }
 

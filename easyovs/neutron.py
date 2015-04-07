@@ -3,6 +3,7 @@ __author__ = 'baohua'
 from oslo.config import cfg
 
 import keystoneclient.v2_0.client as ksclient
+from keystoneclient.openstack.common.apiclient.exceptions import AuthorizationFailure
 import neutronclient.v2_0.client as neutronclient
 import sys
 
@@ -20,15 +21,19 @@ class NeutronHandler(object):
     """
     def __init__(self):
         config.init(sys.argv[1:])
-        self.keystone = ksclient.Client(auth_url=cfg.CONF.OS.auth_url,
-                               tenant_name=cfg.CONF.OS.tenant_name,
-                               username=cfg.CONF.OS.username,
-                               password=cfg.CONF.OS.password)
-        self.token = self.keystone.auth_token
-        neutron_endpoint_url = self.keystone.service_catalog.url_for(
-            service_type='network')
-        self.neutron = neutronclient.Client(endpoint_url=neutron_endpoint_url,
-                                        token=self.token)
+        try:
+            self.keystone = ksclient.Client(auth_url=cfg.CONF.OS.auth_url,
+                                   tenant_name=cfg.CONF.OS.tenant_name,
+                                   username=cfg.CONF.OS.username,
+                                   password=cfg.CONF.OS.password)
+            self.token = self.keystone.auth_token
+            neutron_endpoint_url = self.keystone.service_catalog.url_for(
+                service_type='network')
+            self.neutron = neutronclient.Client(endpoint_url=neutron_endpoint_url,
+                                            token=self.token)
+        except AuthorizationFailure:
+            output("No valid openstack authencation information is found")
+            self.neutron = None
 
     def get_neutron_ports(self, fresh=False):
         """
@@ -102,6 +107,8 @@ class NeutronHandler(object):
                 except Exception:
                     return []
                 return result
+        if not self.neutron:
+            return result
         try:
             result = self.neutron.list_ports().get('ports', [])
         except Exception:
