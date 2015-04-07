@@ -5,7 +5,7 @@ from subprocess import Popen, PIPE
 from easyovs.bridge import Bridge
 from easyovs.flow import Flow
 from easyovs.log import debug, output
-from easyovs.neutron import get_neutron_ports
+from easyovs.neutron import neutron_handler
 from easyovs.util import get_bridges, color_str
 
 
@@ -98,29 +98,34 @@ def br_show(bridge):
     ovs_ports = br_getports(bridge)
     if not ovs_ports:
         return
-    neutron_ports = get_neutron_ports()
+    neutron_ports = neutron_handler.get_neutron_ports()
+    debug('get neutron_ports', neutron_ports)
     content = []
     mac_ip_show = False
-    for intf in ovs_ports: # e.g., qvo-xxx, int-br-eth0, qr-xxx, tapxxx
+    for intf in ovs_ports:  # e.g., qvo-xxx, int-br-eth0, qr-xxx, tapxxx
         port, tag, intf_type = ovs_ports[intf]['port'], ovs_ports[intf]['vlan'], ovs_ports[intf]['type']
         if neutron_ports and intf[3:] in neutron_ports:
-            vm_ip, vm_mac = neutron_ports[intf[3:]]['ip_address'], neutron_ports[intf[3:]]['mac']
+            p = neutron_ports[intf[3:]]
+            vm_ips = ','.join(map(lambda x: x.get('ip_address'),
+                                  p['fixed_ips']))
+            vm_mac = p.get('mac_address')
             mac_ip_show = True
         else:
-            vm_ip, vm_mac = '', ''
-        content.append((intf, port, tag, intf_type, vm_ip, vm_mac))
+            vm_ips, vm_mac = '', ''
+        content.append((intf, port, tag, intf_type, vm_ips, vm_mac))
         #output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
     content.sort(key=lambda x: x[1]) #sort by port
     content.sort(key=lambda x: x[4]) #sort by vm_ip
     content.sort(key=lambda x: x[3]) #sort by type
-    output(color_str('b','%-20s%-12s%-8s%-12s' % ('Intf', 'Port', 'Vlan', 'Type')))
+    output(color_str('r','%-20s%-12s%-8s%-12s' % ('Intf', 'Port', 'Vlan', 'Type')))
     if mac_ip_show:
-        output(color_str('b', '%-16s%-24s\n' % ('vmIP', 'vmMAC')))
+        output(color_str('r', '%-16s%-24s\n' % ('vmIP', 'vmMAC')))
     else:
         output('\n')
     i = 0
     for _ in content:
-        color = ['w','g'][i%2]
+        #color = ['w','g'][i%2]
+        color = 'b'
         output(color_str(color, '%-20s%-12s%-8s%-12s' % (_[0], _[1], _[2], _[3])))
         if mac_ip_show:
             output(color_str(color, '%-16s%-24s\n' % (_[4], _[5])))

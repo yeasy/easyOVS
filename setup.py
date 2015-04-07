@@ -37,8 +37,10 @@ setup(
     keywords='Cloud OpenStack OpenvSwitch SDN',
     license='BSD',
     install_requires=[
-        'setuptools>=1.0',
         'oslo.config>=1.2',
+        'python-keystoneclient>=1.0',
+        'python-neutronclient>=1.0',
+        'setuptools>=1.0',
     ],
     scripts=scripts,
 )

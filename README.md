@@ -35,7 +35,7 @@ export OS_TENANT_NAME=demo
 export OS_PASSWORD=admin
 export OS_AUTH_URL=http://127.0.0.1:5000/v2.0/
 ```
-Otherwise, set the information into etc/easyovs.conf files.
+Otherwise, set the information into the `etc/easyovs.conf` file.
 ```sh
 [OS]
 auth_url = http://127.0.0.1:5000/v2.0

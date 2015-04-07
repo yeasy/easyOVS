@@ -3,7 +3,7 @@ __author__ = 'baohua'
 from subprocess import PIPE, Popen
 from easyovs.log import output
 
-from easyovs.util import get_port_id_from_ip
+from easyovs.util import get_port_id_from_ip, color_str
 
 _format_str_iptables_rule_ = '%8s\t%-20s%-20s%-6s%-20s\n'  # pkts source destination prot other
 
@@ -17,10 +17,12 @@ def show_iptables_rules(ips):
         if not port_id:
             output('No local addr %s exists.\n' % ip)
             continue
-        output('## IP = %s, port = %s\n' % (ip, port_id))
+        output(color_str('r', '## IP = %s, port = %s\n' % (ip, port_id)))
         rules_dic = get_iptables_rules(port_id)
         if rules_dic:
-            output(_format_str_iptables_rule_ % ('PKTS', 'SOURCE', 'DESTINATION', 'PROT', 'OTHER'))
+            output(color_str('b', _format_str_iptables_rule_ % ('PKTS',
+                                                                'SOURCE',
+                                                                'DESTINATION', 'PROT', 'OTHER')))
             for r in rules_dic:
                 if rules_dic[r]:
                     output('%s:\n' % r)

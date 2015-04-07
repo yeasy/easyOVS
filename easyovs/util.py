@@ -4,7 +4,8 @@ from subprocess import Popen, PIPE
 import re
 
 from easyovs.log import debug, info
-from easyovs.neutron import get_neutron_ports
+#from easyovs.neutron import get_neutron_ports
+from easyovs.neutron import neutron_handler
 
 def sh(cmd):
     """
@@ -194,9 +195,9 @@ def get_port_id_from_ip(ip):
     e.g., d4de9fe0-6d from 192.168.0.2
     """
     bridges = get_bridges()
-    ports = get_neutron_ports()
+    ports = neutron_handler.get_neutron_ports()
     for k in ports:
-        if ports[k]['ip_address'] == ip:
+        if ports[k]['fixed_ips'][0].get('ip_address') == ip:
             for br in sorted(bridges.keys()):
                 for port in bridges[br]['Port'].keys():
                     if port[3:] == k:
