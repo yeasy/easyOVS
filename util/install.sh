@@ -56,6 +56,7 @@ if [ "$DIST" = "Fedora" -o  "$DIST" = "CentOS"  -o  "$DIST" = "Redhat" ]; then
 fi
 
 if [ "$DIST" = "Ubuntu" -o "$DIST" = "Debian" -o "$DIST" = "Fedora" -o "$DIST" = "CentOS" -o  "$DIST" = "Redhat" ]; then
+	echo "Dist = $DIST"
     KERNEL_NAME=`uname -r`
     KERNEL_HEADERS=linux-headers-${KERNEL_NAME}
 else
@@ -84,9 +85,9 @@ function core {
 function dep {
     echo "Installing ${PROJ} dependencies"
     if [ "$DIST" = "Fedora" -o "$DIST" = "CentOS" ]; then
-        $install gcc make  python-setuptools help2man pyflakes pylint python-pep8 > /dev/null
+        $install gcc make  python-setuptools python-pip help2man pyflakes pylint python-pep8 > /dev/null
     else
-        $install gcc make python-setuptools help2man pyflakes pylint pep8 > /dev/null
+        $install gcc make python-setuptools python-pip help2man pyflakes pylint pep8 >  /dev/null
     fi
 }
 
