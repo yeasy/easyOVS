@@ -69,7 +69,7 @@ if which lsb_release &> /dev/null; then
     RELEASE=`lsb_release -rs`
     CODENAME=`lsb_release -cs`
 fi
-echo "Detected Linux distribution: $DIST_FLL $RELEASE $CODENAME $ARCH"
+echo "Detected Linux distribution: $DIST_FULL $RELEASE $CODENAME $ARCH"
 
 # Install core
 function core {
