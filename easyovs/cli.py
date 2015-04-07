@@ -9,6 +9,7 @@ import sys
 from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_exists, br_list, br_show
 from easyovs.iptables import show_iptables_rules
 from easyovs.log import info, output, error, debug
+from easyovs.neutron import show_port_info
 from easyovs.util import color_str, fmt_flow_str
 
 
@@ -155,6 +156,12 @@ class CLI(Cmd):
         Show the iptables rules of a given vm.
         """
         show_iptables_rules(line)
+
+    def do_query(self, line):
+        """
+        Show the port information of given keywords.
+        """
+        show_port_info(line)
 
     def do_list(self, _arg):
         """

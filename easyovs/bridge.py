@@ -8,7 +8,6 @@ import termios
 from easyovs.util import get_bridges
 from easyovs.flow import Flow
 from easyovs.log import output, debug
-#from easyovs.neutron import get_neutron_ports
 from easyovs.util import get_num_after, get_str_before, get_str_between
 
 

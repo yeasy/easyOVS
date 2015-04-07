@@ -62,7 +62,7 @@ Show the available commands and some usage examples.
 
 ### list
 List the available bridges. The output would look like
-```
+```sh
  EasyOVS> list
 s1
  Port:		s1-eth2 s1 s1-eth1
@@ -85,7 +85,7 @@ s3
 `EasyOVS> [bridge|default] show`
 
 Show the ports information of a given bridge. The output would look like
-```
+```sh
  EasyOVS> br-int show
 br-int
 Intf                Port        Vlan    Type        vmIP            vmMAC
@@ -102,7 +102,7 @@ br-int              LOCAL               internal
 
 Dump flows in a bridge. The output would look like
 
-```
+```sh
 EasyOVS> s1 dump
 ID TAB PKT       PRI   MATCH                                                       ACT
 0  0   0         2400  dl_dst=ff:ff:ff:ff:ff:ff                                    CONTROLLER:65535
@@ -131,7 +131,7 @@ Delete flows with given ids (see the first column of the `dump` output).
 
 Set the default bridge. Then you will go into a bridge mode, and can ignore the bridge parameter when using the
 command.
-```
+```sh
 EasyOVS> set br-int
 Set the default bridge to br-int.
 EasyOVS: br-int> 
@@ -146,7 +146,7 @@ Exit from the bridge mode, or quit EasyOVS if already at the top level.
 `EasyOVS> get`
 
 Get the current default bridge.
-```
+```sh
 EasyOVS: br-int> get
 Current default bridge is br-int
 ```
@@ -155,7 +155,7 @@ Current default bridge is br-int
 `EasyOVS> ipt vm_ip1, vm_ip2...`
 
 Show the related iptables rules of the given vms.
-```
+```sh
 EasyOVS> ipt 192.168.0.2 192.168.0.4
 ## IP = 192.168.0.2, port = qvo583c7038-d ##
     PKTS	SOURCE          DESTINATION     PROT  OTHER               
@@ -192,11 +192,54 @@ EasyOVS> ipt 192.168.0.2 192.168.0.4
 
 ```
 
+### query
+
+`EasyOVS> query vm_ip1, port_id...`
+
+Show the related port information by giving the IP address or part of the 
+id string.
+
+```sh
+EasyOVS> query 10.0.0.2,c4493802
+## port_id = f47c62b0-dbd2-4faa-9cdd-8abc886ce08f
+status: ACTIVE
+name:
+allowed_address_pairs: []
+admin_state_up: True
+network_id: ea3928dc-b1fd-4a1a-940e-82b8c55214e6
+tenant_id: 3a55e7b5f5504649a2dfde7147383d02
+extra_dhcp_opts: []
+binding:vnic_type: normal
+device_owner: compute:az_compute
+mac_address: fa:16:3e:52:7a:f2
+fixed_ips: [{u'subnet_id': u'94bf94c0-6568-4520-aee3-d12b5e472128', u'ip_address': u'10.0.0.2'}]
+id: f47c62b0-dbd2-4faa-9cdd-8abc886ce08f
+security_groups: [u'7c2b801b-4590-4a1f-9837-1cceb7f6d1d0']
+device_id: c3522974-8a08-481c-87b5-fe3822f5c89c
+## port_id = c4493802-4344-42bd-87a6-1b783f88609a
+status: ACTIVE
+name:
+allowed_address_pairs: []
+admin_state_up: True
+network_id: ea3928dc-b1fd-4a1a-940e-82b8c55214e6
+tenant_id: 3a55e7b5f5504649a2dfde7147383d02
+extra_dhcp_opts: []
+binding:vnic_type: normal
+device_owner: compute:az_compute
+mac_address: fa:16:3e:94:84:90
+fixed_ips: [{u'subnet_id': u'94bf94c0-6568-4520-aee3-d12b5e472128', u'ip_address': u'10.0.0.4'}]
+id: c4493802-4344-42bd-87a6-1b783f88609a
+security_groups: [u'7c2b801b-4590-4a1f-9837-1cceb7f6d1d0']
+device_id: 9365c842-9228-44a6-88ad-33d7389cda5f
+```
+
+
+
 ### sh
 `EasyOVS> sh cmd`
 
 Run the system cmd locally, e.g., using ls -l to show local directory's content.
-```
+```sh
 EasyOVS> sh ls -l
 total 48
 drwxr-xr-x. 2 root root 4096 Apr  1 14:34 bin
@@ -240,7 +283,10 @@ Options:
 Clean the env.
 
 ### -m
-Run the given command in easyovs, show the output, and exit.
+Run the given command in easyovs directly, show the output, and exit.
+```sh
+easyovs -m "show br-int"
+```
 
 E.g. `easyovs -m 'br-int dump'`.
 

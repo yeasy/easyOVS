@@ -3,7 +3,8 @@ __author__ = 'baohua'
 from subprocess import PIPE, Popen
 from easyovs.log import output
 
-from easyovs.util import get_port_id_from_ip, color_str
+from easyovs.util import color_str
+from easyovs.neutron import get_port_id_from_ip
 
 _format_str_iptables_rule_ = '%8s\t%-20s%-20s%-6s%-20s\n'  # pkts source destination prot other
 
