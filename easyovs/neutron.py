@@ -1,7 +1,9 @@
 __author__ = 'baohua'
 
-from oslo_config import cfg
-
+try:
+    from oslo_config import cfg
+except ImportError:
+    from oslo.config import cfg
 import keystoneclient.v2_0.client as ksclient
 from keystoneclient.openstack.common.apiclient.exceptions import \
     AuthorizationFailure, Unauthorized
