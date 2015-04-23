@@ -85,11 +85,9 @@ function core {
 function dep {
     echo "###Installing ${PROJ} dependencies"
 	if [ "$DIST" = "Fedora" -o "$DIST" = "CentOS" -o  "$DIST" = "Redhat" ]; then
-        $install gcc make python-devel python-setuptools python-pip pyflakes
-        pylint python-pep8 > /dev/null
+        $install gcc make python-devel python-setuptools python-pip pyflakes pylint python-pep8 > /dev/null
     elif [ "$DIST" = "Ubuntu" -o "$DIST" = "Debian" ]; then
-        $install gcc make python-dev python-setuptools python-pip help2man
-        pyflakes pylint pep8 >  /dev/null
+        $install gcc make python-dev python-setuptools python-pip help2man pyflakes pylint pep8 >  /dev/null
     fi
 }
 
