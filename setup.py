@@ -24,7 +24,6 @@ setup(
     description='Easy way to manage OpenvSwitch bridges',
     author='Baohua Yang',
     author_email='yangbaohua@gmail.com',
-    #packages=['easyovs'],
     packages=find_packages(),
     long_description="""
         EasyOVS provides more convenient and fluent way to operation your OpenvSwitch bridges,

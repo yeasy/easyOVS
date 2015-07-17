@@ -24,4 +24,4 @@ bash easyOVS/util/install.sh
 
 VOLUME ["/var/run/openvswitch/"]
 
-CMD [ "/bin/easyovs" ]
+CMD [ "/usr/local/bin/easyovs" ]

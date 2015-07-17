@@ -47,11 +47,10 @@ $(MANPAGES): $(EXEC)
 
 install: #$(MANPAGES)
 	#install $(MANPAGES) $(MANDIR)
-	install $(EXEC) /bin/
+	# $(EXEC) will be installed into /usr/local/bin/ in following cmd
 	python setup.py install  --record install.log
 
 uninstall:
-	rm /bin/$(PROJ)
 	[ -e install.log ] && cat install.log | xargs rm -rf
 
 clean:
