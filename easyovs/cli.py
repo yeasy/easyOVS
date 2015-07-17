@@ -72,6 +72,8 @@ class CLI(Cmd):
         Add a flow to a bridge.
         """
         args = arg.replace('"', '').replace("'", "").split()
+        if len(args) < 2:
+            error('Not enough parameters are given\n')
         bridge, flow_str = args[0], ' '.join(args[1:])
         if not br_exists(bridge) and self.bridge:
             bridge, flow_str = self.bridge, ' '.join(args)
