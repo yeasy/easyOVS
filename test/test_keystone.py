@@ -21,10 +21,13 @@ if __name__ == '__main__':
                                password=cfg.CONF.OS.password)
     token = keystone.auth_token
 
-    #nova_endpoint_url = keystone.service_catalog.url_for(service_type='compute')
+    #nova_endpoint_url = keystone.service_catalog.url_for(
+    # service_type='compute')
     nova = nvclient.Client(auth_token=token)
 
-    neutron_endpoint_url = keystone.service_catalog.url_for(service_type='network')
-    neutron = neutronclient.Client(endpoint_url=neutron_endpoint_url, token=token)
+    neutron_endpoint_url = keystone.service_catalog.url_for(
+        service_type='network')
+    neutron = neutronclient.Client(endpoint_url=neutron_endpoint_url,
+                                   token=token)
     print neutron.list_networks()
     print neutron.list_ports()

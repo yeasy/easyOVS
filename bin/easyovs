@@ -8,7 +8,8 @@ import sys
 import time
 
 from easyovs import VERSION, config
-from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_list, br_show
+from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_list, \
+    br_show
 from easyovs.cli import CLI
 from easyovs.common import CMDS_ONE, CMDS_TWO, CMDS_OTHER
 from easyovs.iptables import show_iptables_rules
@@ -56,6 +57,7 @@ class Platform(object):
             cleanup()
             exit()
 
+        output('EasyOVS %s, type help for information\n' % VERSION)
         start = time.time()
         cmd = cfg.CONF.cmd
         info("cmd = %s\n" % cmd)
@@ -75,10 +77,12 @@ class Platform(object):
                 output('Wrong command format is given\n')
         elif len(cmd.split()) >= 3:
             if cmd.split()[1] in CMDS_OTHER:  # e.g., br0 delflow 9
-                br, func, arg = cmd.split()[0], cmd.split()[1], ' '.join(cmd.split()[2:])
+                br, func, arg = cmd.split()[0], cmd.split()[1], ' '.join(
+                    cmd.split()[2:])
                 getattr(self, func)(br, arg.replace(',', ' '))
             elif cmd.split()[0] in CMDS_OTHER:  # e.g., delflow br0 9
-                br, func, arg = cmd.split()[1], cmd.split()[0], ' '.join(cmd.split()[2:])
+                br, func, arg = cmd.split()[1], cmd.split()[0], ' '.join(
+                    cmd.split()[2:])
                 getattr(self, func)(br, arg.replace(',', ' '))
             elif cmd.split()[0] == 'ipt':  # e.g., ipt 10.0.0.1, 10.0.0.2
                 func, arg = cmd.split()[0], ' '.join(cmd.split()[1:])

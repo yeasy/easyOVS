@@ -4,7 +4,7 @@ from subprocess import Popen, PIPE
 import re
 
 from easyovs.log import debug, info
-#from easyovs.neutron import get_neutron_ports
+
 
 def sh(cmd):
     """
@@ -23,6 +23,8 @@ def cleanup():
     sh('rm -f /tmp/tmp_switch_* /tmp/vlogs* /tmp/*.out /tmp/*.log')
 
     debug("*** Cleanup complete.\n")
+
+
 def get_numstr_after(line, field):
     """
     Return the Number value in string after given field or ''
@@ -35,17 +37,19 @@ def get_numstr_after(line, field):
         result = r.group(0).replace(field, '').strip()
     return result
 
-def get_num_after(line,field):
+
+def get_num_after(line, field):
     """
     Return the Number value after given field or None
     >>> get_numstr_after("abc=19,xx","abc=") == 19
     True
     """
-    result = get_numstr_after(line,field)
+    result = get_numstr_after(line, field)
     if result:
         return int(result)
     else:
         return None
+
 
 def get_str_before(line, ch):
     """
@@ -72,8 +76,9 @@ def get_str_between(line, start, end):
     """
     result = ''
     start, end = r'%s' % start, r'%s' % end
-    if not start.startswith('\\') and not start.startswith('(') and not start.startswith(')') \
-            and not end.startswith('\\') and not end.startswith('(') and not end.startswith(')'):
+    if not start.startswith('\\') and not start.startswith('(') and not \
+            start.startswith(')') and not end.startswith('\\') and not \
+            end.startswith('(') and not end.startswith(')'):
         r = re.search(r'%s.*%s' % (start, end), line)
     else:
         r = re.search(r'\%s.*\%s' % (start, end), line)
@@ -108,6 +113,7 @@ def fmt_flow_str(raw_str):
     flow = match + ' ' + actions
     return flow
 
+
 def color_str(color, raw_str):
     if color == 'r':
         fore = 31
@@ -137,8 +143,8 @@ def compress_mac_str(raw_str):
     >>> compress_mac_str('00:00:00:01:01:01')
     '00::01:01:01'
     """
-    if re.search(r'(\d\d:)\1{2,}',raw_str):
-        return re.sub(r'(\d\d:)\1{2,}',r'\1:',raw_str)
+    if re.search(r'(\d\d:)\1{2,}', raw_str):
+        return re.sub(r'(\d\d:)\1{2,}', r'\1:', raw_str)
     else:
         return raw_str
 
@@ -158,34 +164,36 @@ def get_bridges():
         },
     }
     """
-    bridges, br = {}, ''
+    brs, br = {}, ''
     cmd = 'ovs-vsctl show'
-    result, error = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
+    result, error = Popen(cmd, stdout=PIPE, stderr=PIPE,
+                          shell=True).communicate()
     if error:
         return {}
     for l in result.split('\n'):
         l = l.strip().replace('"', '')
         if l.startswith('Bridge '):
             br = l.lstrip('Bridge ')
-            bridges[br] = {}
-            bridges[br]['Controller'] = []
-            bridges[br]['Port'] = {}
-            bridges[br]['fail_mode'] = ''
+            brs[br] = {}
+            brs[br]['Controller'] = []
+            brs[br]['Port'] = {}
+            brs[br]['fail_mode'] = ''
         else:
             if l.startswith('Controller '):
-                bridges[br]['Controller'].append(l.replace('Controller ', ''))
+                brs[br]['Controller'].append(l.replace('Controller ', ''))
             elif l.startswith('fail_mode: '):
-                bridges[br]['fail_mode'] = l.replace('fail_mode: ', '')
+                brs[br]['fail_mode'] = l.replace('fail_mode: ', '')
             elif l.startswith('Port '):
                 phy_port = l.replace('Port ', '')  # e.g., br-eth0
-                bridges[br]['Port'][phy_port] = {'vlan': '', 'type': ''}
+                brs[br]['Port'][phy_port] = {'vlan': '', 'type': ''}
             elif l.startswith('tag: '):
-                bridges[br]['Port'][phy_port]['vlan'] = l.replace('tag: ', '')
+                brs[br]['Port'][phy_port]['vlan'] = l.replace('tag: ', '')
             elif l.startswith('Interface '):
-                bridges[br]['Port'][phy_port]['intf'] = l.replace('Interface ', '')
+                brs[br]['Port'][phy_port]['intf'] = \
+                    l.replace('Interface ', '')
             elif l.startswith('type: '):
-                bridges[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
-    return bridges
+                brs[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
+    return brs
 
 
 if __name__ == '__main__':

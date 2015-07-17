@@ -1,7 +1,5 @@
 __author__ = 'baohua'
 
-from subprocess import Popen, PIPE
-
 from easyovs.bridge import Bridge
 from easyovs.flow import Flow
 from easyovs.log import debug, output
@@ -71,9 +69,11 @@ def br_list():
     for br in sorted(bridges.keys()):
         br_info += "%s\n" % br
         if bridges[br]['Port']:
-            br_info += " Port:\t\t%s\n" % (' '.join(sorted(bridges[br]['Port'].keys())))
+            br_info += " Port:\t\t%s\n" \
+                       % (' '.join(sorted(bridges[br]['Port'].keys())))
         if bridges[br]['Controller']:
-            br_info += " Controller:\t%s\n" % (' '.join(bridges[br]['Controller']))
+            br_info += " Controller:\t%s\n" \
+                       % (' '.join(bridges[br]['Controller']))
         if bridges[br]['fail_mode']:
             br_info += " Fail_Mode:\t%s\n" % (bridges[br]['fail_mode'])
     output(br_info)
@@ -103,7 +103,9 @@ def br_show(bridge):
     content = []
     mac_ip_show = False
     for intf in ovs_ports:  # e.g., qvo-xxx, int-br-eth0, qr-xxx, tapxxx
-        port, tag, intf_type = ovs_ports[intf]['port'], ovs_ports[intf]['vlan'], ovs_ports[intf]['type']
+        port, tag, intf_type = \
+            ovs_ports[intf]['port'], ovs_ports[intf]['vlan'], ovs_ports[
+                intf]['type']
         if neutron_ports and intf[3:] in neutron_ports:
             p = neutron_ports[intf[3:]]
             vm_ips = ','.join(map(lambda x: x.get('ip_address'),
@@ -113,11 +115,12 @@ def br_show(bridge):
         else:
             vm_ips, vm_mac = '', ''
         content.append((intf, port, tag, intf_type, vm_ips, vm_mac))
-        #output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
-    content.sort(key=lambda x: x[1]) #sort by port
-    content.sort(key=lambda x: x[4]) #sort by vm_ip
-    content.sort(key=lambda x: x[3]) #sort by type
-    output(color_str('r','%-20s%-12s%-8s%-12s' % ('Intf', 'Port', 'Vlan', 'Type')))
+        # output('%-20s%-8s%-16s%-24s%-8s\n' %(intf,port,vmIP,vmMac,tag))
+    content.sort(key=lambda x: x[1])  # sort by port
+    content.sort(key=lambda x: x[4])  # sort by vm_ip
+    content.sort(key=lambda x: x[3])  # sort by type
+    output(color_str('r', '%-20s%-12s%-8s%-12s'
+                     % ('Intf', 'Port', 'Vlan', 'Type')))
     if mac_ip_show:
         output(color_str('r', '%-16s%-24s\n' % ('vmIP', 'vmMAC')))
     else:
@@ -126,7 +129,8 @@ def br_show(bridge):
     for _ in content:
         #color = ['w','g'][i%2]
         color = 'b'
-        output(color_str(color, '%-20s%-12s%-8s%-12s' % (_[0], _[1], _[2], _[3])))
+        output(color_str(color, '%-20s%-12s%-8s%-12s'
+                         % (_[0], _[1], _[2], _[3])))
         if mac_ip_show:
             output(color_str(color, '%-16s%-24s\n' % (_[4], _[5])))
         else:

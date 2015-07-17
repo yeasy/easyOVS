@@ -5,11 +5,12 @@ try:
     from oslo_config import cfg
 except ImportError:
     from oslo.config import cfg
-from select import poll, POLLIN
+from select import poll
 from subprocess import call
 import sys
 
-from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_exists, br_list, br_show
+from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_exists, \
+    br_list, br_show
 from easyovs.iptables import show_iptables_rules
 from easyovs.log import info, output, error, debug
 from easyovs.neutron import show_port_info
@@ -48,7 +49,8 @@ class CLI(Cmd):
         self.in_poller = poll()
         self.in_poller.register(stdin)
         Cmd.__init__(self)
-        output("***\n Welcome to EasyOVS, type help to see available commands.\n***\n")
+        output("***\n Welcome to EasyOVS,"
+               "type help to see available commands.\n***\n")
         info('*** Starting CLI:\n')
         debug("==cfg.ADMIN==\n")
         debug("auth_url = %s\n" % cfg.CONF.OS.auth_url)
@@ -94,12 +96,15 @@ class CLI(Cmd):
         if len(args) >= 2:
             flow_ids = ' '.join(args[1:]).replace(',', ' ').split()
             if not br_delflow(args[0], flow_ids):
-                output('Del flow#%s from %s failed.\n' % (' '.join(flow_ids), args[0]))
+                output('Del flow#%s from %s failed.\n'
+                       % (' '.join(flow_ids), args[0]))
             else:
-                output('Del flow#%s from %s done.\n' % (','.join(flow_ids), args[0]))
+                output('Del flow#%s from %s done.\n'
+                       % (','.join(flow_ids), args[0]))
         elif len(args) == 1 and self.bridge:
             if not br_delflow(self.bridge, arg):
-                output('Del flow#%s from %s failed.\n' % (arg, self.bridge))
+                output('Del flow#%s from %s failed.\n'
+                       % (arg, self.bridge))
             else:
                 output('Del flow#%s from %s done.\n' % (arg, self.bridge))
         else:
@@ -187,9 +192,11 @@ class CLI(Cmd):
         if not arg:
             output('Argument is missed\n')
         elif not br_exists(arg):
-            output('The bridge does not exist.\n You can check available bridges using show\n')
+            output('The bridge does not exist.\n '
+                   'You can check available bridges using show\n')
         else:
-            self.prompt = color_str('g', PROMPT_KW[:-2] + ':%s> ' % color_str('b', arg))
+            self.prompt = \
+                color_str('g', PROMPT_KW[:-2] + ':%s> ' % color_str('b', arg))
             self.bridge = arg
             output('Set the default bridge to %s.\n' % self.bridge)
 
@@ -226,7 +233,8 @@ class CLI(Cmd):
         if len(line.split()) == 2:
             bridge, cmd = line.split()
         else:
-            bridge, cmd, args = line.split()[0], line.split()[1], ' '.join(line.split()[2:])
+            bridge, cmd, args = \
+                line.split()[0], line.split()[1], ' '.join(line.split()[2:])
         if br_exists(bridge):
             try:
                 if args:
@@ -234,6 +242,8 @@ class CLI(Cmd):
                 else:
                     getattr(self, 'do_%s' % cmd)(bridge)
             except AttributeError:
-                error('*** Unknown command: %s, cmd=%s, bridge=%s, args=%s ***\n' % (line, cmd, bridge, args))
+                error('*** Unknown command: '
+                      '%s, cmd=%s, bridge=%s, args=%s '
+                      '***\n' % (line, cmd, bridge, args))
         else:
             error('*** Bridge %s is not existed\n' % bridge)

@@ -14,7 +14,9 @@ from easyovs.util import get_num_after, get_str_before, get_str_between
 def check_exist(func):
     def wrapper(self, *arg):
         if not self.exists():
-            output('The bridge does not exist.\nPlease check available bridges using list\n')
+            output(
+                'The bridge does not exist.\n \
+                Please check available bridges using list\n')
             return None
         else:
             return func(self, *arg)
@@ -45,7 +47,8 @@ class Bridge(object):
         if not flow:
             return False
         addflow_cmd = 'ovs-ofctl add-flow %s "%s"' % (self.bridge, flow)
-        error = Popen(addflow_cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()[1]
+        error = Popen(addflow_cmd, stdout=PIPE, stderr=PIPE,
+                      shell=True).communicate()[1]
         if error:
             output(error)
             return False
@@ -112,8 +115,10 @@ class Bridge(object):
                     #del_flow.fmt_output()
         f.close()
         f_new.close()
-        replace_cmd = "ovs-ofctl replace-flows %s %s" % (self.bridge, flows_db_new)
-        error = Popen(replace_cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()[1]
+        replace_cmd = "ovs-ofctl replace-flows %s %s" % (self.bridge,
+                                                         flows_db_new)
+        error = Popen(replace_cmd, stdout=PIPE, stderr=PIPE,
+                      shell=True).communicate()[1]
         if error:
             output(error)
             return False
@@ -124,14 +129,15 @@ class Bridge(object):
     @check_exist
     def load_flows(self, db=False):
         """
-        Load the OpenvSwitch table rules into self.flows, and also to db if enabled.
+        Load the OpenvSwitch table rules into self.flows, and to db if enabled.
         """
         debug('load_flows():\n')
         cmd = "ovs-ofctl dump-flows %s" % self.bridge
-        flow_id, flows, f = 0, [], None
+        flows, f = [], None
         if db:
             f = open(self.flows_db, 'w')
-        result, error = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
+        result, error = \
+            Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
         if error:
             return
         for l in result.split('\n'):
@@ -175,20 +181,22 @@ class Bridge(object):
             if table is None or packet is None:
                 return None
             for field in line.split():
-                if field.startswith('priority='): #priority of priority+match
+                if field.startswith('priority='):  # priority
                     priority = get_num_after(field, 'priority=')
                     if priority is None:
                         return None
-                    match = field.replace('priority=%u' % priority, '').lstrip(',').strip()
+                    match = \
+                        field.replace('priority=%u'
+                                      % priority, '').lstrip(',').strip()
                     if not match:
                         match = r'*'
                 elif field.startswith('actions='):
                     actions = field.replace('actions=', '').rstrip('\n')
             if priority is None:  # There is no priority= field
                 match = line.split()[len(line.split()) - 2]
-            if len(match)>=30:
-                match.replace('vlan_tci','vlan')
-                match = re.compile('0x0{1,}').sub('0x',match)
+            if len(match) >= 30:
+                match.replace('vlan_tci', 'vlan')
+                match = re.compile('0x0{1,}').sub('0x', match)
             return Flow(self.bridge, table, packet, priority, match, actions)
         else:
             return None
@@ -196,7 +204,7 @@ class Bridge(object):
     @check_exist
     def get_ports(self):
         """
-        Return a dict of the ports (port, addr, tag, type) on the bridge, looks like
+        Return a dict of the ports (port, addr, tag, type) on the bridge, like
         {
             'qvoxxx':{
                 'port':2,
@@ -208,11 +216,12 @@ class Bridge(object):
         """
         ports = {}
         cmd = "ovs-ofctl show %s" % self.bridge
-        result, error = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
+        result, error = \
+            Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
         if error:
             return {}
         #output('%-8s%-16s%-16s\n' %('PORT','INTF','ADDR'))
-        bridges = get_bridges()
+        brs = get_bridges()
         for l in result.split('\n'):
             if l.startswith(' ') and l.find('(') >= 0 and l.find(')') >= 0:
                 l = l.strip()
@@ -220,10 +229,11 @@ class Bridge(object):
                 intf = get_str_between(l, '(', ')')
                 addr = l[l.find('addr:') + len('addr:'):]
                 #output('%-8s%-16s%-16s\n' %(port,intf,addr))
-                if self.bridge in bridges and intf in bridges[self.bridge]['Port']:
-                    tag = bridges[self.bridge]['Port'][intf].get('vlan', '')
-                    intf_type = bridges[self.bridge]['Port'][intf].get('type', '')
+                if self.bridge in brs and intf in brs[self.bridge]['Port']:
+                    tag = brs[self.bridge]['Port'][intf].get('vlan', '')
+                    intf_type = brs[self.bridge]['Port'][intf].get('type', '')
                 else:
                     tag, intf_type = '', ''
-                ports[intf] = {'port': port, 'addr': addr, 'vlan': tag, 'type': intf_type}
+                ports[intf] = {'port': port, 'addr': addr, 'vlan': tag,
+                               'type': intf_type}
         return ports
