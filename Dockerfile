@@ -7,6 +7,8 @@ MAINTAINER Baohua Yang
 ENV DEBIAN_FRONTEND noninteractive
 ENV TZ Asia/Shanghai
 
+USER root
+
 # install needed software
 RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
 RUN apt-get update && \
@@ -19,5 +21,7 @@ echo "index-url = http://mirrors.aliyun.com/pypi/simple/" >> ~/.pip/pip.conf
 
 RUN git clone https://github.com/yeasy/easyOVS.git && \
 bash easyOVS/util/install.sh
+
+VOLUME ["/var/run/openvswitch/"]
 
 CMD [ "/bin/easyovs" ]
