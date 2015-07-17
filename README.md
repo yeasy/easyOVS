@@ -54,7 +54,7 @@ If you wanna to remove the package from the system
 
 ## Run with Docker
 ```sh
-docker run -it --privileged --net='host' -v /var/run/openvswitch/:/var/run/openvswitch/:ro yeasy/easyovs:latest
+docker run -it --net='host' -v /var/run/openvswitch/:/var/run/openvswitch/:ro yeasy/easyovs:latest
 ```
 
 # Documentation
@@ -236,8 +236,6 @@ id: c4493802-4344-42bd-87a6-1b783f88609a
 security_groups: [u'7c2b801b-4590-4a1f-9837-1cceb7f6d1d0']
 device_id: 9365c842-9228-44a6-88ad-33d7389cda5f
 ```
-
-
 
 ### sh
 `EasyOVS> sh cmd`
