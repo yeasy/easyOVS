@@ -77,7 +77,7 @@ function core {
     pushd $WORK_DIR
     chmod a+x ${EXEC}
     [ -f /etc/easyovs.conf ] || cp $WORK_DIR/etc/easyovs.conf /etc/
-    sudo make install
+    make install
     popd
 }
 

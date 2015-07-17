@@ -12,10 +12,12 @@ BINDIR = /usr/bin
 MANDIR = /usr/share/man/man1
 DOCDIRS = doc/html doc/latex
 PDF = doc/latex/refman.pdf
-
 CFLAGS += -Wall -Wextra
 
 all: codecheck test
+
+build:
+	docker build -t easyovs .
 
 codecheck: $(PYSRC)
 	-echo "Running code check"
@@ -45,6 +47,7 @@ $(MANPAGES): $(EXEC)
 
 install: #$(MANPAGES)
 	#install $(MANPAGES) $(MANDIR)
+	install $(EXEC) /bin/
 	python setup.py install  --record install.log
 
 uninstall:
