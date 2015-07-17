@@ -1,4 +1,4 @@
 "Docstring to silence pylint; ignores --ignore option for __init__.py"
 __author__ = 'baohua'
 
-VERSION = "0.3"
+VERSION = "0.4"

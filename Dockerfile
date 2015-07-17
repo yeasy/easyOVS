@@ -10,7 +10,7 @@ ENV TZ Asia/Shanghai
 # install needed software
 RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
 RUN apt-get update && \
-apt-get install pep8 pyflakes python2.7-dev python-pip git -y && \
+apt-get install pep8 pyflakes python2.7-dev python-pip git openvswitch-switch -y && \
 rm -rf /var/cache/apt/
 
 # update the pypi mirror

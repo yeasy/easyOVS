@@ -27,8 +27,7 @@ easyOVS will show an interactive CLI, which supports command suggestions and for
 
 ## Enable OpenStack Feature
 To integrate the port information collected from OpenStack, 
-please set the authentication information in your environment:
-e.g., 
+please set the authentication information in your environment: e.g.,
 ```sh
 export OS_USERNAME=demo
 export OS_TENANT_NAME=demo
@@ -52,6 +51,11 @@ If you wanna upgrade easyOVS from a previous version, just run
 If you wanna to remove the package from the system
 
 `sudo bash ./easyOVS/util/install.sh -d`
+
+## Run with Docker
+```sh
+docker run -it --privileged --net='host' -v /var/run/openvswitch/:/var/run/openvswitch/:ro yeasy/easyovs:latest
+```
 
 # Documentation
 
