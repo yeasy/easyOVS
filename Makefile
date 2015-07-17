@@ -51,6 +51,7 @@ install: #$(MANPAGES)
 	python setup.py install  --record install.log
 
 uninstall:
+	rm /bin/$(PROJ)
 	[ -e install.log ] && cat install.log | xargs rm -rf
 
 clean:
