@@ -5,7 +5,7 @@ Provide smarter and powerful operation on OpenvSwitch bridges in OpenStack.
 
 version 0.4
 
-#What is easyOVS
+# What is easyOVS
 easyOVS provides a more convenient and fluent way to operate your 
 [OpenvSwitch](http://openvswitch.org) bridges in OpenStack platform,
 such as list their ports, dump their flows and add/del some flows in a smart 
@@ -15,6 +15,8 @@ If using in OpenStack environment (Currently tested from the Havana to the Juno
 release), easyOVS will associate the ports with the vm MAC/IP and VLAN Tag information, and the iptables rules for vm.
 
 # Installation and Usage
+
+## Install on host
 Download the latest version and install.
 
 `git clone https://github.com/yeasy/easyOVS.git && sudo bash ./easyOVS/util/install.sh`
@@ -24,6 +26,20 @@ After the installation, start easyovs with
 `sudo easyovs`
 
 easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
+
+## Run with Docker
+```sh
+docker run -it --net='host' -v /var/run/openvswitch/:/var/run/openvswitch/:ro yeasy/easyovs:latest
+```
+
+## Upgrade or Delete
+If you wanna upgrade easyOVS from a previous version, just run
+
+`sudo bash ./easyOVS/util/install.sh -u`
+
+If you wanna to remove the package from the system
+
+`sudo bash ./easyOVS/util/install.sh -d`
 
 ## Enable OpenStack Feature
 To integrate the port information collected from OpenStack, 
@@ -41,20 +57,6 @@ auth_url = http://127.0.0.1:5000/v2.0
 username = demo
 password = admin
 tenant_name = demo
-```
-
-## Upgrade or Delete
-If you wanna upgrade easyOVS from a previous version, just run
-
-`sudo bash ./easyOVS/util/install.sh -u`
-
-If you wanna to remove the package from the system
-
-`sudo bash ./easyOVS/util/install.sh -d`
-
-## Run with Docker
-```sh
-docker run -it --net='host' -v /var/run/openvswitch/:/var/run/openvswitch/:ro yeasy/easyovs:latest
 ```
 
 # Documentation
