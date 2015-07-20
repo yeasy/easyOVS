@@ -44,7 +44,7 @@ man: $(MANPAGES)
 $(MANPAGES): $(EXEC)
 	PYTHONPATH=. help2man -N -n "Manpages." $< -o $@
 
-.PHONY: doc clean install uninstall
+.PHONY: all build clean doc install test uninstall
 
 install: #$(MANPAGES)
 	#install $(MANPAGES) $(MANDIR)
