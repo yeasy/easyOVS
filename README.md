@@ -102,6 +102,27 @@ qvo8bf9cba2-3f      9           1                   192.168.0.5     fa:16:3e:a2:
 qvod4de9fe0-6d      8           2                   10.0.0.2        fa:16:3e:38:2b:2e       
 br-int              LOCAL               internal
 ```
+### addbr
+`EasyOVS> addbr br-test`
+
+Create a new bridge. The output would look like
+
+```sh
+EasyOVS> addbr br1,br2
+bridge br1 was created
+bridge br2 was created
+```
+
+### delbr
+`EasyOVS> delbr br-test`
+
+Delete a bridge. The output would look like
+
+```sh
+EasyOVS> delbr br1,br2
+bridge br1 was deleted
+bridge br2 was deleted
+```
 
 ### dump
 `EasyOVS> [bridge|default] dump`

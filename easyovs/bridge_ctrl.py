@@ -1,8 +1,10 @@
 __author__ = 'baohua'
 
+from subprocess import call, Popen, PIPE
+
 from easyovs.bridge import Bridge
 from easyovs.flow import Flow
-from easyovs.log import debug, output
+from easyovs.log import debug, error, output
 from easyovs.neutron import neutron_handler
 from easyovs.util import get_bridges, color_str
 
@@ -78,6 +80,29 @@ def br_list():
             br_info += " Fail_Mode:\t%s\n" % (bridges[br]['fail_mode'])
     output(br_info)
 
+def br_addbr(bridge):
+    """
+    Create a new bridge.
+    """
+    cmd = "ovs-vsctl --may-exist add-br %s" % bridge
+    result, err = \
+        Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
+    if err:
+        error("Error when adding new bridge %s\n" % bridge)
+    else:
+        output("bridge %s was created\n" % bridge)
+
+def br_delbr(bridge):
+    """
+    Delete a bridge.
+    """
+    cmd = "ovs-vsctl --if-exists del-br %s" % bridge
+    result, err = \
+        Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
+    if err:
+        error("Error when deleting bridge %s\n" % bridge)
+    else:
+        output("bridge %s was deleted\n" % bridge)
 
 def br_dump(bridge):
     """
