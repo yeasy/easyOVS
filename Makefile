@@ -32,6 +32,7 @@ errcheck: $(PYSRC)
 
 test: $(SRCFILES) $(TESTFILES)
 	-echo "Running tests"
+	cd test && bash test_all_commands.sh
 
 develop: $(MANPAGES)
 	# Perhaps we should link these as well
