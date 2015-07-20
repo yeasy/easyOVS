@@ -8,8 +8,8 @@ import sys
 import time
 
 from easyovs import VERSION, config
-from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_list, \
-    br_show
+from easyovs.bridge_ctrl import br_addbr, br_delbr, br_addflow, br_delflow, \
+    br_dump, br_list, br_show
 from easyovs.cli import CLI
 from easyovs.common import CMDS_ONE, CMDS_TWO, CMDS_OTHER
 from easyovs.iptables import show_iptables_rules
@@ -109,6 +109,14 @@ class Platform(object):
     @staticmethod
     def list():
         br_list()
+
+    @staticmethod
+    def addbr(br):
+        br_addbr(br)
+
+    @staticmethod
+    def delbr(br):
+        br_delbr(br)
 
     @staticmethod
     def show(br):
