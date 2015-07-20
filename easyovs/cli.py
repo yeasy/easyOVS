@@ -9,8 +9,8 @@ from select import poll
 from subprocess import call
 import sys
 
-from easyovs.bridge_ctrl import br_addflow, br_delflow, br_dump, br_exists, \
-    br_list, br_show
+from easyovs.bridge_ctrl import br_addflow, br_delbr, br_addbr, br_delflow, \
+    br_dump, br_exists,br_list, br_show
 from easyovs.iptables import show_iptables_rules
 from easyovs.log import info, output, error, debug
 from easyovs.neutron import show_port_info
@@ -73,7 +73,9 @@ class CLI(Cmd):
         """
         args = arg.replace('"', '').replace("'", "").split()
         if len(args) < 2:
-            error('Not enough parameters are given\n')
+            output('Not enough parameters are given, use like ')
+            output('br-int addflow priority=3 ip actions=OUTPUT:1\n')
+            return
         bridge, flow_str = args[0], ' '.join(args[1:])
         if not br_exists(bridge) and self.bridge:
             bridge, flow_str = self.bridge, ' '.join(args)
@@ -110,7 +112,41 @@ class CLI(Cmd):
             else:
                 output('Del flow#%s from %s done.\n' % (arg, self.bridge))
         else:
-            output("Please use [bridge] delflow flow_id.\n")
+            output("Please use like [bridge] delflow flow_id.\n")
+
+    def do_addbr(self, arg):
+        """
+        addbr [bridge]
+        create a new bridge with name
+        """
+        args = arg.split()
+        if len(args) < 1:
+            output('Not enough parameters are given, use like ')
+            output('addbr br1,br2\n')
+            return
+        brs = ' '.join(args[1:]).replace(',', ' ').split()
+        for br in brs:
+            br_addbr(br)
+        else:
+            output("Please give a valid bridge.\n")
+            return
+
+    def do_delbr(self, arg):
+        """
+        delbr [bridge]
+        Delete a bridge
+        """
+        args = arg.split()
+        if len(args) < 1:
+            output('Not enough parameters are given, use like ')
+            output('del br1,br2\n')
+            return
+        brs = ' '.join(args[1:]).replace(',', ' ').split()
+        for br in brs:
+            br_delbr(br)
+        else:
+            output("Please give a valid bridge.\n")
+            return
 
     def do_dump(self, arg):
         """
