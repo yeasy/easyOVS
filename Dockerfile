@@ -19,7 +19,7 @@ rm -rf /var/cache/apt/
 RUN mkdir ~/.pip/ && echo "[global]" > ~/.pip/pip.conf && \
 echo "index-url = http://mirrors.aliyun.com/pypi/simple/" >> ~/.pip/pip.conf
 
-RUN git clone https://github.com/yeasy/easyOVS.git && \
+RUN git clone https://github.com/yeasy/easyOVS.git master && \
 bash easyOVS/util/install.sh
 
 VOLUME ["/var/run/openvswitch/"]
