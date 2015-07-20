@@ -120,7 +120,7 @@ class CLI(Cmd):
         create a new bridge with name
         """
         args = arg.split()
-        if len(args) < 2:
+        if len(args) < 1:
             output('Not enough parameters are given, use like ')
             output('addbr br1,br2\n')
             return
@@ -137,7 +137,7 @@ class CLI(Cmd):
         Delete a bridge
         """
         args = arg.split()
-        if len(args) < 2:
+        if len(args) < 1:
             output('Not enough parameters are given, use like ')
             output('del br1,br2\n')
             return
