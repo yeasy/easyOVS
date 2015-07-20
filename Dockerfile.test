@@ -28,4 +28,4 @@ RUN make install
 
 VOLUME ["/var/run/openvswitch/"]
 
-CMD [ "make test" ]
+CMD ["bash", "-c", "make test" ]
