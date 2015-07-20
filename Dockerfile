@@ -10,9 +10,8 @@ ENV TZ Asia/Shanghai
 USER root
 
 # install needed software
-#RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
-RUN sed -i 's/archive.ubuntu.com\/ubuntu/9.186.100.77:8088\/aliyun-ubuntu/g' /etc/apt/sources.list
-RUN apt-get update && \
+RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+apt-get update && \
 apt-get install git openvswitch-switch pep8 pyflakes python2.7-dev python-pip python-setuptools -y && \
 rm -rf /var/cache/apt/
 
