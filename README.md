@@ -29,7 +29,9 @@ easyOVS will show an interactive CLI, which supports command suggestions and for
 
 ## Run with Docker
 ```sh
-docker run -it --net='host' -v /var/run/openvswitch/:/var/run/openvswitch/:ro yeasy/easyovs:latest
+docker run -it --net='host' \
+ -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+  yeasy/easyovs:latest
 ```
 
 ## Upgrade or Delete
