@@ -39,7 +39,7 @@ If you wanna upgrade easyOVS from a previous version, just run
 
 `sudo bash ./easyOVS/util/install.sh -u`
 
-If you wanna to remove the package from the system
+If you wanna remove the package from the system
 
 `sudo bash ./easyOVS/util/install.sh -d`
 

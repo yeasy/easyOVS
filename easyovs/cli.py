@@ -127,9 +127,6 @@ class CLI(Cmd):
         brs = ' '.join(args[1:]).replace(',', ' ').split()
         for br in brs:
             br_addbr(br)
-        else:
-            output("Please give a valid bridge.\n")
-            return
 
     def do_delbr(self, arg):
         """
@@ -144,9 +141,6 @@ class CLI(Cmd):
         brs = ' '.join(args[1:]).replace(',', ' ').split()
         for br in brs:
             br_delbr(br)
-        else:
-            output("Please give a valid bridge.\n")
-            return
 
     def do_dump(self, arg):
         """

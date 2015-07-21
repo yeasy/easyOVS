@@ -16,6 +16,7 @@ echo_b "##Test: easyovs -m addbr br-test" | tee -a ${log_file}
 if easyovs -m 'addbr br-test' | tee -a ${log_file} | grep -i "error" > /dev/null 2>&1
 then
     echo_r "Failed" | tee -a ${log_file}
+    exit -1
 else
 	echo_g "Passed" | tee -a ${log_file}
 fi
@@ -24,6 +25,7 @@ echo_b "##Test: easyovs -m delbr br-test" | tee -a ${log_file}
 if easyovs -m 'delbr br-test' | tee -a ${log_file} | grep -i "error" > /dev/null 2>&1
 then
     echo_r "Failed" | tee -a ${log_file}
+    exit -1
 else
 	echo_g "Passed" | tee -a ${log_file}
 fi
@@ -35,5 +37,9 @@ then
 	echo_g "Passed" | tee -a ${log_file}
 else
     echo_r "Failed" | tee -a ${log_file}
+    exit -1
 fi
 easyovs -m 'delbr br-test'
+
+
+exit 0
