@@ -77,11 +77,12 @@ class CLI(Cmd):
             output('br-int addflow priority=3 ip actions=OUTPUT:1\n')
             return
         bridge, flow_str = args[0], ' '.join(args[1:])
-        if not br_exists(bridge) and self.bridge:
-            bridge, flow_str = self.bridge, ' '.join(args)
-        else:
-            output('Please give a valid bridge.\n')
-            return
+        if not br_exists(bridge):
+            if self.bridge:
+                bridge, flow_str = self.bridge, ' '.join(args)
+            else:
+                output('Please give a valid bridge.\n')
+                return
         flow = fmt_flow_str(flow_str)
         if not flow:
             output('Please give a valid flow.\n')
@@ -124,7 +125,7 @@ class CLI(Cmd):
             output('Not enough parameters are given, use like ')
             output('addbr br1,br2\n')
             return
-        brs = ' '.join(args[1:]).replace(',', ' ').split()
+        brs = ' '.join(args[0:]).replace(',', ' ').split()
         for br in brs:
             br_addbr(br)
 
@@ -138,7 +139,7 @@ class CLI(Cmd):
             output('Not enough parameters are given, use like ')
             output('del br1,br2\n')
             return
-        brs = ' '.join(args[1:]).replace(',', ' ').split()
+        brs = ' '.join(args[0:]).replace(',', ' ').split()
         for br in brs:
             br_delbr(br)
 
