@@ -69,13 +69,21 @@ class Platform(object):
                 self.list()
         elif len(cmd_split) >= 2:
             if cmd_split[1] in CMDS_BR:  # e.g., br0 delflow 9
-                br, func, arg = cmd_split[0], cmd_split[1], ' '.join(
-                    cmd_split[2:])
-                getattr(self, func)(br, arg.replace(',', ' '))
+                if len(cmd_split) > 2:
+                    br, func, arg = cmd_split[0], cmd_split[1], ' '.join(
+                        cmd_split[2:])
+                    getattr(self, func)(br, arg.replace(',', ' '))
+                else:
+                    br, func = cmd_split[0], cmd_split[1]
+                    getattr(self, func)(br)
             elif cmd_split[0] in CMDS_BR:  # e.g., delflow br0 9
-                br, func, arg = cmd_split[1], cmd_split[0], ' '.join(
-                    cmd_split[2:])
-                getattr(self, func)(br, arg.replace(',', ' '))
+                if len(cmd_split) > 2:
+                    br, func, arg = cmd_split[1], cmd_split[0], ' '.join(
+                        cmd_split[2:])
+                    getattr(self, func)(br, arg.replace(',', ' '))
+                else:
+                    br, func = cmd_split[1], cmd_split[0]
+                    getattr(self, func)(br)
             elif cmd_split[0] in CMDS_OTHER:  # e.g., ipt 10.0.0.1, 10.0.0.2
                 func, arg = cmd_split[0], ' '.join(cmd_split[1:])
                 getattr(self, func)(arg)
