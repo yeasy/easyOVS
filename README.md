@@ -31,6 +31,7 @@ easyOVS will show an interactive CLI, which supports command suggestions and for
 ```sh
 docker run -it --net='host' \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ --privileged \
   yeasy/easyovs:latest
 ```
 

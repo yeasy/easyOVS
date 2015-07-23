@@ -5,7 +5,7 @@ FROM yeasy/devbase:python
 MAINTAINER Baohua Yang
 
 # install needed software
-RUN apt-get install openvswitch-switch -y
+RUN apt-get install openvswitch-switch iptables -y
 
 RUN git clone https://github.com/yeasy/easyOVS.git -b master  && \
 bash easyOVS/util/install.sh
