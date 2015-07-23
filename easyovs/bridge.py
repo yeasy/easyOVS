@@ -7,7 +7,7 @@ import termios
 
 from easyovs.util import get_bridges
 from easyovs.flow import Flow
-from easyovs.log import output, debug
+from easyovs.log import output, error, debug
 from easyovs.util import get_num_after, get_str_before, get_str_between
 
 
@@ -47,10 +47,12 @@ class Bridge(object):
         if not flow:
             return False
         addflow_cmd = 'ovs-ofctl add-flow %s "%s"' % (self.bridge, flow)
-        error = Popen(addflow_cmd, stdout=PIPE, stderr=PIPE,
+        err = Popen(addflow_cmd, stdout=PIPE, stderr=PIPE,
                       shell=True).communicate()[1]
-        if error:
-            output(error)
+        if err:
+            output(err)
+            error("Error when adding new flow <%s> to bridge %s\n"
+                  % (flow, self.bridge))
             return False
         else:
             return True
@@ -100,31 +102,31 @@ class Bridge(object):
         if not del_flows:
             return False
         self.load_flows(True)
-        flows_db_new = self.flows_db + '.new'
-        f, f_new = open(self.flows_db, 'r'), open(flows_db_new, 'w')
+        f = open(self.flows_db, 'r')
         while True:
             lines = f.readlines(1000)
             if not lines:
                 break
             for line in lines:
                 flow = self.parse_flow(line)
-                if flow not in del_flows:
-                    f_new.write('%s' % line)
-                else:
-                    debug("Del the flow:\n")
-                    #del_flow.fmt_output()
+                if flow in del_flows:
+                    del_matches = line.replace(',',' ').split()
+                    del_matches = \
+                        filter(lambda m: not (m.startswith("cookie=") \
+                               or m.startswith("actions=")), del_matches)
+                    del_cmd = "ovs-ofctl --strict del-flows %s %s" \
+                              % (self.bridge, ','.join(del_matches))
+                    output(del_cmd + '\n')
+                    err = Popen(del_cmd, stdout=PIPE, stderr=PIPE,
+                                  shell=True).communicate()[1]
+                    if err:
+                        output(err)
+                        error("Error when deleting flow <%s> in bridge %s\n"
+                              % (','.join(del_matches), self.bridge))
+                        return False
         f.close()
-        f_new.close()
-        replace_cmd = "ovs-ofctl replace-flows %s %s" % (self.bridge,
-                                                         flows_db_new)
-        error = Popen(replace_cmd, stdout=PIPE, stderr=PIPE,
-                      shell=True).communicate()[1]
-        if error:
-            output(error)
-            return False
-        else:
-            self.load_flows()
-            return True
+        self.load_flows()
+        return True
 
     @check_exist
     def load_flows(self, db=False):
