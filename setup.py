@@ -43,7 +43,7 @@ setup(
         'oslo.config>=1.0,<=1.15',
         'python-keystoneclient>=1.0,<=1.6',
         'python-neutronclient>=2.0,<=2.6',
-        'setuptools>=1.0,<=3.1',
+        'setuptools>=1.0,<=3.3',
     ],
     scripts=scripts,
 )
