@@ -120,12 +120,11 @@ class CLI(Cmd):
         addbr [bridge]
         create a new bridge with name
         """
-        args = arg.split()
-        if len(args) < 1:
+        brs = arg.replace(',', ' ').split()
+        if len(brs) < 1:
             output('Not enough parameters are given, use like ')
             output('addbr br1,br2\n')
             return
-        brs = ' '.join(args[0:]).replace(',', ' ').split()
         for br in brs:
             br_addbr(br)
 
@@ -134,12 +133,11 @@ class CLI(Cmd):
         delbr [bridge]
         Delete a bridge
         """
-        args = arg.split()
-        if len(args) < 1:
+        brs = arg.replace(',', ' ').split()
+        if len(brs) < 1:
             output('Not enough parameters are given, use like ')
             output('del br1,br2\n')
             return
-        brs = ' '.join(args[0:]).replace(',', ' ').split()
         for br in brs:
             br_delbr(br)
 
