@@ -46,7 +46,7 @@ docker run -it \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -e OS_USERNAME=$OS_USERNAME \
- -e OS_PASSWORD=$OS_USERNAME \
+ -e OS_PASSWORD=$OS_PASSWORD \
  -e OS_TENANT_NAME=$OS_TENANT_NAME \
  -e OS_AUTH_URL=$OS_AUTH_URL \
   yeasy/easyovs:latest
