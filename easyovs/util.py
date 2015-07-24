@@ -148,8 +148,7 @@ def compress_mac_str(raw_str):
     else:
         return raw_str
 
-
-def get_bridges():
+def get_all_bridges():
     """
     Return a dict of all available bridges, looks like
     {
@@ -161,6 +160,7 @@ def get_bridges():
                 'tag':'1', //tagid
                 'type':'internal', //tagid
                 },
+            }
         },
     }
     """
@@ -194,6 +194,7 @@ def get_bridges():
             elif l.startswith('type: '):
                 brs[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
     return brs
+
 
 def find_ns(key):
     ns_list, err = Popen('ip netns list', stdout=PIPE, stderr=PIPE,

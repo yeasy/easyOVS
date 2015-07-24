@@ -1,8 +1,8 @@
 __author__ = 'baohua'
 
 from subprocess import PIPE, Popen
+from easyovs.bridge_ctrl import find_br_ports
 from easyovs.log import debug, error, output, warn
-
 from easyovs.util import color_str, find_ns
 from easyovs.neutron import get_port_id_from_ip
 
@@ -214,12 +214,17 @@ class IPtables(object):
         '''
         debug("Try to show vm rules, ip=%s\n" % ip)
         port_id = get_port_id_from_ip(ip)
+        debug('The port id is %s\n' % port_id)
         if not port_id:
-            warn('No local addr %s exists.\n' % ip)
+            warn('No port id is found for ip=%s\n' % ip)
             return
-
         output(color_str('## IP = %s, port = %s\n' % (ip, port_id), 'r'))
-        rules_dic = self._query_port_rules(port_id)
+        br_port = find_br_ports(port_id)
+        if not br_port:
+            warn('No br port is found for ip=%s\n' % ip)
+            return
+        debug('The br port is %s\n' % br_port)
+        rules_dic = self._query_port_rules(br_port)
         if rules_dic:
             output(color_str( _format_str_iptables_rule_ % (
                 'PKTS', 'SOURCE', 'DESTINATION', 'PROT', 'OTHER'), 'b'))
@@ -262,7 +267,7 @@ class IPtables(object):
         else:
             return None
 
-    def _query_port_rules(self, port_id):
+    def _query_port_rules(self, br_port):
         """
         Return the dict of the related security rules on a given port.
         {
@@ -270,9 +275,10 @@ class IPtables(object):
         }
         will load rules first
         """
-        if port_id.startswith('qvo'):  # local vm at Computer Node
+        if br_port.startswith('qvo'):  # vm port
+            debug('qvo should be vm port\n')
             self.load(table='filter')
-            chain_tag = port_id[3:13]
+            chain_tag = br_port[3:13]
             i_rules = self.get_rules(chain='neutron-openvswi-i' +
                                            chain_tag)
             o_rules = self.get_rules(chain='neutron-openvswi-o' +
@@ -281,14 +287,14 @@ class IPtables(object):
                                            chain_tag)
             return {'IN': i_rules, 'OUT': o_rules, 'SRC_FILTER': s_rules}
         else:  # maybe at Network Node
-            in_ns = find_ns(port_id)
-            if not in_ns:
-                warn("On network node, cannot find ns with %s" % port_id)
+            debug('Should be network function port\n')
+            ns = find_ns(br_port)
+            if not ns:
+                debug("port %s not in namespaces\n" % br_port)
+            self.load(table='nat', ns=ns)
+            if br_port.startswith('tap'):  # dhcp
                 return None
-            self.load(table='nat', ns=in_ns)
-            if port_id.startswith('tap'):  # dhcp
-                return None
-            elif port_id.startswith('qr-') or port_id.startswith('qg-'):
+            elif br_port.startswith('qr-') or br_port.startswith('qg-'):
                 pre = self.get_rules(table='nat',
                                      chain='neutron-l3-agent-PREROUTING')
                 out = self.get_rules(table='nat',
