@@ -43,10 +43,11 @@ class IPchain(object):
     """
     represent one chain
     """
-    def __init__(self, name='INPUT'):
+    def __init__(self, name='INPUT', policy='ACCEPT'):
         self.name = name
         self.rules = []  # list of rule objects
         self.keys = []
+        self.policy = policy
         #  num pkts bytes target prot opt in out source destination flags
 
     def add_rules(self, rules):
@@ -66,6 +67,9 @@ class IPchain(object):
         :return:
         '''
         return self.rules
+
+    def set_policy(self, policy):
+        self.policy = policy
 
     def set_keys(self, keys):
         self.keys = keys
@@ -114,7 +118,10 @@ class IPtable(object):
                 continue
             segs = r[0].split()  # r[0] is the top row
             if segs[0] == 'Chain' and segs[1] not in self.chains:  # no exist
-                self.chains[segs[1]] = IPchain(segs[1])
+                if 'DROP' in segs:
+                    self.chains[segs[1]] = IPchain(segs[1], 'DROP')
+                else:
+                    self.chains[segs[1]] = IPchain(segs[1])
             keys = r[1].split()
             keys.append('flags')
             self.chains[segs[1]].set_keys(keys)
@@ -204,23 +211,23 @@ class IPtables(object):
         :param ip: vm ip
         :return:
         '''
-        debug("Show vm rules, ip=%s\n" % ip)
+        debug("Try to show vm rules, ip=%s\n" % ip)
         port_id = get_port_id_from_ip(ip)
         if not port_id:
             warn('No local addr %s exists.\n' % ip)
             return
 
         output(color_str('r', '## IP = %s, port = %s\n' % (ip, port_id)))
-        rules_dic = self.query_port_rules(port_id)
+        rules_dic = self._query_port_rules(port_id)
         if rules_dic:
             output(color_str('b', _format_str_iptables_rule_ % (
                 'PKTS', 'SOURCE', 'DESTINATION', 'PROT', 'OTHER')))
             for r in rules_dic:
                 if rules_dic[r]:
                     output('%s:\n' % r)
-                    self.fmt_show_rules(rules_dic[r])
+                    self._fmt_show_rules(rules_dic[r])
 
-    def check_table(self, table='filter'):
+    def check(self, table='filter', chain='INPUT'):
         pass
 
     def get_table(self, table='filter'):
@@ -254,7 +261,7 @@ class IPtables(object):
         else:
             return None
 
-    def query_port_rules(self, port_id):
+    def _query_port_rules(self, port_id):
         """
         Return the dict of the related security rules on a given port.
         {
@@ -294,44 +301,7 @@ class IPtables(object):
             else:
                 return None
 
-    #deprecated
-    def convert_iptables_rules(self, rules):
-        """
-        Return a list containing the information of the iptables rules.
-        Would look like
-        [
-        {'num':1,
-        'pkts':20,
-        'bytes':20480,
-        'target':'DROP',
-        'prot':'all',
-        'opt':'--',
-        'in':'*',
-        'out''*':,
-        'source':'0.0.0.0/0',
-        'destination':'0.0.0.0/0',
-        'flags':'state RELATED,ESTABLISHED'
-        }
-        ]
-        """
-        result = []
-        if not rules:
-            return result
-        rule_list = rules.strip('\n').split('\n')
-        if len(rule_list) < 3:
-            return result
-        keys = rule_list[1].split()
-        len_key = len(keys)
-        rows = rule_list[2:]
-        for l in rows:
-            r, d = l.split(), {}
-            for i in range(len_key):
-                d[keys[i]] = r[i]
-            d['other'] = ' '.join(r[len_key:])
-            result.append(d)
-        return result
-
-    def fmt_show_rules(self, rule_list):
+    def _fmt_show_rules(self, rule_list):
         """
         Possible columns:
         num   pkts bytes target prot opt in out source destination flags

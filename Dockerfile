@@ -7,7 +7,7 @@ MAINTAINER Baohua Yang
 # install needed software
 RUN apt-get install openvswitch-switch iptables -y
 
-RUN git clone https://github.com/yeasy/easyOVS.git -b master  && \
+RUN git clone https://github.com/yeasy/easyOVS.git -b dev  && \
 bash easyOVS/util/install.sh
 
 VOLUME ["/var/run/openvswitch/"]

@@ -208,7 +208,7 @@ class CLI(Cmd):
         args = arg.split()
         if len(args) < 1 or len(args) > 3:  # only 1-3 is valid
             warn("Not correct parameters, use as:\n")
-            warn("ipt vm vm_ip1, vm_ip2\n")
+            warn("ipt vm vm_ip\n")
             warn("ipt show|check [filter] [INPUT]\n")
             return
         cmd = args[0]
@@ -216,23 +216,32 @@ class CLI(Cmd):
             error('Unsupported cmd=%s\n' % cmd)
             return
         self.ipt.load()  # load all chains
-        if len(args) == 1:  # filter|INPUT
-            debug('run self.ipt.%s()\n' % cmd)
-            getattr(self.ipt, '%s' % cmd)()
-        elif len(args) == 2:  # filter|INPUT
-            if args[1] in self.ipt.get_valid_tables():  # filter
-                debug('run self.ipt.%s(table=%s)\n' % (cmd, args[1]))
-                getattr(self.ipt, '%s' % cmd)(table=args[1])
-            else:  # INPUT
-                debug('run self.ipt.%s(chain=%s)\n' % (cmd, args[1]))
-                getattr(self.ipt, '%s' % cmd)(chain=args[1])
-        elif len(args) == 3:
-            if args[1] in self.ipt.get_valid_tables():  # filter INPUT
-                debug('run self.ipt.%s(table=%s, chain=%s\n)'
-                      % (cmd, args[1], args[2]))
-                getattr(self.ipt, '%s' % cmd)(table=args[1], chain=args[2])
+        if cmd == 'vm':
+            if len(args) == 1:
+                error('Not enough parameters are given\n')
+                return
             else:
-                warn("Unknown table, table=%s\n" % args[1])
+                for vm_ip in args[1:]:
+                    debug('run self.ipt.%s(...)\n' % cmd)
+                    getattr(self.ipt, '%s' % cmd)(vm_ip)
+        elif cmd in ['check', 'show']:
+            if len(args) == 1:  # show
+                debug('run self.ipt.%s()\n' % cmd)
+                getattr(self.ipt, '%s' % cmd)()
+            elif len(args) == 2:  # filter|INPUT
+                if args[1] in self.ipt.get_valid_tables():  # filter
+                    debug('run self.ipt.%s(table=%s)\n' % (cmd, args[1]))
+                    getattr(self.ipt, '%s' % cmd)(table=args[1])
+                else:  # INPUT
+                    debug('run self.ipt.%s(chain=%s)\n' % (cmd, args[1]))
+                    getattr(self.ipt, '%s' % cmd)(chain=args[1])
+            elif len(args) == 3:
+                if args[1] in self.ipt.get_valid_tables():  # filter INPUT
+                    debug('run self.ipt.%s(table=%s, chain=%s\n)'
+                          % (cmd, args[1], args[2]))
+                    getattr(self.ipt, '%s' % cmd)(table=args[1], chain=args[2])
+                else:
+                    warn("Unknown table, table=%s\n" % args[1])
 
     def do_query(self, line):
         """

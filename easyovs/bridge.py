@@ -108,7 +108,7 @@ class Bridge(object):
             if not lines:
                 break
             for line in lines:
-                flow = self.parse_flow(line)
+                flow = self._parse_flow(line)
                 if flow in del_flows:
                     del_matches = line.replace(',', ' ').split()
                     del_matches = \
@@ -146,7 +146,7 @@ class Bridge(object):
             l = l.strip()
             if l.startswith('cookie='):
                 debug('%s\n' % l)
-                flow = self.parse_flow(l)
+                flow = self._parse_flow(l)
                 if flow:
                     flows.append(flow)
                     if db:
@@ -171,7 +171,7 @@ class Bridge(object):
         else:
             return {}
 
-    def parse_flow(self, line):
+    def _parse_flow(self, line):
         """
         Return a Flow or None, converted from a given line of original flow.
         """
