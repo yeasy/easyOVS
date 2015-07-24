@@ -5,7 +5,7 @@ import re
 import sys
 import termios
 
-from easyovs.bridge_ctrl import get_all_bridges
+from easyovs.util import get_all_bridges
 from easyovs.flow import Flow
 from easyovs.log import output, error, debug
 from easyovs.util import get_num_after, get_str_before, get_str_between

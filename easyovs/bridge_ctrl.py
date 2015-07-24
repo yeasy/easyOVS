@@ -6,7 +6,7 @@ from easyovs.bridge import Bridge
 from easyovs.flow import Flow
 from easyovs.log import debug, error, output
 from easyovs.neutron import neutron_handler
-from easyovs.util import color_str
+from easyovs.util import color_str, get_all_bridges
 
 
 def br_addflow(bridge, flow):
@@ -150,51 +150,3 @@ def find_br_ports(port_id):
                 if p.endswith(port_id):
                     return p
     return None
-
-def get_all_bridges():
-    """
-    Return a dict of all available bridges, looks like
-    {
-        'br-int':{
-            'Controller':[],
-            'fail_mode':'',
-            'Port':{
-             'qvoxxx': {
-                'tag':'1', //tagid
-                'type':'internal', //tagid
-                },
-            }
-        },
-    }
-    """
-    brs, br = {}, ''
-    cmd = 'ovs-vsctl show'
-    result, error = Popen(cmd, stdout=PIPE, stderr=PIPE,
-                          shell=True).communicate()
-    if error:
-        return {}
-    for l in result.split('\n'):
-        l = l.strip().replace('"', '')
-        if l.startswith('Bridge '):
-            br = l.lstrip('Bridge ')
-            brs[br] = {}
-            brs[br]['Controller'] = []
-            brs[br]['Port'] = {}
-            brs[br]['fail_mode'] = ''
-        else:
-            if l.startswith('Controller '):
-                brs[br]['Controller'].append(l.replace('Controller ', ''))
-            elif l.startswith('fail_mode: '):
-                brs[br]['fail_mode'] = l.replace('fail_mode: ', '')
-            elif l.startswith('Port '):
-                phy_port = l.replace('Port ', '')  # e.g., br-eth0
-                brs[br]['Port'][phy_port] = {'vlan': '', 'type': ''}
-            elif l.startswith('tag: '):
-                brs[br]['Port'][phy_port]['vlan'] = l.replace('tag: ', '')
-            elif l.startswith('Interface '):
-                brs[br]['Port'][phy_port]['intf'] = \
-                    l.replace('Interface ', '')
-            elif l.startswith('type: '):
-                brs[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
-    return brs
-
