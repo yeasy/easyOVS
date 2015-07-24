@@ -5,7 +5,7 @@ import re
 import sys
 import termios
 
-from easyovs.util import get_bridges
+from easyovs.bridge_ctrl import get_all_bridges
 from easyovs.flow import Flow
 from easyovs.log import output, error, debug
 from easyovs.util import get_num_after, get_str_before, get_str_between
@@ -223,7 +223,7 @@ class Bridge(object):
         if error:
             return {}
         #output('%-8s%-16s%-16s\n' %('PORT','INTF','ADDR'))
-        brs = get_bridges()
+        brs = get_all_bridges()
         for l in result.split('\n'):
             if l.startswith(' ') and l.find('(') >= 0 and l.find(')') >= 0:
                 l = l.strip()
