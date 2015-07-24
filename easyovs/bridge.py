@@ -48,7 +48,7 @@ class Bridge(object):
             return False
         addflow_cmd = 'ovs-ofctl add-flow %s "%s"' % (self.bridge, flow)
         err = Popen(addflow_cmd, stdout=PIPE, stderr=PIPE,
-                      shell=True).communicate()[1]
+                    shell=True).communicate()[1]
         if err:
             output(err)
             error("Error when adding new flow <%s> to bridge %s\n"
@@ -110,19 +110,19 @@ class Bridge(object):
             for line in lines:
                 flow = self.parse_flow(line)
                 if flow in del_flows:
-                    del_matches = line.replace(',',' ').split()
+                    del_matches = line.replace(',', ' ').split()
                     del_matches = \
-                        filter(lambda m: not (m.startswith("cookie=") \
+                        filter(lambda m: not (m.startswith("cookie=")
                                or m.startswith("actions=")), del_matches)
                     del_cmd = "ovs-ofctl --strict del-flows %s %s" \
                               % (self.bridge, ','.join(del_matches))
                     output(del_cmd + '\n')
                     err = Popen(del_cmd, stdout=PIPE, stderr=PIPE,
-                                  shell=True).communicate()[1]
+                                shell=True).communicate()[1]
                     if err:
-                        output(err)
-                        error("Error when deleting flow <%s> in bridge %s\n"
+                        error("Error when delflow <%s> in bridge %s\n"
                               % (','.join(del_matches), self.bridge))
+                        error(err)
                         return False
         f.close()
         self.load_flows()

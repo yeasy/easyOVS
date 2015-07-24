@@ -11,9 +11,9 @@ import sys
 
 from easyovs import VERSION
 from easyovs.bridge_ctrl import br_addflow, br_delbr, br_addbr, br_delflow, \
-    br_dump, br_exists,br_list, br_show
+    br_dump, br_exists, br_list, br_show
 from easyovs.common import CMDS_ONE, CMDS_BR, CMDS_OTHER
-from easyovs.iptables import IPtables, show_vm_rules
+from easyovs.iptables import IPtables
 from easyovs.log import info, output, error, debug, warn
 from easyovs.neutron import show_port_info
 from easyovs.util import color_str, fmt_flow_str
@@ -214,6 +214,8 @@ class CLI(Cmd):
         cmd = args[0]
         if not hasattr(self.ipt, '%s' % cmd):
             error('Unsupported cmd=%s\n' % cmd)
+            return
+        self.ipt.load()  # load all chains
         if len(args) == 1:  # filter|INPUT
             debug('run self.ipt.%s()\n' % cmd)
             getattr(self.ipt, '%s' % cmd)()
