@@ -63,8 +63,9 @@ class CLI(Cmd):
                   cfg.CONF.OS.auth_url)
             debug("username = %s\n" % os.environ['OS_USERNAME'] or
                   cfg.CONF.OS.username)
-            debug("password = %s\n" % os.environ['OS_PASSWORD'] or
-                  cfg.CONF.OS.password)
+            passwd = os.environ['OS_PASSWORD'] or cfg.CONF.OS.password
+            passwd = passwd[:len(passwd)/4] + "****" + passwd[-len(passwd)/4:]
+            debug("password = %s\n" % passwd)
             debug("tenant_name = %s\n" % os.environ['OS_TENANT_NAME'] or
                   cfg.CONF.OS.tenant_name)
             while True:

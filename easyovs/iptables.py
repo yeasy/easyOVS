@@ -276,7 +276,7 @@ class IPtables(object):
         will load rules first
         """
         if br_port.startswith('qvo'):  # vm port
-            debug('qvo should be vm port')
+            debug('qvo should be vm port\n')
             self.load(table='filter')
             chain_tag = br_port[3:13]
             i_rules = self.get_rules(chain='neutron-openvswi-i' +
@@ -287,7 +287,7 @@ class IPtables(object):
                                            chain_tag)
             return {'IN': i_rules, 'OUT': o_rules, 'SRC_FILTER': s_rules}
         else:  # maybe at Network Node
-            debug('Should be network function related port')
+            debug('Should be network function port\n')
             ns = find_ns(br_port)
             if not ns:
                 debug("port %s not in namespaces\n" % br_port)
