@@ -129,13 +129,13 @@ class IPtables(object):
     represent a iptables object, which can handle the table rules
     """
     def __init__(self):
-        self.available_tables = ['raw', 'nat', 'filter', 'mangle', 'security']
+        self.valid_tables = ['raw', 'nat', 'filter', 'mangle', 'security']
         self.tables = {}
-        for tb in self.available_tables:
+        for tb in self.valid_tables:
             self.tables[tb] = IPtable(tb)
 
-    def get_available_tables(self):
-        return self.available_tables
+    def get_valid_tables(self):
+        return self.valid_tables
 
     def load(self, table=None, chain=None):
         '''
@@ -145,10 +145,10 @@ class IPtables(object):
         :param chain: which chain to load, None for all
         :return:
         '''
-        if table in self.available_tables:
+        if table in self.valid_tables:
             self.tables[table].load(chain)
         else:
-            for tb in self.available_tables:
+            for tb in self.valid_tables:
                 self.tables[tb].load(chain)
 
     def show(self, table='filter', chain=None):
@@ -158,8 +158,9 @@ class IPtables(object):
         :param chain: which chain to show, None for all.
         :return:
         '''
-        debug("Show table=%s, chain=%s\n" % (table, chain))
-        if table in self.available_tables:
+        debug("Show table=%s, chain=%s\n" % (table, chain or 'None'))
+        self.load(table, chain)
+        if table in self.valid_tables:
             self.tables[table].show(chain)
 
     def check_table(self, table='filter'):
