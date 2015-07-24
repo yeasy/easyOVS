@@ -45,10 +45,10 @@ docker run -it \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
- -e OS_USERNAME=admin
- -e OS_PASSWORD=admin
- -e OS_TENANT_NAME=admin
- -e OS_AUTH_URL=http://127.0.0.1:5000/v2
+ -e OS_USERNAME=$OS_USERNAME
+ -e OS_PASSWORD=$OS_USERNAME
+ -e OS_TENANT_NAME=$OS_TENANT_NAME
+ -e OS_AUTH_URL=$OS_AUTH_URL
   yeasy/easyovs:latest
 ```
 
