@@ -114,7 +114,7 @@ def fmt_flow_str(raw_str):
     return flow
 
 
-def color_str(color, raw_str):
+def color_str(raw_str, color):
     if color == 'r':
         fore = 31
     elif color == 'g':

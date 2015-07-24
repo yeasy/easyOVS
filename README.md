@@ -27,11 +27,28 @@ After the installation, start easyovs with
 
 easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
 
-## Run with Docker
+## Run with Docker (recommended)
+### No OpenStack Support
 ```sh
-docker run -it --net='host' \
- -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+docker run -it \
+ --net='host' \
  --privileged \
+ -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+  yeasy/easyovs:latest
+```
+
+### Enable Openstack support
+Replace the following openstack credentials with your own.
+
+```sh
+docker run -it \
+ --net='host' \
+ --privileged \
+ -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ -e OS_USERNAME=admin
+ -e OS_PASSWORD=admin
+ -e OS_TENANT_NAME=admin
+ -e OS_AUTH_URL=http://127.0.0.1:5000/v2
   yeasy/easyovs:latest
 ```
 

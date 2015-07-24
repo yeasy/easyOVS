@@ -124,7 +124,7 @@ def br_show(bridge):
     if not ovs_ports:
         return
     neutron_ports = neutron_handler.get_neutron_ports()
-    debug('get neutron_ports', neutron_ports)
+    debug('get neutron_ports\n')
     content = []
     mac_ip_show = False
     for intf in ovs_ports:  # e.g., qvo-xxx, int-br-eth0, qr-xxx, tapxxx
@@ -144,20 +144,20 @@ def br_show(bridge):
     content.sort(key=lambda x: x[1])  # sort by port
     content.sort(key=lambda x: x[4])  # sort by vm_ip
     content.sort(key=lambda x: x[3])  # sort by type
-    output(color_str('r', '%-20s%-12s%-8s%-12s'
-                     % ('Intf', 'Port', 'Vlan', 'Type')))
+    output(color_str('%-20s%-12s%-8s%-12s'
+                     % ('Intf', 'Port', 'Vlan', 'Type'), 'r'))
     if mac_ip_show:
-        output(color_str('r', '%-16s%-24s\n' % ('vmIP', 'vmMAC')))
+        output(color_str('%-16s%-24s\n' % ('vmIP', 'vmMAC'), 'r'))
     else:
         output('\n')
     i = 0
     for _ in content:
         #color = ['w','g'][i%2]
         color = 'b'
-        output(color_str(color, '%-20s%-12s%-8s%-12s'
-                         % (_[0], _[1], _[2], _[3])))
+        output(color_str('%-20s%-12s%-8s%-12s'
+                         % (_[0], _[1], _[2], _[3]), color))
         if mac_ip_show:
-            output(color_str(color, '%-16s%-24s\n' % (_[4], _[5])))
+            output(color_str('%-16s%-24s\n' % (_[4], _[5]), color))
         else:
             output('\n')
         i += 1

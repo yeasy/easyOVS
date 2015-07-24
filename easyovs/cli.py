@@ -49,7 +49,7 @@ class CLI(Cmd):
         self.ipt = IPtables()
         if foreground:
             output('EasyOVS %s, type help for information\n' % VERSION)
-            self.prompt = color_str('g', PROMPT_KW)
+            self.prompt = color_str(PROMPT_KW, 'g')
             self.stdin = stdin
             self.in_poller = poll()
             self.in_poller.register(stdin)
@@ -177,7 +177,7 @@ class CLI(Cmd):
         """
         if self.bridge:
             self.bridge = None
-            self.prompt = color_str('g', PROMPT_KW)
+            self.prompt = color_str(PROMPT_KW, 'g')
         else:
             return self.do_quit(_arg)
 
@@ -218,7 +218,7 @@ class CLI(Cmd):
         self.ipt.load()  # load all chains
         if cmd == 'vm':
             if len(args) == 1:
-                error('Not enough parameters are given\n')
+                error('No vm ip is given\n')
                 return
             else:
                 for vm_ip in args[1:]:
@@ -274,7 +274,7 @@ class CLI(Cmd):
                    'You can check available bridges using show\n')
         else:
             self.prompt = \
-                color_str('g', PROMPT_KW[:-2] + ':%s> ' % color_str('b', arg))
+                color_str(PROMPT_KW[:-2] + ':%s> ' % color_str('b', arg), 'g')
             self.bridge = arg
             output('Set the default bridge to %s.\n' % self.bridge)
 
