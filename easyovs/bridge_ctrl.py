@@ -6,7 +6,7 @@ from easyovs.bridge import Bridge
 from easyovs.flow import Flow
 from easyovs.log import debug, error, output
 from easyovs.neutron import neutron_handler
-from easyovs.util import get_bridges, color_str
+from easyovs.util import color_str
 
 
 def br_addflow(bridge, flow):
@@ -23,47 +23,21 @@ def br_delflow(bridge, ids):
     else:
         return Bridge(bridge).del_flow(ids)
 
-
-def br_getflows(bridge):
-    if isinstance(bridge, str):
-        return Bridge(bridge).get_flows()
-    else:
-        return None
-
-
-def br_exists(bridge):
+def br_exists(name):
     """
     Return True of False of a bridge's existence.
     """
-    if isinstance(bridge, str):
-        return Bridge(bridge).exists()
+    if isinstance(name, str):
+        return Bridge(name).exists()
     else:
         return False
-
-
-def br_getports(bridge):
-    """
-    Return a dict of the ports (port, addr, tag, type) on the bridge, looks like
-        {
-            'qvoxxx':{
-                'port':2,
-                'addr':08:91:ff:ff:f3,
-                'vlan':1,
-                'type':internal,
-            }
-        }
-    """
-    if isinstance(bridge, str):
-        return Bridge(bridge).get_ports()
-    else:
-        return {}
 
 
 def br_list():
     """
     List available bridges.
     """
-    bridges = get_bridges()
+    bridges = get_all_bridges()
     if not bridges:
         output('None bridge exists. Might try using root privilege?\n')
         return
@@ -80,47 +54,46 @@ def br_list():
             br_info += " Fail_Mode:\t%s\n" % (bridges[br]['fail_mode'])
     output(br_info)
 
-def br_addbr(bridge):
+def br_addbr(name):
     """
     Create a new bridge.
     """
-    cmd = "ovs-vsctl --may-exist add-br %s" % bridge
+    cmd = "ovs-vsctl --may-exist add-br %s" % name
     result, err = \
         Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
     if err:
-        error("Error when adding new bridge %s\n" % bridge)
+        error("Error when adding new bridge %s\n" % name)
     else:
-        output("bridge %s was created\n" % bridge)
+        output("bridge %s was created\n" % name)
 
-def br_delbr(bridge):
+def br_delbr(name):
     """
     Delete a bridge.
     """
-    cmd = "ovs-vsctl --if-exists del-br %s" % bridge
+    cmd = "ovs-vsctl --if-exists del-br %s" % name
     result, err = \
         Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
     if err:
-        error("Error when deleting bridge %s\n" % bridge)
+        error("Error when deleting bridge %s\n" % name)
     else:
-        output("bridge %s was deleted\n" % bridge)
+        output("bridge %s was deleted\n" % name)
 
-def br_dump(bridge):
+def br_dump(name):
     """
     Dump the port information of a given bridges.
     """
-    flows = br_getflows(bridge)
+    flows = Bridge(name).get_flows()
     debug('br_dump: len flows=%u\n' % len(flows))
     if flows:
         Flow.banner_output()
         for f in flows:
             f.fmt_output()
 
-
-def br_show(bridge):
+def br_show(name):
     """
     Show information of a given bridges.
     """
-    ovs_ports = br_getports(bridge)
+    ovs_ports = Bridge(name).get_ports()
     if not ovs_ports:
         return
     neutron_ports = neutron_handler.get_neutron_ports()
@@ -161,3 +134,67 @@ def br_show(bridge):
         else:
             output('\n')
         i += 1
+
+
+def find_br_ports(port_id):
+    '''
+    Find a port with given id
+    :param port_id: a4111776-bd
+
+    :return: qr-a4111776-bd
+    '''
+    brs = get_all_bridges()
+    for br_id in brs:
+        if 'Port'in brs[br_id]:
+            for p in brs[br_id]['Port']:
+                if p.endswith(port_id):
+                    return p
+    return None
+
+def get_all_bridges():
+    """
+    Return a dict of all available bridges, looks like
+    {
+        'br-int':{
+            'Controller':[],
+            'fail_mode':'',
+            'Port':{
+             'qvoxxx': {
+                'tag':'1', //tagid
+                'type':'internal', //tagid
+                },
+            }
+        },
+    }
+    """
+    brs, br = {}, ''
+    cmd = 'ovs-vsctl show'
+    result, error = Popen(cmd, stdout=PIPE, stderr=PIPE,
+                          shell=True).communicate()
+    if error:
+        return {}
+    for l in result.split('\n'):
+        l = l.strip().replace('"', '')
+        if l.startswith('Bridge '):
+            br = l.lstrip('Bridge ')
+            brs[br] = {}
+            brs[br]['Controller'] = []
+            brs[br]['Port'] = {}
+            brs[br]['fail_mode'] = ''
+        else:
+            if l.startswith('Controller '):
+                brs[br]['Controller'].append(l.replace('Controller ', ''))
+            elif l.startswith('fail_mode: '):
+                brs[br]['fail_mode'] = l.replace('fail_mode: ', '')
+            elif l.startswith('Port '):
+                phy_port = l.replace('Port ', '')  # e.g., br-eth0
+                brs[br]['Port'][phy_port] = {'vlan': '', 'type': ''}
+            elif l.startswith('tag: '):
+                brs[br]['Port'][phy_port]['vlan'] = l.replace('tag: ', '')
+            elif l.startswith('Interface '):
+                brs[br]['Port'][phy_port]['intf'] = \
+                    l.replace('Interface ', '')
+            elif l.startswith('type: '):
+                brs[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
+    return brs
+

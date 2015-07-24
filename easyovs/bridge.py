@@ -28,8 +28,8 @@ class Bridge(object):
     An OpenvSwitch bridge, typically is a datapath, e.g., br-int
     """
 
-    def __init__(self, bridge):
-        self.bridge = bridge
+    def __init__(self, name):
+        self.bridge = name
         self.flows = []
         self.flows_db = '/tmp/tmp_%s_flows' % self.bridge
 

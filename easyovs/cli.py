@@ -7,6 +7,7 @@ except ImportError:
     from oslo.config import cfg
 from select import poll
 from subprocess import call
+import os
 import sys
 
 from easyovs import VERSION
@@ -57,11 +58,15 @@ class CLI(Cmd):
             output("***\n Welcome to EasyOVS,"
                    "type help to see available commands.\n***\n")
             info('*** Starting CLI:\n')
-            debug("==cfg.ADMIN==\n")
-            debug("auth_url = %s\n" % cfg.CONF.OS.auth_url)
-            debug("username = %s\n" % cfg.CONF.OS.username)
-            debug("password = %s\n" % cfg.CONF.OS.password)
-            debug("tenant_name = %s\n" % cfg.CONF.OS.tenant_name)
+            debug("==Loading credentials==\n")
+            debug("auth_url = %s\n" % os.environ['OS_AUTH_URL'] or
+                  cfg.CONF.OS.auth_url)
+            debug("username = %s\n" % os.environ['OS_USERNAME'] or
+                  cfg.CONF.OS.username)
+            debug("password = %s\n" % os.environ['OS_PASSWORD'] or
+                  cfg.CONF.OS.password)
+            debug("tenant_name = %s\n" % os.environ['OS_TENANT_NAME'] or
+                  cfg.CONF.OS.tenant_name)
             while True:
                 try:
                     #if self.isatty():
