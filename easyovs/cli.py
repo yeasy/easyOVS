@@ -11,7 +11,7 @@ import sys
 
 from easyovs.bridge_ctrl import br_addflow, br_delbr, br_addbr, br_delflow, \
     br_dump, br_exists,br_list, br_show
-from easyovs.iptables import show_iptables_rules
+from easyovs.iptables import IPtables, show_vm_rules
 from easyovs.log import info, output, error, debug
 from easyovs.neutron import show_port_info
 from easyovs.util import color_str, fmt_flow_str
@@ -44,7 +44,8 @@ class CLI(Cmd):
 
     def __init__(self, bridge=None, stdin=sys.stdin):
         self.prompt = color_str('g', PROMPT_KW)
-        self.bridge = bridge
+        self.bridge = bridge  # default bridge
+        self.ipt = IPtables()
         self.stdin = stdin
         self.in_poller = poll()
         self.in_poller.register(stdin)
@@ -190,11 +191,30 @@ class CLI(Cmd):
         if line is '':
             output(self.helpStr)
 
-    def do_ipt(self, line):
+    def do_ipt(self, arg):
         """
-        Show the iptables rules of a given vm.
+        Show the iptables rules, e.g.,
+        ipt show vm1,vm2
+        ipt show nat,raw,forward
+        ipt check nat,raw,forward
         """
-        show_iptables_rules(line)
+        args = arg.split()
+        if len(args) < 2:
+            error("Not engough paramers, use as:\n")
+            error("ipt show vm_ip1, vm_ip2\n")
+            error("ipt show filter INPUT\n")
+            return
+        if args[0] == 'show':
+            if args[1] in self.ipt.get_available_tables():
+                self.ipt.show(args[1], args[2])
+        elif args[0] == 'check':
+            pass
+        else:
+            error("ipt only support show and check\n")
+            return
+
+        flow_ids = ' '.join(args[1:]).replace(',', ' ').split()
+        show_vm_rules(line)
 
     def do_query(self, line):
         """

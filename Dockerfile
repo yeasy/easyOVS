@@ -1,23 +1,11 @@
 # This will generate an image with the easyOVS installed.
 # see: https://github.com/yeasy/easyOVS
 
-FROM ubuntu:14.04
+FROM yeasy/devbase:python
 MAINTAINER Baohua Yang
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV TZ Asia/Shanghai
-
-USER root
-
 # install needed software
-RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-apt-get update && \
-apt-get install git openvswitch-switch pep8 pyflakes python2.7-dev python-pip python-setuptools -y && \
-rm -rf /var/cache/apt/
-
-# update the pypi mirror
-RUN mkdir ~/.pip/ && echo "[global]" > ~/.pip/pip.conf && \
-echo "index-url = http://mirrors.aliyun.com/pypi/simple/" >> ~/.pip/pip.conf
+RUN apt-get install openvswitch-switch iptables -y
 
 RUN git clone https://github.com/yeasy/easyOVS.git -b master  && \
 bash easyOVS/util/install.sh
