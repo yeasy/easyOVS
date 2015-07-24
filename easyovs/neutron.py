@@ -8,6 +8,7 @@ import keystoneclient.v2_0.client as ksclient
 from keystoneclient.openstack.common.apiclient.exceptions import \
     AuthorizationFailure, Unauthorized
 import neutronclient.v2_0.client as neutronclient
+import os
 import sys
 
 from os.path import exists, getmtime
@@ -25,11 +26,15 @@ class NeutronHandler(object):
     """
     def __init__(self):
         config.init(sys.argv[1:])
+        username=cfg.CONF.OS.username or os.environ['OS_USERNAME'] or None
+        password=cfg.CONF.OS.password or os.environ['OS_PASSWORD'] or None
+        tenant_name=cfg.CONF.OS.tenant_name or os.environ['OS_TENANT_NAME'] or None
+        auth_url=cfg.CONF.OS.auth_url or os.environ['OS_AUTH_URL'] or None
         try:
-            self.keystone = ksclient.Client(auth_url=cfg.CONF.OS.auth_url,
-                                            tenant_name=cfg.CONF.OS.tenant_name,
-                                            username=cfg.CONF.OS.username,
-                                            password=cfg.CONF.OS.password)
+            self.keystone = ksclient.Client(auth_url=auth_url,
+                                            tenant_name=tenant_name,
+                                            username=username,
+                                            password=password)
             self.token = self.keystone.auth_token
             neutron_endpoint_url = self.keystone.service_catalog.url_for(
                 service_type='network')

@@ -25,7 +25,7 @@ class Flow(object):
     @staticmethod
     def banner_output():
         output(color_str('%-3s%-4s%-10s%-6s%-60s%-20s\n'
-               % ('ID', 'TAB', 'PKT', 'PRI', 'MATCH', 'ACT'), 'b'))
+               % ('ID', 'TAB', 'PKT', 'PRI', 'MATCH', 'ACT'), 'g'))
 
     def fmt_output(self):
         if self.packet > 0:
@@ -34,7 +34,7 @@ class Flow(object):
                                                 self.packet,
                                                 self.priority,
                                                 compress_mac_str(self.match),
-                                                self.actions), 'g')
+                                                self.actions), 'b')
         else:
             result = \
                 self._format_str_ \
