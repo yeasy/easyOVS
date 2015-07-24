@@ -79,7 +79,8 @@ class IPchain(object):
         Print all rules in this chain
         :return:
         '''
-        output("chain=%s\n" % self.name)
+        output(color_str("chain=%s, policy=%s\n" % (self.name, self.policy),
+                         'b'))
         for r in self.rules:
             r.show()
 
@@ -133,7 +134,7 @@ class IPtable(object):
         :param chain:
         :return:
         '''
-        output("table=%s\n" % self.name)
+        output(color_str("===table=%s===\n" % self.name, 'r'))
         for cn in self.chains:
             if not chain or cn.upper() == chain.upper():
                 self.chains[cn].show()
@@ -217,11 +218,11 @@ class IPtables(object):
             warn('No local addr %s exists.\n' % ip)
             return
 
-        output(color_str('r', '## IP = %s, port = %s\n' % (ip, port_id)))
+        output(color_str('## IP = %s, port = %s\n' % (ip, port_id), 'r'))
         rules_dic = self._query_port_rules(port_id)
         if rules_dic:
-            output(color_str('b', _format_str_iptables_rule_ % (
-                'PKTS', 'SOURCE', 'DESTINATION', 'PROT', 'OTHER')))
+            output(color_str( _format_str_iptables_rule_ % (
+                'PKTS', 'SOURCE', 'DESTINATION', 'PROT', 'OTHER'), 'b'))
             for r in rules_dic:
                 if rules_dic[r]:
                     output('%s:\n' % r)

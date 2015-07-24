@@ -145,12 +145,12 @@ def show_port_info(keywords):
             neutron_handler.query_port_by_id(keyword) or \
             neutron_handler.query_port_by_ip(keyword)
         if port:
-            output(color_str('b', '## port_id = %s\n' % (port.get('id'))))
+            output(color_str('## port_id = %s\n' % (port.get('id')), 'b'))
             for k in port:
                 output('%s: %s\n' % (k, port.get(k)))
         else:
-            output('%s\n' % (color_str('r', 'No port is found, please '
-                                            'check your tenant info')))
+            output('%s\n' % (color_str('No port is found, please '
+                                       'check your tenant info', 'r')))
 
 
 def get_port_id_from_ip(ip):
