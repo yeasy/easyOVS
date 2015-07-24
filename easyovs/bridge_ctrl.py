@@ -1,6 +1,6 @@
 __author__ = 'baohua'
 
-from subprocess import call, Popen, PIPE
+from subprocess import Popen, PIPE
 
 from easyovs.bridge import Bridge
 from easyovs.flow import Flow

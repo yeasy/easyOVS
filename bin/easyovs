@@ -7,15 +7,11 @@ from oslo_config import cfg
 import sys
 import time
 
-from easyovs import VERSION, config
-from easyovs.bridge_ctrl import br_addbr, br_delbr, br_addflow, br_delflow, \
-    br_dump, br_list, br_show
+from easyovs import config
 from easyovs.cli import CLI
 from easyovs.common import CMDS_ONE, CMDS_BR, CMDS_OTHER
-from easyovs.iptables import show_vm_rules
-from easyovs.log import info, debug, error, output, LEVELS, lg
-from easyovs.neutron import show_port_info
-from easyovs.util import cleanup, fmt_flow_str
+from easyovs.log import info, debug, error, LEVELS, lg
+from easyovs.util import cleanup
 
 
 # Fix setuptools' evil madness, and open up (more?) security holes
@@ -41,12 +37,11 @@ class Platform(object):
         """
         Setup and validate environment.
         """
-
         # set logging verbosity
         if LEVELS[cfg.CONF.verbosity] > LEVELS['output']:
-            print ('*** WARNING: selected verbosity level (%s) will hide CLI '
-                   'output!\n'
-                   'Please restart easyOVS with -v [debug, info, output].'
+            print ('*** WARNING: selected verbosity level (%s) will '
+                   ' hide CLI output!\n'
+                   'Please restart with -v [debug, info, output].'
                    % cfg.CONF.verbosity)
         lg.set_log_level(cfg.CONF.verbosity)
         info("Set log level to %s\n" % cfg.CONF.verbosity)
@@ -57,85 +52,26 @@ class Platform(object):
             cleanup()
             exit()
 
-        output('EasyOVS %s, type help for information\n' % VERSION)
         start = time.time()
         cmd = cfg.CONF.cmd
-        info("cmd = %s\n" % cmd)
+        info("Run direct cmd = %s\n" % cmd)
         cmd_split = cmd.split()
-        if len(cmd_split) == 1 and cmd in CMDS_ONE:
-            if cmd == 'cli':
-                CLI()
-            elif cmd == 'list':
-                self.list()
-        elif len(cmd_split) >= 2:
-            if cmd_split[1] in CMDS_BR:  # e.g., br0 delflow 9
-                if len(cmd_split) > 2:
-                    br, func, arg = cmd_split[0], cmd_split[1], ' '.join(
-                        cmd_split[2:])
-                    getattr(self, func)(br, arg.replace(',', ' '))
-                else:
-                    br, func = cmd_split[0], cmd_split[1]
-                    getattr(self, func)(br)
-            elif cmd_split[0] in CMDS_BR:  # e.g., delflow br0 9
-                if len(cmd_split) > 2:
-                    br, func, arg = cmd_split[1], cmd_split[0], ' '.join(
-                        cmd_split[2:])
-                    getattr(self, func)(br, arg.replace(',', ' '))
-                else:
-                    br, func = cmd_split[1], cmd_split[0]
-                    getattr(self, func)(br)
-            elif cmd_split[0] in CMDS_OTHER:  # e.g., ipt 10.0.0.1, 10.0.0.2
-                func, arg = cmd_split[0], ' '.join(cmd_split[1:])
-                getattr(self, func)(arg)
-            else:
-                output('Wrong command format is given\n')
+        if len(cmd_split) == 1 and cmd == 'cli':
+            CLI()
+        elif cmd_split[0] in CMDS_ONE + CMDS_BR + CMDS_OTHER:
+            CLI(foreground=False).run(cmd, cfg.CONF.forced)
         else:
-            output('Wrong command format is given\n')
+            error('Unknown command, cmd=%s\n' % cmd)
         elapsed = float(time.time() - start)
         info('\n### Completed in %0.3f seconds ###\n' % elapsed)
-
-    @staticmethod
-    def dump(br):
-        br_dump(br)
-
-    @staticmethod
-    def ipt(ips):
-        show_vm_rules(ips)
-
-    @staticmethod
-    def query(keyword):
-        show_port_info(keyword)
-
-    @staticmethod
-    def list():
-        br_list()
-
-    @staticmethod
-    def addbr(br):
-        br_addbr(br)
-
-    @staticmethod
-    def delbr(br):
-        br_delbr(br)
-
-    @staticmethod
-    def show(br):
-        br_show(br)
-
-    @staticmethod
-    def addflow(br, flow_str):
-        br_addflow(br, fmt_flow_str(flow_str))
-
-    @staticmethod
-    def delflow(br, flow_id):
-        br_delflow(br, flow_id)
 
 
 if __name__ == "__main__":
     try:
         Platform()
     except KeyboardInterrupt:
-        info("\n\nKeyboard Interrupt. Shutting down and cleaning up...\n\n")
+        info("\n\nKeyboard Interrupt. "
+             "Shutting down and cleaning up...\n\n")
         cleanup()
     except Exception:
         # Print exception

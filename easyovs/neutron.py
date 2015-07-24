@@ -37,7 +37,7 @@ class NeutronHandler(object):
                 endpoint_url=neutron_endpoint_url,
                 token=self.token)
         except AuthorizationFailure:
-            warn("OpenStack auth failed\n")
+            warn("OpenStack auth not loaded\n")
             self.neutron = None
         except Unauthorized:
             warn("No valid OpenStack auth info is found\n")

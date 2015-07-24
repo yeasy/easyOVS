@@ -195,6 +195,19 @@ def get_bridges():
                 brs[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
     return brs
 
+def find_ns(key):
+    ns_list, err = Popen('ip netns list', stdout=PIPE, stderr=PIPE,
+                         shell=True).communicate()
+    if err:
+        return None
+    ns_list = ns_list.splitlines()
+    for ns in ns_list:  # qrouter-03266ec4-a03b-41b2-897b-c18ae3279933
+        if Popen('ip netns exec %s ip addr | grep %s' % (ns, key),
+                 stdout=PIPE, stderr=PIPE,
+                 shell=True) .communicate()[0]:
+            return ns
+    return None
+
 
 if __name__ == '__main__':
     import doctest
