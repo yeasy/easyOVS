@@ -112,14 +112,14 @@ class CLI(Cmd):
         args = arg.split()
         if len(args) >= 2:
             flow_ids = ' '.join(args[1:]).replace(',', ' ').split()
-            if not br_delflow(args[0], flow_ids):
+            if not br_delflow(args[0], flow_ids, forced):
                 output('Del flow#%s from %s failed.\n'
                        % (' '.join(flow_ids), args[0]))
             else:
                 output('Del flow#%s from %s done.\n'
                        % (','.join(flow_ids), args[0]))
         elif len(args) == 1 and self.bridge:
-            if not br_delflow(self.bridge, arg):
+            if not br_delflow(self.bridge, arg, forced):
                 output('Del flow#%s from %s failed.\n'
                        % (arg, self.bridge))
             else:
@@ -255,7 +255,7 @@ class CLI(Cmd):
         """
         show_port_info(line)
 
-    def do_list(self, _arg):
+    def do_list(self, _arg=None):
         """
         List available bridges in the system.
         """
