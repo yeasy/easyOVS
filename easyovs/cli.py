@@ -59,14 +59,14 @@ class CLI(Cmd):
                    "type help to see available commands.\n***\n")
             info('*** Starting CLI:\n')
             debug("==Loading credentials==\n")
-            debug("auth_url = %s\n" % os.environ['OS_AUTH_URL'] or
+            debug("auth_url = %s\n" % os.getenv('OS_AUTH_URL') or
                   cfg.CONF.OS.auth_url)
-            debug("username = %s\n" % os.environ['OS_USERNAME'] or
+            debug("username = %s\n" % os.getenv('OS_USERNAME') or
                   cfg.CONF.OS.username)
-            passwd = os.environ['OS_PASSWORD'] or cfg.CONF.OS.password
+            passwd = os.getenv('OS_PASSWORD') or cfg.CONF.OS.password
             passwd = passwd[:len(passwd)/4] + "****" + passwd[-len(passwd)/4:]
             debug("password = %s\n" % passwd)
-            debug("tenant_name = %s\n" % os.environ['OS_TENANT_NAME'] or
+            debug("tenant_name = %s\n" % os.getenv('OS_TENANT_NAME') or
                   cfg.CONF.OS.tenant_name)
             while True:
                 try:
@@ -112,14 +112,14 @@ class CLI(Cmd):
         args = arg.split()
         if len(args) >= 2:
             flow_ids = ' '.join(args[1:]).replace(',', ' ').split()
-            if not br_delflow(args[0], flow_ids):
+            if not br_delflow(args[0], flow_ids, forced):
                 output('Del flow#%s from %s failed.\n'
                        % (' '.join(flow_ids), args[0]))
             else:
                 output('Del flow#%s from %s done.\n'
                        % (','.join(flow_ids), args[0]))
         elif len(args) == 1 and self.bridge:
-            if not br_delflow(self.bridge, arg):
+            if not br_delflow(self.bridge, arg, forced):
                 output('Del flow#%s from %s failed.\n'
                        % (arg, self.bridge))
             else:
@@ -255,7 +255,7 @@ class CLI(Cmd):
         """
         show_port_info(line)
 
-    def do_list(self, _arg):
+    def do_list(self, _arg=None):
         """
         List available bridges in the system.
         """
