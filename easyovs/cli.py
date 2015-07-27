@@ -255,7 +255,7 @@ class CLI(Cmd):
         """
         show_port_info(line)
 
-    def do_list(self, _arg):
+    def do_list(self, _arg=None):
         """
         List available bridges in the system.
         """

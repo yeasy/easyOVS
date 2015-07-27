@@ -12,7 +12,7 @@ log_file=$0".log"
 
 echo_b "All results would be recorded into ${log_file}"
 
-echo_b "##Test: easyovs -m addbr br-test" | tee -a ${log_file}
+echo_b "##Test: easyovs -m 'addbr br-test'" | tee -a ${log_file}
 if easyovs -m 'addbr br-test' | tee -a ${log_file} | grep -i "error" > /dev/null 2>&1
 then
     echo_r "Failed" | tee -a ${log_file}
@@ -32,7 +32,7 @@ fi
 
 echo_b "##Test: easyovs -m list" | tee -a ${log_file}
 easyovs -m 'addbr br-test' > /dev/null 2>&1
-if easyovs -m list | tee -a ${log_file} | grep "br-test" > /dev/null 2>&1
+if easyovs -m 'list' | tee -a ${log_file} | grep "br-test" > /dev/null 2>&1
 then
     echo_g "Passed" | tee -a ${log_file}
 else

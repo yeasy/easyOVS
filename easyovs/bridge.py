@@ -116,7 +116,6 @@ class Bridge(object):
                                or m.startswith("actions=")), del_matches)
                     del_cmd = "ovs-ofctl --strict del-flows %s %s" \
                               % (self.bridge, ','.join(del_matches))
-                    output(del_cmd + '\n')
                     err = Popen(del_cmd, stdout=PIPE, stderr=PIPE,
                                 shell=True).communicate()[1]
                     if err:
