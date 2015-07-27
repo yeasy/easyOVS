@@ -16,12 +16,12 @@ def br_addflow(bridge, flow):
         return False
 
 
-def br_delflow(bridge, ids):
+def br_delflow(bridge, ids, forced=False):
     debug('br_delflow: %s: %s\n' % (bridge, ','.join(ids)))
     if type(ids) == str and ids.isdigit():
-        return Bridge(bridge).del_flow([ids])
+        return Bridge(bridge).del_flow([ids], forced)
     else:
-        return Bridge(bridge).del_flow(ids)
+        return Bridge(bridge).del_flow(ids, forced)
 
 def br_exists(name):
     """

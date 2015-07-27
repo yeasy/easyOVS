@@ -58,7 +58,7 @@ class Bridge(object):
             return True
 
     @check_exist
-    def del_flow(self, flow_ids):
+    def del_flow(self, flow_ids, forced=False):
         """
         Return True or False to del a flow from given list.
         """
@@ -78,27 +78,30 @@ class Bridge(object):
                 continue
             else:
                 del_flow = self.flows[flow_id]
-                Flow.banner_output()
-                del_flow.fmt_output()
-                output('Del the flow? [Y/n]: ')
-                new = termios.tcgetattr(fd)
-                new[3] = new[3] & ~termios.ICANON
-                try:
-                    termios.tcsetattr(fd, termios.TCSADRAIN, new)
-                    while True:
-                        in_ch = sys.stdin.read(1)
-                        if in_ch == 'n' or in_ch == 'N':
-                            output('\tCancel the deletion.\n')
-                            break
-                        elif in_ch == 'y' or in_ch == 'Y' or in_ch != '\n':
-                            del_flows.append(del_flow)
-                            output('\n')
-                            break
-                        else:
-                            output('\nWrong, please input [Y/n]: ')
-                            continue
-                finally:
-                    termios.tcsetattr(fd, termios.TCSADRAIN, old)
+                if forced:
+                    del_flows.append(del_flow)
+                else:
+                    Flow.banner_output()
+                    del_flow.fmt_output()
+                    output('Del the flow? [Y/n]: ')
+                    new = termios.tcgetattr(fd)
+                    new[3] = new[3] & ~termios.ICANON
+                    try:
+                        termios.tcsetattr(fd, termios.TCSADRAIN, new)
+                        while True:
+                            in_ch = sys.stdin.read(1)
+                            if in_ch == 'n' or in_ch == 'N':
+                                output('\tCancel the deletion.\n')
+                                break
+                            elif in_ch == 'y' or in_ch == 'Y' or in_ch != '\n':
+                                del_flows.append(del_flow)
+                                output('\n')
+                                break
+                            else:
+                                output('\nWrong, please input [Y/n]: ')
+                                continue
+                    finally:
+                        termios.tcsetattr(fd, termios.TCSADRAIN, old)
         if not del_flows:
             return False
         self.load_flows(True)
