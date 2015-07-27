@@ -26,11 +26,11 @@ class NeutronHandler(object):
     """
     def __init__(self):
         config.init(sys.argv[1:])
-        username = os.environ['OS_USERNAME'] or cfg.CONF.OS.username or None
-        password = os.environ['OS_PASSWORD'] or cfg.CONF.OS.password or None
+        username = os.getenv('OS_USERNAME') or cfg.CONF.OS.username or None
+        password = os.getenv('OS_PASSWORD') or cfg.CONF.OS.password or None
         tenant_name = \
-            os.environ['OS_TENANT_NAME'] or cfg.CONF.OS.tenant_name or None
-        auth_url = os.environ['OS_AUTH_URL'] or cfg.CONF.OS.auth_url or None
+            os.getenv('OS_TENANT_NAME') or cfg.CONF.OS.tenant_name or None
+        auth_url = os.getenv('OS_AUTH_URL') or cfg.CONF.OS.auth_url or None
         try:
             self.keystone = ksclient.Client(auth_url=auth_url,
                                             tenant_name=tenant_name,
