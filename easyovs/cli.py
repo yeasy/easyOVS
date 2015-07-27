@@ -7,12 +7,15 @@ except ImportError:
     from oslo.config import cfg
 from select import poll
 from subprocess import call
+import os
 import sys
 
+from easyovs import VERSION
 from easyovs.bridge_ctrl import br_addflow, br_delbr, br_addbr, br_delflow, \
-    br_dump, br_exists,br_list, br_show
-from easyovs.iptables import IPtables, show_vm_rules
-from easyovs.log import info, output, error, debug
+    br_dump, br_exists, br_list, br_show
+from easyovs.common import CMDS_ONE, CMDS_BR, CMDS_OTHER
+from easyovs.iptables import IPtables
+from easyovs.log import info, output, error, debug, warn
 from easyovs.neutron import show_port_info
 from easyovs.util import color_str, fmt_flow_str
 
@@ -42,32 +45,39 @@ class CLI(Cmd):
         'Default bridge can be set using\n\tset <bridge>.\n'
     )
 
-    def __init__(self, bridge=None, stdin=sys.stdin):
-        self.prompt = color_str('g', PROMPT_KW)
-        self.bridge = bridge  # default bridge
+    def __init__(self, stdin=sys.stdin, foreground=True):
+        self.bridge = None  # default bridge
         self.ipt = IPtables()
-        self.stdin = stdin
-        self.in_poller = poll()
-        self.in_poller.register(stdin)
-        Cmd.__init__(self)
-        output("***\n Welcome to EasyOVS,"
-               "type help to see available commands.\n***\n")
-        info('*** Starting CLI:\n')
-        debug("==cfg.ADMIN==\n")
-        debug("auth_url = %s\n" % cfg.CONF.OS.auth_url)
-        debug("username = %s\n" % cfg.CONF.OS.username)
-        debug("password = %s\n" % cfg.CONF.OS.password)
-        debug("tenant_name = %s\n" % cfg.CONF.OS.tenant_name)
-        while True:
-            try:
-                #if self.isatty():
-                #quietRun( 'stty sane' )
-                self.cmdloop()
-                break
-            except KeyboardInterrupt:
-                info('\nInterrupt\n')
+        if foreground:
+            output('EasyOVS %s, type help for information\n' % VERSION)
+            self.prompt = color_str(PROMPT_KW, 'g')
+            self.stdin = stdin
+            self.in_poller = poll()
+            self.in_poller.register(stdin)
+            Cmd.__init__(self)
+            output("***\n Welcome to EasyOVS,"
+                   "type help to see available commands.\n***\n")
+            info('*** Starting CLI:\n')
+            debug("==Loading credentials==\n")
+            debug("auth_url = %s\n" % os.environ['OS_AUTH_URL'] or
+                  cfg.CONF.OS.auth_url)
+            debug("username = %s\n" % os.environ['OS_USERNAME'] or
+                  cfg.CONF.OS.username)
+            passwd = os.environ['OS_PASSWORD'] or cfg.CONF.OS.password
+            passwd = passwd[:len(passwd)/4] + "****" + passwd[-len(passwd)/4:]
+            debug("password = %s\n" % passwd)
+            debug("tenant_name = %s\n" % os.environ['OS_TENANT_NAME'] or
+                  cfg.CONF.OS.tenant_name)
+            while True:
+                try:
+                    #if self.isatty():
+                    #quietRun( 'stty sane' )
+                    self.cmdloop()
+                    break
+                except KeyboardInterrupt:
+                    info('\nInterrupt\n')
 
-    def do_addflow(self, arg):
+    def do_addflow(self, arg, forced=False):
         """
         addflow [bridge] flow
         Add a flow to a bridge.
@@ -93,10 +103,11 @@ class CLI(Cmd):
         else:
             output('Add flow <%s> to %s done.\n' % (flow, bridge))
 
-    def do_delflow(self, arg):
+    def do_delflow(self, arg, forced=False):
         """
-        [bridge] delflow flow_id
+        [bridge] delflow flow_id, flow_id
         Del a flow from a bridge.
+        :param args:
         """
         args = arg.split()
         if len(args) >= 2:
@@ -116,9 +127,9 @@ class CLI(Cmd):
         else:
             output("Please use like [bridge] delflow flow_id.\n")
 
-    def do_addbr(self, arg):
+    def do_addbr(self, arg, forced=False):
         """
-        addbr [bridge]
+        addbr br1, br2
         create a new bridge with name
         """
         brs = arg.replace(',', ' ').split()
@@ -129,20 +140,22 @@ class CLI(Cmd):
         for br in brs:
             br_addbr(br)
 
-    def do_delbr(self, arg):
+    def do_delbr(self, arg, forced=False):
         """
-        delbr [bridge]
+        delbr br1, br2
         Delete a bridge
+
         """
+
         brs = arg.replace(',', ' ').split()
         if len(brs) < 1:
             output('Not enough parameters are given, use like ')
-            output('del br1,br2\n')
+            output('delbr br1,br2\n')
             return
         for br in brs:
             br_delbr(br)
 
-    def do_dump(self, arg):
+    def do_dump(self, arg, forced=False):
         """
         [bridge] dump
         Dump the flows from a bridge.
@@ -170,7 +183,7 @@ class CLI(Cmd):
         """
         if self.bridge:
             self.bridge = None
-            self.prompt = color_str('g', PROMPT_KW)
+            self.prompt = color_str(PROMPT_KW, 'g')
         else:
             return self.do_quit(_arg)
 
@@ -194,27 +207,47 @@ class CLI(Cmd):
     def do_ipt(self, arg):
         """
         Show the iptables rules, e.g.,
-        ipt show vm1,vm2
-        ipt show nat,raw,forward
-        ipt check nat,raw,forward
+        ipt vm vm1,vm2
+        ipt show nat,raw,filter [INPUT]
+        ipt check nat,raw,filter
         """
         args = arg.split()
-        if len(args) < 2:
-            error("Not engough paramers, use as:\n")
-            error("ipt show vm_ip1, vm_ip2\n")
-            error("ipt show filter INPUT\n")
+        if len(args) < 1 or len(args) > 3:  # only 1-3 is valid
+            warn("Not correct parameters, use as:\n")
+            warn("ipt vm vm_ip\n")
+            warn("ipt show|check [filter] [INPUT]\n")
             return
-        if args[0] == 'show':
-            if args[1] in self.ipt.get_available_tables():
-                self.ipt.show(args[1], args[2])
-        elif args[0] == 'check':
-            pass
-        else:
-            error("ipt only support show and check\n")
+        cmd = args[0]
+        if not hasattr(self.ipt, '%s' % cmd):
+            error('Unsupported cmd=%s\n' % cmd)
             return
-
-        flow_ids = ' '.join(args[1:]).replace(',', ' ').split()
-        show_vm_rules(line)
+        self.ipt.load()  # load all chains
+        if cmd == 'vm':
+            if len(args) == 1:
+                error('No vm ip is given\n')
+                return
+            else:
+                for vm_ip in args[1:]:
+                    debug('run self.ipt.%s(...)\n' % cmd)
+                    getattr(self.ipt, '%s' % cmd)(vm_ip)
+        elif cmd in ['check', 'show']:
+            if len(args) == 1:  # show
+                debug('run self.ipt.%s()\n' % cmd)
+                getattr(self.ipt, '%s' % cmd)()
+            elif len(args) == 2:  # filter|INPUT
+                if args[1] in self.ipt.get_valid_tables():  # filter
+                    debug('run self.ipt.%s(table=%s)\n' % (cmd, args[1]))
+                    getattr(self.ipt, '%s' % cmd)(table=args[1])
+                else:  # INPUT
+                    debug('run self.ipt.%s(chain=%s)\n' % (cmd, args[1]))
+                    getattr(self.ipt, '%s' % cmd)(chain=args[1])
+            elif len(args) == 3:
+                if args[1] in self.ipt.get_valid_tables():  # filter INPUT
+                    debug('run self.ipt.%s(table=%s, chain=%s\n)'
+                          % (cmd, args[1], args[2]))
+                    getattr(self.ipt, '%s' % cmd)(table=args[1], chain=args[2])
+                else:
+                    warn("Unknown table, table=%s\n" % args[1])
 
     def do_query(self, line):
         """
@@ -247,7 +280,7 @@ class CLI(Cmd):
                    'You can check available bridges using show\n')
         else:
             self.prompt = \
-                color_str('g', PROMPT_KW[:-2] + ':%s> ' % color_str('b', arg))
+                color_str(PROMPT_KW[:-2] + ':%s> ' % color_str('b', arg), 'g')
             self.bridge = arg
             output('Set the default bridge to %s.\n' % self.bridge)
 
@@ -257,7 +290,7 @@ class CLI(Cmd):
         """
         call(line, shell=True)
 
-    def do_show(self, arg):
+    def do_show(self, arg, forced=False):
         """
         Show port details of a bridge, with neutron information.
         """
@@ -298,3 +331,29 @@ class CLI(Cmd):
                       '***\n' % (line, cmd, bridge, args))
         else:
             error('*** Bridge %s is not existed\n' % bridge)
+
+    def run(self, cmd, forced=False):
+        '''
+        Run given commands from -m 'xxxx'. Treat this similar with CLI.
+        :param args:
+        :param forced:
+        :return:
+        '''
+        cmd_split = cmd.split()
+        if cmd_split[0] in CMDS_ONE:  # list
+            func = cmd_split[0]
+            getattr(self, 'do_' + func)()
+        elif cmd_split[0] in CMDS_BR:
+            if len(cmd_split) > 2:  # e.g., delflow br0 9,10
+                func, args = cmd_split[0], ' '.join(cmd_split[1:])
+                debug("run do_%s(%s, %s)\n" %
+                      (func, args.replace(',', ' '), forced))
+                getattr(self, 'do_' + func)(args.replace(',', ' '), forced)
+            else:  # e.g., delbr br0
+                func, args = cmd_split[0], cmd_split[1]
+                getattr(self, 'do_' + func)(args)
+        elif cmd_split[0] in CMDS_OTHER:  # e.g., ipt vm 10.0.0.1, 10.0.0.2
+            func, args = cmd_split[0], ' '.join(cmd_split[1:])
+            getattr(self, 'do_' + func)(args)
+        else:
+            output('Wrong command format is given\n')

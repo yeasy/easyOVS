@@ -114,7 +114,7 @@ def fmt_flow_str(raw_str):
     return flow
 
 
-def color_str(color, raw_str):
+def color_str(raw_str, color):
     if color == 'r':
         fore = 31
     elif color == 'g':
@@ -148,8 +148,7 @@ def compress_mac_str(raw_str):
     else:
         return raw_str
 
-
-def get_bridges():
+def get_all_bridges():
     """
     Return a dict of all available bridges, looks like
     {
@@ -161,6 +160,7 @@ def get_bridges():
                 'tag':'1', //tagid
                 'type':'internal', //tagid
                 },
+            }
         },
     }
     """
@@ -194,6 +194,20 @@ def get_bridges():
             elif l.startswith('type: '):
                 brs[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
     return brs
+
+
+def find_ns(key):
+    ns_list, err = Popen('ip netns list', stdout=PIPE, stderr=PIPE,
+                         shell=True).communicate()
+    if err:
+        return None
+    ns_list = ns_list.splitlines()
+    for ns in ns_list:  # qrouter-03266ec4-a03b-41b2-897b-c18ae3279933
+        if Popen('ip netns exec %s ip addr | grep %s' % (ns, key),
+                 stdout=PIPE, stderr=PIPE,
+                 shell=True) .communicate()[0]:
+            return ns
+    return None
 
 
 if __name__ == '__main__':

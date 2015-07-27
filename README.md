@@ -27,11 +27,28 @@ After the installation, start easyovs with
 
 easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
 
-## Run with Docker
+## Run with Docker (recommended)
+### No OpenStack Support
 ```sh
-docker run -it --net='host' \
- -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+docker run -it \
+ --net='host' \
  --privileged \
+ -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+  yeasy/easyovs:latest
+```
+
+### Enable Openstack support
+Replace the following openstack credentials with your own.
+
+```sh
+docker run -it \
+ --net='host' \
+ --privileged \
+ -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ -e OS_USERNAME=$OS_USERNAME \
+ -e OS_PASSWORD=$OS_PASSWORD \
+ -e OS_TENANT_NAME=$OS_TENANT_NAME \
+ -e OS_AUTH_URL=$OS_AUTH_URL \
   yeasy/easyovs:latest
 ```
 
@@ -91,11 +108,11 @@ s3
 ```
 
 ### show
-`EasyOVS> [bridge|default] show`
+`EasyOVS> show [bridge|default]`
 
 Show the ports information of a given bridge. The output would look like
 ```sh
- EasyOVS> br-int show
+ EasyOVS> show br-int
 br-int
 Intf                Port        Vlan    Type        vmIP            vmMAC
 int-br-eth0         15
@@ -122,18 +139,17 @@ bridge br2 was created
 Delete a bridge. The output would look like
 
 ```sh
-EasyOVS> delbr br1,br2
+EasyOVS> delbr br1
 bridge br1 was deleted
-bridge br2 was deleted
 ```
 
 ### dump
-`EasyOVS> [bridge|default] dump`
+`EasyOVS> dump [bridge|default]`
 
 Dump flows in a bridge. The output would look like
 
 ```sh
-EasyOVS> s1 dump
+EasyOVS> dump s1
 ID TAB PKT       PRI   MATCH                                                       ACT
 0  0   0         2400  dl_dst=ff:ff:ff:ff:ff:ff                                    CONTROLLER:65535
 1  0   0         2400  arp                                                         CONTROLLER:65535
@@ -144,20 +160,20 @@ ID TAB PKT       PRI   MATCH                                                    
 ```
 
 ### addflow
-`EasyOVS> [bridge|default] addflow [match] actions=[action]`
+`EasyOVS> addflow [bridge|default] [match] actions=[action]`
 
 Add a flow into the bridge, e.g.,
 
-`EasyOVS> br-int addflow priority=3 ip actions=OUTPUT:1`
+`EasyOVS> addflow br-int priority=3 ip actions=OUTPUT:1`
 
 ### delflow
-`EasyOVS> [bridge|default] delflow id1 id2...`
+`EasyOVS> delflow [bridge|default] id1 id2...`
 
 Delete flows with given ids (see the first column of the `dump` output).
 
 
 ### set
-`EasyOVS> bridge set`
+`EasyOVS> set bridge`
 
 Set the default bridge. Then you will go into a bridge mode, and can ignore the bridge parameter when using the
 command.
@@ -182,11 +198,11 @@ Current default bridge is br-int
 ```
 
 ### ipt
-`EasyOVS> ipt vm_ip1, vm_ip2...`
+`EasyOVS> ipt vm vm_ip...`
 
 Show the related iptables rules of the given vms.
 ```sh
-EasyOVS> ipt 192.168.0.2 192.168.0.4
+EasyOVS> ipt vm 192.168.0.2
 ## IP = 192.168.0.2, port = qvo583c7038-d ##
     PKTS	SOURCE          DESTINATION     PROT  OTHER               
 #IN:
@@ -203,23 +219,23 @@ EasyOVS> ipt 192.168.0.2 192.168.0.4
     1241	all             all             all                       
 #SRC_FILTER:
    59163	192.168.0.2     all             all   MAC FA:16:3E:9C:DC:3A
-## IP = 192.168.0.4, port = qvo260209fa-7 ##
-    PKTS	SOURCE          DESTINATION     PROT  OTHER               
-#IN:
-      73	all             all             all   state RELATED,ESTABLISHED
-       0	all             all             tcp   tcp dpt:22          
-       0	all             all             icmp                      
-       0	192.168.0.2     all             all                       
-       0	192.168.0.5     all             all                       
-       0	10.0.0.2        all             all                       
-   11331	192.168.0.3     all             udp   udp spt:67 dpt:68   
-#OUT:
-   30034	all             all             udp   udp spt:68 dpt:67   
-   11377	all             all             all   state RELATED,ESTABLISHED
-      12	all             all             all                       
-#SRC_FILTER:
-    9859	192.168.0.4     all             all   MAC FA:16:3E:0F:17:04
+```
+`EasyOVS> ipt show [table] [chain]...`
 
+Show the related iptables rules of the given table or chain.
+```sh
+EasyOVS> ipt show filter FORWARD
+table=filter
+chain=FORWARD
+1 0 0 ACCEPT all -- * virbr0 0.0.0.0/0 192.168.122.0/24 ctstate RELATED,ESTABLISHED
+2 0 0 ACCEPT all -- virbr0 * 192.168.122.0/24 0.0.0.0/0
+3 0 0 ACCEPT all -- virbr0 virbr0 0.0.0.0/0 0.0.0.0/0
+4 0 0 REJECT all -- * virbr0 0.0.0.0/0 0.0.0.0/0 reject-with icmp-port-unreachable
+5 0 0 REJECT all -- virbr0 * 0.0.0.0/0 0.0.0.0/0 reject-with icmp-port-unreachable
+6 691K 1117M DOCKER all -- * docker0 0.0.0.0/0 0.0.0.0/0
+7 691K 1117M ACCEPT all -- * docker0 0.0.0.0/0 0.0.0.0/0 ctstate RELATED,ESTABLISHED
+8 463K 26M ACCEPT all -- docker0 !docker0 0.0.0.0/0 0.0.0.0/0
+9 0 0 ACCEPT all -- docker0 docker0 0.0.0.0/0 0.0.0.0/0
 ```
 
 ### query
