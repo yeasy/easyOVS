@@ -31,6 +31,8 @@ easyOVS will show an interactive CLI, which supports command suggestions and for
 ### No OpenStack Support
 ```sh
 docker run -it \
+ --name easyovs \
+ --rm \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
@@ -42,6 +44,8 @@ Replace the following openstack credentials with your own.
 
 ```sh
 docker run -it \
+ --name easyovs \
+ --rm \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
