@@ -31,6 +31,8 @@ easyOVS will show an interactive CLI, which supports command suggestions and for
 ### No OpenStack Support
 ```sh
 docker run -it \
+ --name easyovs \
+ --rm \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
@@ -42,6 +44,8 @@ Replace the following openstack credentials with your own.
 
 ```sh
 docker run -it \
+ --name easyovs \
+ --rm \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
@@ -50,6 +54,47 @@ docker run -it \
  -e OS_TENANT_NAME=$OS_TENANT_NAME \
  -e OS_AUTH_URL=$OS_AUTH_URL \
   yeasy/easyovs:latest
+```
+
+### Wrap with script
+Certainly, you can wrap the above command into a script, to run command
+directly with Docker container without such long typing, e.g., make a `
+./docker-easyovs.sh` file with content as
+```sh
+#!/bin/sh
+
+export OS_USERNAME=admin
+export OS_PASSWORD=admin
+export OS_TENANT_NAME=admin
+export OS_AUTH_URL=http://127.0.0.1:5000/v2.0
+
+docker run -it \
+ --name easyovs \
+ --rm \
+ --net='host' \
+ --privileged \
+ -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ -e OS_USERNAME=$OS_USERNAME \
+ -e OS_PASSWORD=$OS_PASSWORD \
+ -e OS_TENANT_NAME=$OS_TENANT_NAME \
+ -e OS_AUTH_URL=$OS_AUTH_URL \
+  yeasy/easyovs:latest "$@"
+```
+
+Make the script executable.
+
+```sh
+# chmod a+x docker-easyovs.sh
+```
+
+Then you can run easyovs command directly with `-m` as
+```sh
+# ./docker-easyovs.sh -m "dump br-int"
+ID TAB PKT       PRI   MATCH                                              ACT
+0  0   3525622   2     in_port=int-br-ex                                  drop
+1  0   925       1     *                                                  NORMAL
+2  23  0         0     *                                                  drop
+
 ```
 
 ## Upgrade or Delete

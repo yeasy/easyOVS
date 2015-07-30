@@ -185,15 +185,23 @@ class Bridge(object):
             if table is None or packet is None:
                 return None
             for field in line.split():
-                if field.startswith('priority='):  # priority
+                if field.startswith('priority='):  # match starts with pri
                     priority = get_num_after(field, 'priority=')
                     if priority is None:
+                        error('No priority field found in flow\n')
                         return None
                     match = \
                         field.replace('priority=%u'
                                       % priority, '').lstrip(',').strip()
                     if not match:
                         match = r'*'
+                    port_no = get_num_after(field, 'in_port=')
+                    if isinstance(port_no, int):
+                        intf = self._get_port_intf(port_no)
+                        if intf:
+                            match = \
+                                match.replace('in_port=%u'
+                                              % port_no, 'in_port=%s' % intf)
                 elif field.startswith('actions='):
                     actions = field.replace('actions=', '').rstrip('\n')
             if priority is None:  # There is no priority= field
@@ -205,16 +213,30 @@ class Bridge(object):
         else:
             return None
 
+    def _get_port_intf(self, port_no):
+        """
+        Get the interface name for the ovs port id in the bridge.
+        :param port_no: int number of ovs port
+        :return: the interface name or None
+        """
+        if not port_no:
+            return None
+        ovs_ports = self.get_ports()
+        for intf in ovs_ports:
+            if ovs_ports[intf].get('port') == str(port_no):
+                return intf
+        return None
+
     @check_exist
     def get_ports(self):
         """
         Return a dict of the ports (port, addr, tag, type) on the bridge, like
         {
             'qvoxxx':{
-                'port':2,
-                'addr':08:91:ff:ff:f3,
-                'vlan':1,
-                'type':internal,
+                'port':'2',
+                'addr':'08:91:ff:ff:f3',
+                'vlan':'1',
+                'type':'internal',
             }
         }
         """
