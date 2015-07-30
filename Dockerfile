@@ -12,4 +12,4 @@ bash easyOVS/util/install.sh
 
 VOLUME ["/var/run/openvswitch/"]
 
-CMD [ "/usr/local/bin/easyovs" ]
+ENTRYPOINT [ "/usr/local/bin/easyovs" ]
