@@ -7,7 +7,7 @@ install:
   - python setup.py install
 
 script:
-  - bash test/test_all_commands.sh
+  - cd test && bash test_all_commands.sh
 
 branches:
   only:
