@@ -8,7 +8,8 @@ install:
   - sudo bash util/install.sh
 
 script:
-  - cd test && sudo bash test_all_commands.sh
+  #- cd test && sudo bash test_all_commands.sh
+  - sudo bash util/install.sh
 
 branches:
   only:
