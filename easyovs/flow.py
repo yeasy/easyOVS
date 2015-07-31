@@ -24,21 +24,21 @@ class Flow(object):
 
     @staticmethod
     def banner_output():
-        output(color_str('%-3s%-4s%-10s%-6s%-60s%-20s\n'
-               % ('ID', 'TAB', 'PKT', 'PRI', 'MATCH', 'ACT'), 'g'))
+        output(color_str('%-3s%-10s%-4s%-6s%-60s%-20s\n'
+               % ('ID', 'PKT', 'TAB', 'PRI', 'MATCH', 'ACT'), 'g'))
 
     def fmt_output(self):
         if self.packet > 0:
             result = \
-                color_str( self._format_str_ % (self.id, self.table,
-                                                self.packet,
+                color_str( self._format_str_ % (self.id, self.packet,
+                                                self.table,
                                                 self.priority,
                                                 compress_mac_str(self.match),
                                                 self.actions), 'b')
         else:
             result = \
                 self._format_str_ \
-                % (self.id, self.table, self.packet,
+                % (self.id, self.packet, self.table,
                    self.priority, compress_mac_str(self.match), self.actions)
         output(result)
 
