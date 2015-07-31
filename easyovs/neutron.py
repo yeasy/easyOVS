@@ -141,7 +141,7 @@ class NeutronHandler(object):
 neutron_handler = NeutronHandler()
 
 
-def show_port_info(keywords):
+def query_info(keywords):
     """
     :param keyword: might be the ip address or substring of the id string
     :return: related port

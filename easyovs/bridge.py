@@ -134,6 +134,7 @@ class Bridge(object):
     def load_flows(self, db=False):
         """
         Load the OpenvSwitch table rules into self.flows, and to db if enabled.
+        self.flows will be a list of Flow objects
         """
         debug('load_flows():\n')
         cmd = "ovs-ofctl dump-flows %s" % self.bridge
@@ -164,7 +165,7 @@ class Bridge(object):
     @check_exist
     def get_flows(self):
         """
-        Return a dict of flows in the bridge.
+        Return a dict of flows in the bridge in order of table:priority.
         """
         debug('Bridge:get_flow()\n')
         self.load_flows()

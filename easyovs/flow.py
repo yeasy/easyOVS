@@ -57,10 +57,10 @@ class Flow(object):
         if self.packet == 0 and other.packet > 0:
             return False
         return \
-            self.table < other.table or (self.table == other.table and
-                                         self.priority > other.priority) or \
+            self.table < other.table or \
+            (self.table == other.table and self.priority > other.priority) or \
             (self.table == other.table and self.priority == other.priority
-             and len(self.match) > len(other.match))
+             and self.packet > 0 and other.packet ==0)
 
     def __lt__(self, other):
         return not self.__eq__(other) and not self.__gt__(other)

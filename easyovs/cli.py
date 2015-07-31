@@ -16,7 +16,7 @@ from easyovs.bridge_ctrl import br_addflow, br_delbr, br_addbr, br_delflow, \
 from easyovs.common import CMDS_ONE, CMDS_BR, CMDS_OTHER
 from easyovs.iptables import IPtables
 from easyovs.log import info, output, error, debug, warn
-from easyovs.neutron import show_port_info
+from easyovs.neutron import query_info
 from easyovs.util import color_str, fmt_flow_str
 
 
@@ -253,7 +253,7 @@ class CLI(Cmd):
         """
         Show the port information of given keywords.
         """
-        show_port_info(line)
+        query_info(line)
 
     def do_list(self, _arg=None):
         """

@@ -43,15 +43,15 @@ def br_list():
         return
     br_info = ''
     for br in sorted(bridges.keys()):
-        br_info += "%s\n" % br
+        br_info += color_str("%s\n" % br, 'r')
         if bridges[br]['Port']:
-            br_info += " Port:\t\t%s\n" \
+            br_info += "\tPort:\t\t%s\n" \
                        % (' '.join(sorted(bridges[br]['Port'].keys())))
         if bridges[br]['Controller']:
-            br_info += " Controller:\t%s\n" \
+            br_info += "\tController:\t%s\n" \
                        % (' '.join(bridges[br]['Controller']))
         if bridges[br]['fail_mode']:
-            br_info += " Fail_Mode:\t%s\n" % (bridges[br]['fail_mode'])
+            br_info += "\tFail_Mode:\t%s\n" % (bridges[br]['fail_mode'])
     output(br_info)
 
 def br_addbr(name):
