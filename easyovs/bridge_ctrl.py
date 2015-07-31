@@ -82,12 +82,7 @@ def br_dump(name):
     """
     Dump the port information of a given bridges.
     """
-    flows = Bridge(name).get_flows()
-    debug('br_dump: len flows=%u\n' % len(flows))
-    if flows:
-        Flow.banner_output()
-        for f in flows:
-            f.fmt_output()
+    Bridge(name).dump_flows()
 
 def br_show(name):
     """

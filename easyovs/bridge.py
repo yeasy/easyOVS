@@ -214,6 +214,23 @@ class Bridge(object):
         else:
             return None
 
+    def dump_flows(self):
+        """
+        Dump out the flows of this bridge
+        :return:
+        """
+        self.load_flows()
+        debug('br_dump: len flows=%u\n' % len(self.flows))
+        table = 0
+        if self.flows:
+            Flow.banner_output()
+            for f in self.flows:
+                if f.table != table:
+                    output('\n')
+                    table = f.table
+                f.fmt_output()
+
+
     def _process_actions(self, actions_str):
         """
         Process the actions fields to make it more readable
