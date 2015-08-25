@@ -36,6 +36,7 @@ docker run -it \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ -v /var/run/netns/:/var/run/netns/:ro \
   yeasy/easyovs:latest
 ```
 
@@ -49,6 +50,7 @@ docker run -it \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ -v /var/run/netns/:/var/run/netns/:ro \
  -e OS_USERNAME=$OS_USERNAME \
  -e OS_PASSWORD=$OS_PASSWORD \
  -e OS_TENANT_NAME=$OS_TENANT_NAME \
@@ -72,7 +74,8 @@ docker run -it \
  --rm \
  --net='host' \
  --privileged \
- -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ -v /var/run/openvswitch/:/var/run/openvswitch/ \
+ -v /var/run/netns/:/var/run/netns/:ro \
  -e OS_USERNAME=$OS_USERNAME \
  -e OS_PASSWORD=$OS_PASSWORD \
  -e OS_TENANT_NAME=$OS_TENANT_NAME \
