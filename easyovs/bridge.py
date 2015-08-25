@@ -31,7 +31,7 @@ class Bridge(object):
     def __init__(self, name):
         self.bridge = name
         self.flows = []
-        self.flows_db = '/tmp/tmp_%s_flows' % self.bridge
+        self.flows_db = '/tmp/tmp_%s.flows' % self.bridge
 
     def exists(self):
         if not self.bridge:
@@ -141,9 +141,9 @@ class Bridge(object):
         flows, f = [], None
         if db:
             f = open(self.flows_db, 'w')
-        result, error = \
+        result, err = \
             Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
-        if error:
+        if err:
             return
         for l in result.split('\n'):
             l = l.strip()

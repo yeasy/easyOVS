@@ -17,10 +17,8 @@ def sh(cmd):
 def cleanup():
     """Clean up junk which might be left over from old runs;
     """
-    sh('pkill -9 -f "neutron port-list"')
-
     debug("*** Removing junk from /tmp\n")
-    sh('rm -f /tmp/tmp_switch_* /tmp/vlogs* /tmp/*.out /tmp/*.log')
+    sh('rm -f /tmp/*.flows')
 
     debug("*** Cleanup complete.\n")
 
