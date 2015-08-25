@@ -17,40 +17,12 @@ class NameSpace(object):
         self.ns_cmd = 'ip netns'
         self.intfs = {}
 
-    def _load(self, test_content=None):
-        if not test_content: # test_content is null
-            run_cmd = '%s exec %s ip a' % (self.ns_cmd, self.id)
-            content, err = Popen(run_cmd, stdout=PIPE, stderr=PIPE,
-                                 shell=True).communicate()
-            if err:
-                error("Failed to run %s, err=%s\n" % (run_cmd, err))
-                return
-        else:
-            content = test_content
-
-        lines = content.split('\n')
-        results = {}  #  {'1':{'intf': eth0, 'ip': [ip1, ip2]}, 'mac': xxx }
-        for l in lines:
-            if not l:
-                continue
-            if not l.startswith(' '):  # one interface: 1: lo: xxxxx
-                intf_line = l.split(':')
-                if len(intf_line) < 2:
-                    warn('Seems the interface line too short\n')
-                    continue
-                else:
-                    id = intf_line[0].strip()
-                    intf = intf_line[1].strip()
-                    results[id] = {'intf': intf, 'ip': [] }
-            else:  # some content line
-                cons = l.split()
-                if len(cons) < 2:
-                    continue
-                if cons[0] == 'inet':
-                    results[id]['ip'].append(cons[1])
-                elif cons[0] == 'link/ether':
-                    results[id]['mac'] = cons[1]
-        self.intfs = results
+    def is_empty(self):
+        """
+        Check if this namespace is empty or only has lo
+        """
+        self._load()
+        return not self.intfs or self.intfs.values()[0].get('intf') == 'lo'
 
     def show(self, test_content=None):
         """
@@ -68,6 +40,41 @@ class NameSpace(object):
                        % ( d, self.intfs[d].get('intf'),
                            self.intfs[d].get('mac'),
                            ', '.join(self.intfs[d].get('ip'))))
+
+    def _load(self, test_content=None):
+        if not test_content: # test_content is null
+            run_cmd = '%s exec %s ip a' % (self.ns_cmd, self.id)
+            content, err = Popen(run_cmd, stdout=PIPE, stderr=PIPE,
+                                 shell=True).communicate()
+            if err:
+                error("Failed to run %s, err=%s\n" % (run_cmd, err))
+                return
+        else:
+            content = test_content
+
+        lines = content.split('\n')
+        intfs = {}  #  {'1':{'intf': eth0, 'ip': [ip1, ip2]}, 'mac': xxx }
+        for l in lines:
+            if not l:
+                continue
+            if not l.startswith(' '):  # one interface: 1: lo: xxxxx
+                intf_line = l.split(':')
+                if len(intf_line) < 2:
+                    warn('Seems the interface line too short\n')
+                    continue
+                else:
+                    id = intf_line[0].strip()
+                    intf = intf_line[1].strip()
+                    intfs[id] = {'intf': intf, 'ip': [] }
+            else:  # some content line
+                cons = l.split()
+                if len(cons) < 2:
+                    continue
+                if cons[0] == 'inet':
+                    intfs[id]['ip'].append(cons[1])
+                elif cons[0] == 'link/ether':
+                    intfs[id]['mac'] = cons[1]
+        self.intfs = intfs
 
 
 class NameSpaces(object):
@@ -101,7 +108,12 @@ class NameSpaces(object):
             return
 
         output(color_str('%d namespaces: ' % len(ns_list), 'b'))
-        output('%s\n' % '\t'.join(ns_list))
+        ns_list_valid = filter(lambda x: not NameSpace(x).is_empty(), ns_list)
+        ns_list_empty = filter(lambda x: NameSpace(x).is_empty(), ns_list)
+        if ns_list_valid:
+            output(color_str('%s\n' % '\t'.join(ns_list), 'b'))
+        if ns_list_empty:
+            output('%s\n' % '\t'.join(ns_list))
 
     def show(self, id_prefix):
         """
