@@ -7,6 +7,6 @@ CMDS_ONE = ['cli', 'list']
 CMDS_BR = \
     ['addbr', 'delbr', 'addflow', 'delflow', 'dump', 'show']
 CMDS_OTHER = \
-    ['ipt', 'query']
+    ['ipt', 'query', 'ns']
 if __name__ == '__main__':
     pass

@@ -3,8 +3,9 @@ __author__ = 'baohua'
 from subprocess import PIPE, Popen
 from easyovs.bridge_ctrl import find_br_ports
 from easyovs.log import debug, error, output, warn
-from easyovs.util import color_str, find_ns
+from easyovs.util import color_str
 from easyovs.neutron import get_port_id_from_ip
+from easyovs.namespaces import NameSpaces
 
 
 # pkts source destination prot other
@@ -174,6 +175,7 @@ class IPtables(object):
     def __init__(self):
         self.valid_tables = ['raw', 'nat', 'filter', 'mangle', 'security']
         self.tables = {}
+        self.nss = NameSpaces()
         for tb in self.valid_tables:
             self.tables[tb] = IPtable(tb)
 
@@ -288,7 +290,7 @@ class IPtables(object):
             return {'IN': i_rules, 'OUT': o_rules, 'SRC_FILTER': s_rules}
         else:  # maybe at Network Node
             debug('Should be network function port\n')
-            ns = find_ns(br_port)
+            ns = self.nss.find(br_port)
             if not ns:
                 debug("port %s not in namespaces\n" % br_port)
             self.load(table='nat', ns=ns)

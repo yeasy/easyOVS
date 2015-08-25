@@ -193,14 +193,23 @@ bridge br1 was deleted
 Dump flows in a bridge. The output would look like
 
 ```sh
-EasyOVS> dump s1
-ID TAB PKT       PRI   MATCH                                                       ACT
-0  0   0         2400  dl_dst=ff:ff:ff:ff:ff:ff                                    CONTROLLER:65535
-1  0   0         2400  arp                                                         CONTROLLER:65535
-2  0   0         2400  dl_type=0x88cc                                              CONTROLLER:65535
-3  0   0         2400  ip,nw_proto=2                                               CONTROLLER:65535
-4  0   0         801   ip                                                          CONTROLLER:65535
-5  0   2         800
+EasyOVS> dump br-tun
+ID PKT       TAB PRI   MATCH                                                       ACT
+0  44        0   1     in_port=gre-ac1da15d                                        resubmit(,3)
+1  1         0   1     in_port=gre-ac1da15f                                        resubmit(,3)
+2  40        0   1     in_port=patch-int                                           resubmit(,2)
+3  0         0   1     in_port=vxlan-ac1da15d                                      resubmit(,4)
+4  0         0   1     in_port=vxlan-ac1da15f                                      resubmit(,4)
+5  0         0   0     *                                                           drop
+6  40        2   0     dl_dst=00::00/01:00::00                                     resubmit(,20)
+7  0         2   0     dl_dst=01:00::00/01:00::00                                  resubmit(,22)
+8  44        3   1     tun_id=0x2                                                  mod_vlan_vid:1,resubmit(,10)
+9  1         3   0     *                                                           drop
+10 0         4   0     *                                                           drop
+11 44        10  1     *                                                           learn(table=20,hard_timeout=300,priority=1,NXM_OF_VLAN_TCI[0..11],NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],load:0->NXM_OF_VLAN_TCI[],load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],output:NXM_OF_IN_PORT[]),output:patch-int
+12 3         20  0     *                                                           resubmit(,22)
+13 3         22  0                                                                 strip_vlan,set_tunnel:0x2,output:gre-ac1da15f,output:gre-ac1da15d
+14 0         22  0     *                                                           drop
 ```
 
 ### addflow
@@ -280,6 +289,19 @@ chain=FORWARD
 7 691K 1117M ACCEPT all -- * docker0 0.0.0.0/0 0.0.0.0/0 ctstate RELATED,ESTABLISHED
 8 463K 26M ACCEPT all -- docker0 !docker0 0.0.0.0/0 0.0.0.0/0
 9 0 0 ACCEPT all -- docker0 docker0 0.0.0.0/0 0.0.0.0/0
+```
+
+### ns
+Check namespaces related operations
+`EasyOVS> ns list` will list all existing namespace names.
+`EasyOVS> ns show id_prefix` will show the information of namespace whose id has the prefix.
+`EasyOVS> ns find pattern` will find the namespace whose content has the pattern.
+
+```sh
+EasyOVS> ns show id
+# Namespace = id
+ID    Intf              Mac                 IPs
+12    tapd41cd120-62    fa:16:3e:75:01:0e   11.3.3.2/24, 169.254.169.254/16
 ```
 
 ### query

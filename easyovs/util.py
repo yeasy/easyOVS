@@ -196,6 +196,7 @@ def get_all_bridges():
     return brs
 
 
+#deprecated
 def find_ns(key):
     ns_list, err = Popen('ip netns list', stdout=PIPE, stderr=PIPE,
                          shell=True).communicate()

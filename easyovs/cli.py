@@ -18,6 +18,7 @@ from easyovs.iptables import IPtables
 from easyovs.log import info, output, error, debug, warn
 from easyovs.neutron import query_info
 from easyovs.util import color_str, fmt_flow_str
+from easyovs.namespaces import NameSpaces
 
 
 PROMPT_KW = 'EasyOVS> '
@@ -48,6 +49,7 @@ class CLI(Cmd):
     def __init__(self, stdin=sys.stdin, foreground=True):
         self.bridge = None  # default bridge
         self.ipt = IPtables()
+        self.nss = NameSpaces()
         if foreground:
             output('EasyOVS %s, type help for information\n' % VERSION)
             self.prompt = color_str(PROMPT_KW, 'g')
@@ -248,6 +250,42 @@ class CLI(Cmd):
                     getattr(self.ipt, '%s' % cmd)(table=args[1], chain=args[2])
                 else:
                     warn("Unknown table, table=%s\n" % args[1])
+
+
+    def do_ns(self, arg):
+        """
+        Show the network namespace content, e.g.,
+        ns list
+        ns show id_prefix
+        ns find pattern
+        """
+        args = arg.split()
+        if len(args) < 1 or len(args) > 2:  # only 1-2 is valid
+            warn("Not correct parameters, use as:\n")
+            warn("ns list\n")
+            warn("ns show id_prefix (lo intf is ignored)\n")
+            warn("ns find pattern\n")
+            return
+        cmd = args[0]
+        if not hasattr(self.nss, '%s' % cmd):
+            error('Unsupported cmd=%s\n' % cmd)
+            return
+        if cmd == 'list':
+            if len(args) != 1:
+                error('No param should be given\n')
+                return
+            else:
+                debug('run self.nss.%s(...)\n' % cmd)
+                getattr(self.nss, '%s' % cmd)()
+        elif cmd in ['show', 'find']:
+            if len(args) == 2:  #
+                debug('run self.nss.%s(%s)\n' % (cmd, args[1]))
+                getattr(self.nss, '%s' % cmd)(args[1])
+            else:
+                warn("Invalid param number, no reach here, %s\n" % arg)
+                return
+        else:
+            error("Unknown cmd, cmd= %s\n" % arg)
 
     def do_query(self, line):
         """
