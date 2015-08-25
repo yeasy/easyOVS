@@ -15,12 +15,9 @@ class NameSpace(object):
     def __init__(self, id):
         self.id = id
         self.ns_cmd = 'ip netns'
+        self.intfs = {}
 
-    def show(self, test_content=None):
-        """
-        Show the namespace content in format
-        :param test_content: used for test parsing given content
-        """
+    def _load(self, test_content=None):
         if not test_content: # test_content is null
             run_cmd = '%s exec %s ip a' % (self.ns_cmd, self.id)
             content, err = Popen(run_cmd, stdout=PIPE, stderr=PIPE,
@@ -53,18 +50,24 @@ class NameSpace(object):
                     results[id]['ip'].append(cons[1])
                 elif cons[0] == 'link/ether':
                     results[id]['mac'] = cons[1]
+        self.intfs = results
 
+    def show(self, test_content=None):
+        """
+        Show the namespace content in format
+        """
+        self._load(test_content)
         output(color_str("# Namespace = %s\n" % self.id, 'b'))
-        if len(results) == 1 and 'lo' == results.values()[0].get('intf'):
+        if len(self.intfs) == 1 and 'lo' == self.intfs.values()[0].get('intf'):
             output('Only lo interface existed\n')
             return
         output(_format_str_ns_intf_ %('ID', 'Intf', 'Mac', 'IPs'))
-        for d in results:
-            if results[d].get('intf') != 'lo':
+        for d in self.intfs:
+            if self.intfs[d].get('intf') != 'lo':
                 output(_format_str_ns_intf_
-                       % ( d, results[d].get('intf'),
-                           results[d].get('mac'),
-                           ', '.join(results[d].get('ip'))))
+                       % ( d, self.intfs[d].get('intf'),
+                           self.intfs[d].get('mac'),
+                           ', '.join(self.intfs[d].get('ip'))))
 
 
 class NameSpaces(object):
@@ -122,11 +125,12 @@ class NameSpaces(object):
         """
         run_cmd = '%s list' % self.ns_cmd
         spaces, err = Popen(run_cmd, stdout=PIPE, stderr=PIPE,
-                           shell=True).communicate()
+                            shell=True).communicate()
         if err:
             error("Failed to run %s, err=%s\n" % (run_cmd, err))
             return None
-        ns_list = spaces.rstrip('\n').split('\n').sort()
+        ns_list = spaces.rstrip('\n').split('\n')
+        ns_list.sort()
         return ns_list
 
     def _search_ns(self, pattern):
@@ -136,6 +140,8 @@ class NameSpaces(object):
         :return: The id of the matched ns
         """
         ns_list = self._get_ids()
+        if not ns_list:
+            return None
         for ns in ns_list:  # qrouter-03266ec4-a03b-41b2-897b-c18ae3279933
             run_cmd = '%s exec %s ip addr | grep %s' % (self.ns_cmd, ns,
                                                         pattern)
