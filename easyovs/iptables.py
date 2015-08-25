@@ -254,7 +254,7 @@ class IPtables(object):
         '''
         tb = self.tables.get(table, None)
         if tb:
-            return tb.get_chain(table, chain)
+            return tb.get_chain(chain)
 
     def get_rules(self, table='filter', chain='INPUT'):
         '''
