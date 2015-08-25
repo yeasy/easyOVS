@@ -126,7 +126,7 @@ class NameSpaces(object):
         if err:
             error("Failed to run %s, err=%s\n" % (run_cmd, err))
             return None
-        ns_list = spaces.rstrip('\n').split('\n')
+        ns_list = spaces.rstrip('\n').split('\n').sort()
         return ns_list
 
     def _search_ns(self, pattern):
