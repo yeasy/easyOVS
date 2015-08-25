@@ -51,14 +51,13 @@ class CLI(Cmd):
         self.ipt = IPtables()
         self.nss = NameSpaces()
         if foreground:
-            output('EasyOVS %s, type help for information\n' % VERSION)
             self.prompt = color_str(PROMPT_KW, 'g')
             self.stdin = stdin
             self.in_poller = poll()
             self.in_poller.register(stdin)
             Cmd.__init__(self)
-            output("***\n Welcome to EasyOVS,"
-                   "type help to see available commands.\n***\n")
+            output("***\n Welcome to EasyOVS %s,"
+                   "type help to see available cmds.\n***\n" % VERSION)
             info('*** Starting CLI:\n')
             debug("==Loading credentials==\n")
             debug("auth_url = %s\n" % os.getenv('OS_AUTH_URL') or
