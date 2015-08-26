@@ -26,6 +26,16 @@ class NameSpace(object):
                (len(self.intfs.values())==1 and
                 self.intfs.values()[0].get('intf') == 'lo')
 
+    def has_intf(self, intf_name):
+        """
+        Check if this namespace has the intf.
+        """
+        self._load()
+        for i in self.intfs:
+            if self.intfs[i]['intf'] == intf_name:
+                return True
+        return False
+
     def show(self, test_content=None):
         """
         Show the namespace content in format
@@ -85,13 +95,24 @@ class NameSpaces(object):
     """
     def __init__(self):
         self.ns_cmd = 'ip netns'
-        pass
+
+    def find_intf(self, intf_name):
+        """
+        Find the first namespace who has the interface
+        :param intf_name:
+        :return:
+        """
+        ns_list = self.get_ids()
+        for ns in ns_list:
+            if NameSpace(ns).has_intf(intf_name):
+                return ns
+        return None
 
     def find(self, pattern):
         """
         Find a namespace which have the pattern
         :param pattern: pattern to search
-        :return:
+        :return: N/A
         """
         ns = self._search_ns(pattern)
         if not ns:
@@ -131,7 +152,6 @@ class NameSpaces(object):
             if id_prefix in s:
                 NameSpace(s).show()
                 return
-
 
     def get_ids(self):
         """

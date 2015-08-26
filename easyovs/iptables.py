@@ -8,8 +8,8 @@ from easyovs.neutron import get_port_id_from_ip
 from easyovs.namespaces import NameSpaces
 
 
-# pkts source destination prot other
-_format_str_iptables_rule_ = '%8s\t%-20s%-20s%-6s%-20s\n'
+# pkts in source out destination prot target other
+_format_str_iptables_rule_ = '\t%-10s%-10s%-20s%-8s%-20s%-6s%-20s%-20s\n'
 
 class IPrule(object):
     """
@@ -17,7 +17,7 @@ class IPrule(object):
     INPUT: rule line splits
     """
     def __init__(self, keys):
-        self.keys = keys
+        self.keys = keys  # rule keys + flags
         self.len = len(self.keys)
         self.content = {}  # {num:1,...}
 
@@ -25,16 +25,22 @@ class IPrule(object):
         if not rule:
             return False
         rule_fmt = ' '.join(rule.split())
-        segs = rule_fmt.split(' ', self.len - 1)
+        segs = rule_fmt.split(' ', self.len - 1)  # have flags or not
         for i in range(len(segs)):
             self.content[self.keys[i]] = segs[i]
+        if 'flags' not in self.content:
+            self.content['flags'] = ''
         return True
 
     def show(self):
-        for k in self.keys:
-            if k in self.content:
-                output("%s " % self.content[k])
-        output("\n")
+        r = self.content
+        if r['source'] == '0.0.0.0/0':
+            r['source'] = '*'
+        if r['destination'] == '0.0.0.0/0':
+            r['destination'] = '*'
+        output(_format_str_iptables_rule_
+               % (r['pkts'], r['in'], r['source'], r['out'],
+                  r['destination'], r['prot'], r['target'], r['flags']))
 
     def get_content(self):
         return self.content
@@ -118,18 +124,18 @@ class IPtable(object):
         chains = rules.split('\n\n')
         for chain in chains:  # some chain
             r = chain.splitlines()  # lines of rule
-            if not r:
-                continue
-            segs = r[0].split()  # r[0] is the top row
-            if segs[0] == 'Chain' and segs[1] not in self.chains:  # no exist
-                if 'DROP' in segs:
-                    self.chains[segs[1]] = IPchain(segs[1], 'DROP')
+            #if not r:
+            #    continue
+            title = r[0].split()  # r[0] is the title row
+            if title[0] == 'Chain' and title[1] not in self.chains:  # title row
+                if 'DROP' in title:
+                    self.chains[title[1]] = IPchain(title[1], 'DROP')
                 else:
-                    self.chains[segs[1]] = IPchain(segs[1])
+                    self.chains[title[1]] = IPchain(title[1])
             keys = r[1].split()
             keys.append('flags')
-            self.chains[segs[1]].set_keys(keys)
-            self.chains[segs[1]].add_rules(r[2:])  # those are real rules
+            self.chains[title[1]].set_keys(keys)
+            self.chains[title[1]].add_rules(r[2:])  # those are real rules
 
     def show(self, chain=None):
         '''
@@ -227,20 +233,19 @@ class IPtables(object):
         if not port_id:
             warn('No port id is found for ip=%s\n' % ip)
             return
-        output(color_str('## IP = %s, port = %s\n' % (ip, port_id), 'r'))
         br_port = find_br_ports(port_id)
         if not br_port:
             warn('No br port is found for ip=%s\n' % ip)
             return
-        debug('The br port is %s\n' % br_port)
+        output(color_str('## IP = %s, port = %s\n' % (ip, br_port), 'r'))
         rules_dic = self._query_port_rules(br_port)
         if rules_dic:
             output(color_str( _format_str_iptables_rule_ % (
-                'PKTS', 'SOURCE', 'DESTINATION', 'PROT', 'OTHER'), 'b'))
+                'PKTS', 'IN', 'SOURCE', 'OUT', 'DESTINATION', 'PROT',
+                'TARGET', 'OTHER'), 'b'))
             for r in rules_dic:
-                if rules_dic[r]:
-                    output('%s:\n' % r)
-                    self._fmt_show_rules(rules_dic[r])
+                output(color_str('%s:\n' % r, 'b'))
+                self._fmt_show_rules(rules_dic[r])
 
     def check(self, table='filter', chain='INPUT', ns=None):
         pass
@@ -284,22 +289,30 @@ class IPtables(object):
         }
         will load rules first
         """
+        results = {}
         if br_port.startswith('qvo'):  # vm port
             debug('qvo should be vm port\n')
             self.load(table='filter')
             chain_tag = br_port[3:13]
             i_rules = self.get_rules(chain='neutron-openvswi-i' +
                                            chain_tag)
-            o_rules = self.get_rules(chain='neutron-openvswi-o' +
+            out = self.get_rules(chain='neutron-openvswi-o' +
                                            chain_tag)
-            s_rules = self.get_rules(chain='neutron-openvswi-s' +
+            filter = self.get_rules(chain='neutron-openvswi-s' +
                                            chain_tag)
-            return {'IN': i_rules, 'OUT': o_rules, 'SRC_FILTER': s_rules}
+            if i_rules:
+                results['IN'] = i_rules
+            if out:
+                results['OUT'] = out
+            if filter:
+                results['SRC_FILTER'] = filter
         else:  # maybe at Network Node
             debug('Should be network function port\n')
-            ns = self.nss.find(br_port)
+            ns = self.nss.find_intf(br_port)
             if not ns:
-                debug("port %s not in namespaces\n" % br_port)
+                warn("port %s not in namespaces\n" % br_port)
+            else:
+                output('ns=%s\n' % ns)
             self.load(table='nat', ns=ns)
             if br_port.startswith('tap'):  # dhcp
                 return None
@@ -308,14 +321,19 @@ class IPtables(object):
                                      chain='neutron-l3-agent-PREROUTING')
                 out = self.get_rules(table='nat',
                                      chain='neutron-l3-agent-OUTPUT')
-                float = self.get_rules(table='nat',
+                float_snat = self.get_rules(table='nat',
                                        chain='neutron-l3-agent-float-snat')
                 snat = self.get_rules(table='nat',
                                       chain='neutron-l3-agent-snat')
-                return {'PRE': pre, 'OUT': out, 'FLOAT': float,
-                        'SNAT': snat}
-            else:
-                return None
+                if pre:
+                    results['PRE'] = pre
+                if out:
+                    results['OUT'] = out
+                if float_snat:
+                    results['FLOAT'] = float_snat
+                if snat:
+                    results['SNAT'] = snat
+        return results
 
     def _fmt_show_rules(self, rule_list):
         """
@@ -323,14 +341,7 @@ class IPtables(object):
         num   pkts bytes target prot opt in out source destination flags
         """
         for r in rule_list:
-            if r['target'] is not 'DROP':
-                if r['source'] == '0.0.0.0/0':
-                    r['source'] = 'all'
-                if r['destination'] == '0.0.0.0/0':
-                    r['destination'] = 'all'
-                output(_format_str_iptables_rule_
-                       % (r['pkts'], r['source'],
-                          r['destination'], r['prot'], r['flags']))
+            r.show()
 
 
 if __name__ == '__main__':

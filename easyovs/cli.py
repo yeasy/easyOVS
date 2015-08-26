@@ -228,7 +228,7 @@ class CLI(Cmd):
                 return
             else:
                 for vm_ip in args[1:]:
-                    debug('run self.ipt.%s(...)\n' % cmd)
+                    debug('run self.ipt.%s(%s)\n' % (cmd, vm_ip))
                     getattr(self.ipt, '%s' % cmd)(vm_ip)
         elif cmd in ['check', 'show']:
             ns = None
@@ -255,7 +255,6 @@ class CLI(Cmd):
                                                   chain=args[2], ns=ns)
                 else:
                     warn("Unknown table, table=%s\n" % args[1])
-
 
     def do_ns(self, arg):
         """
