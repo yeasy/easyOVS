@@ -231,14 +231,14 @@ class CLI(Cmd):
                     debug('run self.ipt.%s(...)\n' % cmd)
                     getattr(self.ipt, '%s' % cmd)(vm_ip)
         elif cmd in ['check', 'show']:
-            if len(args) == 1:  # show
-                debug('run self.ipt.%s()\n' % cmd)
-                getattr(self.ipt, '%s' % cmd)()
-                return
             ns = None
             if args[-1] in NameSpaces().get_ids():
                 ns = args.pop()
-            if len(args) == 2:  # filter|INPUT
+            if len(args) == 1:  # show
+                debug('run self.ipt.%s(ns=%s)\n' % (cmd, ns))
+                getattr(self.ipt, '%s' % cmd)(ns=ns)
+                return
+            elif len(args) == 2:  # filter|INPUT
                 if args[1] in self.ipt.get_valid_tables():  # filter
                     debug('run self.ipt.%s(table=%s,ns=%s)\n' % (cmd,
                                                                  args[1], ns))
