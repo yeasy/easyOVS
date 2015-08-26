@@ -22,7 +22,9 @@ class NameSpace(object):
         Check if this namespace is empty or only has lo
         """
         self._load()
-        return not self.intfs or self.intfs.values()[0].get('intf') == 'lo'
+        return not self.intfs or \
+               (len(self.intfs.values())==1 and
+                self.intfs.values()[0].get('intf') == 'lo')
 
     def show(self, test_content=None):
         """
@@ -107,7 +109,7 @@ class NameSpaces(object):
             warn('No namespace exists\n')
             return
 
-        output(color_str('%d namespaces: ' % len(ns_list), 'b'))
+        output(color_str('%d namespaces:\n ' % len(ns_list), 'b'))
         ns_list_valid = filter(lambda x: not NameSpace(x).is_empty(), ns_list)
         ns_list_empty = filter(lambda x: NameSpace(x).is_empty(), ns_list)
         if ns_list_valid:
