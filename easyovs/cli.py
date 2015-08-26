@@ -222,7 +222,6 @@ class CLI(Cmd):
         if not hasattr(self.ipt, '%s' % cmd):
             error('Unsupported cmd=%s\n' % cmd)
             return
-        self.ipt.load()  # load all chains
         if cmd == 'vm':
             if len(args) == 1:
                 error('No vm ip is given\n')
@@ -235,18 +234,25 @@ class CLI(Cmd):
             if len(args) == 1:  # show
                 debug('run self.ipt.%s()\n' % cmd)
                 getattr(self.ipt, '%s' % cmd)()
-            elif len(args) == 2:  # filter|INPUT
+                return
+            ns = None
+            if args[-1] in NameSpaces().get_ids():
+                ns = args.pop()
+            if len(args) == 2:  # filter|INPUT
                 if args[1] in self.ipt.get_valid_tables():  # filter
-                    debug('run self.ipt.%s(table=%s)\n' % (cmd, args[1]))
-                    getattr(self.ipt, '%s' % cmd)(table=args[1])
+                    debug('run self.ipt.%s(table=%s,ns=%s)\n' % (cmd,
+                                                                 args[1], ns))
+                    getattr(self.ipt, '%s' % cmd)(table=args[1], ns=ns)
                 else:  # INPUT
-                    debug('run self.ipt.%s(chain=%s)\n' % (cmd, args[1]))
-                    getattr(self.ipt, '%s' % cmd)(chain=args[1])
+                    debug('run self.ipt.%s(chain=%s, ns=%s)\n'
+                          % (cmd, args[1], ns))
+                    getattr(self.ipt, '%s' % cmd)(chain=args[1], ns=ns)
             elif len(args) == 3:
                 if args[1] in self.ipt.get_valid_tables():  # filter INPUT
-                    debug('run self.ipt.%s(table=%s, chain=%s\n)'
-                          % (cmd, args[1], args[2]))
-                    getattr(self.ipt, '%s' % cmd)(table=args[1], chain=args[2])
+                    debug('run self.ipt.%s(table=%s, chain=%s, ns=%s\n)'
+                          % (cmd, args[1], args[2], ns))
+                    getattr(self.ipt, '%s' % cmd)(table=args[1],
+                                                  chain=args[2], ns=ns)
                 else:
                     warn("Unknown table, table=%s\n" % args[1])
 
@@ -259,12 +265,14 @@ class CLI(Cmd):
         ns find pattern
         """
         args = arg.split()
-        if len(args) < 1 or len(args) > 2:  # only 1-2 is valid
+        if len(args) > 2:  # only 1-2 is valid
             warn("Not correct parameters, use as:\n")
-            warn("ns list\n")
+            warn("ns [list]\n")
             warn("ns show id_prefix (lo intf is ignored)\n")
             warn("ns find pattern\n")
             return
+        if len(args) == 0:  # default cmd for ns
+            args.insert(0, 'list')
         cmd = args[0]
         if not hasattr(self.nss, '%s' % cmd):
             error('Unsupported cmd=%s\n' % cmd)

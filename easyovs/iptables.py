@@ -90,10 +90,11 @@ class IPtable(object):
     """
     represent one table
     """
-    def __init__(self, name='filter'):
+    def __init__(self, name='filter', ns=None):
         self.name = name
         self.chains = {}
         self.run_cmd = 'iptables --line-numbers -nvL -t %s' % self.name
+        self.ns = ns
 
     def load(self, chain=None, ns=None):
         '''
@@ -108,6 +109,7 @@ class IPtable(object):
             run_cmd = self.run_cmd
         if ns:
             run_cmd = 'ip netns exec %s %s' % (ns, run_cmd)
+            self.ns = ns
         rules, err = Popen(run_cmd, stdout=PIPE, stderr=PIPE,
                            shell=True).communicate()
         if err:
@@ -135,7 +137,11 @@ class IPtable(object):
         :param chain:
         :return:
         '''
-        output(color_str("===table=%s===\n" % self.name, 'r'))
+        if self.ns:
+            output(color_str("===ns=%s, table=%s===\n" % (self.ns,
+                                                          self.name), 'r'))
+        else:
+            output(color_str("===table=%s===\n" % self.name, 'r'))
         for cn in self.chains:
             if not chain or cn.upper() == chain.upper():
                 self.chains[cn].show()
@@ -197,14 +203,15 @@ class IPtables(object):
             for tb in self.valid_tables:
                 self.tables[tb].load(chain, ns)
 
-    def show(self, table='filter', chain=None):
+    def show(self, table='filter', chain=None, ns=None):
         '''
         Show the content.
         :param table: which table to show, None for all
         :param chain: which chain to show, None for all.
         :return:
         '''
-        debug("Show table=%s, chain=%s\n" % (table, chain or 'None'))
+        debug("Show table=%s, chain=%s, ns=%s\n" % (table, chain, ns))
+        self.load(table, chain, ns)
         if table in self.valid_tables:
             self.tables[table].show(chain)
 
@@ -235,7 +242,7 @@ class IPtables(object):
                     output('%s:\n' % r)
                     self._fmt_show_rules(rules_dic[r])
 
-    def check(self, table='filter', chain='INPUT'):
+    def check(self, table='filter', chain='INPUT', ns=None):
         pass
 
     def get_table(self, table='filter'):

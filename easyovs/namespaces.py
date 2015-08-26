@@ -104,7 +104,7 @@ class NameSpaces(object):
         List existing namespaces in the system
         :return:
         """
-        ns_list = self._get_ids()
+        ns_list = self.get_ids()
         if not ns_list:
             warn('No namespace exists\n')
             return
@@ -123,16 +123,17 @@ class NameSpaces(object):
         :param id_prefix: id of namespace to show
         :return:
         """
-        ns_list = self._get_ids()
+        ns_list = self.get_ids()
         if not ns_list:
             warn('No namespace exists\n')
             return
         for s in ns_list:
-            if s.startswith(id_prefix):
+            if id_prefix in s:
                 NameSpace(s).show()
+                return
 
 
-    def _get_ids(self):
+    def get_ids(self):
         """
         Get all ids of the namespaces
         :return: The list of namespace ids, e.g., ['red', 'blue']
@@ -142,6 +143,8 @@ class NameSpaces(object):
                             shell=True).communicate()
         if err:
             error("Failed to run %s, err=%s\n" % (run_cmd, err))
+            return None
+        if not spaces:  # spaces == ''
             return None
         ns_list = spaces.rstrip('\n').split('\n')
         ns_list.sort()
@@ -153,7 +156,7 @@ class NameSpaces(object):
         :param pattern: pattern to search
         :return: The id of the matched ns
         """
-        ns_list = self._get_ids()
+        ns_list = self.get_ids()
         if not ns_list:
             return None
         for ns in ns_list:  # qrouter-03266ec4-a03b-41b2-897b-c18ae3279933
