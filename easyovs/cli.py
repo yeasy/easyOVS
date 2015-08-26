@@ -56,7 +56,7 @@ class CLI(Cmd):
             self.in_poller = poll()
             self.in_poller.register(stdin)
             Cmd.__init__(self)
-            output("***\n Welcome to EasyOVS %s,"
+            output("***\n Welcome to EasyOVS %s, "
                    "type help to see available cmds.\n***\n" % VERSION)
             info('*** Starting CLI:\n')
             debug("==Loading credentials==\n")

@@ -28,10 +28,11 @@ After the installation, start easyovs with
 easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
 
 ## Run with Docker (recommended)
+remove the ``:ro`` flag if you want to modify the ovs rules or net namespaces.
+
 ### No OpenStack Support
 ```sh
 docker run -it \
- --name easyovs \
  --rm \
  --net='host' \
  --privileged \
@@ -45,7 +46,6 @@ Replace the following openstack credentials with your own.
 
 ```sh
 docker run -it \
- --name easyovs \
  --rm \
  --net='host' \
  --privileged \
@@ -74,7 +74,7 @@ docker run -it \
  --rm \
  --net='host' \
  --privileged \
- -v /var/run/openvswitch/:/var/run/openvswitch/ \
+ -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
  -e OS_USERNAME=$OS_USERNAME \
  -e OS_PASSWORD=$OS_PASSWORD \
@@ -83,13 +83,14 @@ docker run -it \
   yeasy/easyovs:latest "$@"
 ```
 
-Make the script executable.
+Make the script executable and run it.
 
 ```sh
 # chmod a+x docker-easyovs.sh
+# ./docker-easyovs.sh
 ```
 
-Then you can run easyovs command directly with `-m` as
+You can also run easyovs command directly with `-m` as
 ```sh
 # ./docker-easyovs.sh -m "dump br-int"
 ID TAB PKT       PRI   MATCH                                              ACT
