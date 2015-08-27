@@ -1,10 +1,17 @@
+sudo: required
 language: python
 python:
-    - "2.6"
-    - "2.7"
+  - "2.6"
+  - "2.7"
 
 install:
-    - python setup.py install
-script:
-    - python setup.py install
+  - sudo bash util/install.sh
 
+script:
+  #- cd test && sudo bash test_all_commands.sh
+  - sudo bash util/install.sh
+
+branches:
+  only:
+    - master
+    - dev

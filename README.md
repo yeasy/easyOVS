@@ -3,16 +3,28 @@ easyOVS [![Build Status](https://travis-ci.org/yeasy/easyOVS.svg?style=flat-squa
 
 Provide smarter and powerful operation on OpenvSwitch bridges in OpenStack.
 
-version 0.4
+version 0.5
 
 # What is easyOVS
 easyOVS provides a more convenient and fluent way to operate your 
-[OpenvSwitch](http://openvswitch.org) bridges in OpenStack platform,
-such as list their ports, dump their flows and add/del some flows in a smart 
+[OpenvSwitch](http://openvswitch.org) bridges, iptables in OpenStack platform,
+such as list the rules or validate the configurations in a smart
 style with color!
 
-If using in OpenStack environment (Currently tested from the Havana to the Juno 
-release), easyOVS will associate the ports with the vm MAC/IP and VLAN Tag information, and the iptables rules for vm.
+If using in OpenStack environment (Currently tested from the Havana to the Kilo
+release), easyOVS will automatically associate the virtual ports with the vm
+MAC/IP, VLAN Tag and namespace information, and the iptables rules for vm.
+
+# Features
+* Support OpenvSwitch version 1.4.6 ~ 2.1.0.
+* Support most popular Linux distributions, e.g., Ubuntu,Debian, CentOS and Fedora.
+* Format the output and use color to make it clear and easy to compare.
+* Associate the OpenStack information (e.g., vm ip) on the virtual port or rule
+* Query openvswitch,iptables,namespace information in smart way.
+* Check if the DVR configuration is correct.
+* Smart command completion, try tab everywhere.
+* Support runing local system commands.
+* Support runing individual command with `-m 'cmd'` and quit.
 
 # Installation and Usage
 
@@ -28,14 +40,16 @@ After the installation, start easyovs with
 easyOVS will show an interactive CLI, which supports command suggestions and formatted colorful output.
 
 ## Run with Docker (recommended)
+remove the ``:ro`` flag if you want to modify the ovs rules or net namespaces.
+
 ### No OpenStack Support
 ```sh
 docker run -it \
- --name easyovs \
  --rm \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ -v /var/run/netns/:/var/run/netns/:ro \
   yeasy/easyovs:latest
 ```
 
@@ -44,11 +58,11 @@ Replace the following openstack credentials with your own.
 
 ```sh
 docker run -it \
- --name easyovs \
  --rm \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ -v /var/run/netns/:/var/run/netns/:ro \
  -e OS_USERNAME=$OS_USERNAME \
  -e OS_PASSWORD=$OS_PASSWORD \
  -e OS_TENANT_NAME=$OS_TENANT_NAME \
@@ -69,11 +83,11 @@ export OS_TENANT_NAME=admin
 export OS_AUTH_URL=http://127.0.0.1:5000/v2.0
 
 docker run -it \
- --name easyovs \
  --rm \
  --net='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
+ -v /var/run/netns/:/var/run/netns/:ro \
  -e OS_USERNAME=$OS_USERNAME \
  -e OS_PASSWORD=$OS_PASSWORD \
  -e OS_TENANT_NAME=$OS_TENANT_NAME \
@@ -81,13 +95,14 @@ docker run -it \
   yeasy/easyovs:latest "$@"
 ```
 
-Make the script executable.
+Make the script executable and run it.
 
 ```sh
 # chmod a+x docker-easyovs.sh
+# ./docker-easyovs.sh
 ```
 
-Then you can run easyovs command directly with `-m` as
+You can also run easyovs command directly with `-m` as
 ```sh
 # ./docker-easyovs.sh -m "dump br-int"
 ID TAB PKT       PRI   MATCH                                              ACT
@@ -194,14 +209,23 @@ bridge br1 was deleted
 Dump flows in a bridge. The output would look like
 
 ```sh
-EasyOVS> dump s1
-ID TAB PKT       PRI   MATCH                                                       ACT
-0  0   0         2400  dl_dst=ff:ff:ff:ff:ff:ff                                    CONTROLLER:65535
-1  0   0         2400  arp                                                         CONTROLLER:65535
-2  0   0         2400  dl_type=0x88cc                                              CONTROLLER:65535
-3  0   0         2400  ip,nw_proto=2                                               CONTROLLER:65535
-4  0   0         801   ip                                                          CONTROLLER:65535
-5  0   2         800
+EasyOVS> dump br-tun
+ID PKT       TAB PRI   MATCH                                                       ACT
+0  44        0   1     in_port=gre-ac1da15d                                        resubmit(,3)
+1  1         0   1     in_port=gre-ac1da15f                                        resubmit(,3)
+2  40        0   1     in_port=patch-int                                           resubmit(,2)
+3  0         0   1     in_port=vxlan-ac1da15d                                      resubmit(,4)
+4  0         0   1     in_port=vxlan-ac1da15f                                      resubmit(,4)
+5  0         0   0     *                                                           drop
+6  40        2   0     dl_dst=00::00/01:00::00                                     resubmit(,20)
+7  0         2   0     dl_dst=01:00::00/01:00::00                                  resubmit(,22)
+8  44        3   1     tun_id=0x2                                                  mod_vlan_vid:1,resubmit(,10)
+9  1         3   0     *                                                           drop
+10 0         4   0     *                                                           drop
+11 44        10  1     *                                                           learn(table=20,hard_timeout=300,priority=1,NXM_OF_VLAN_TCI[0..11],NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],load:0->NXM_OF_VLAN_TCI[],load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],output:NXM_OF_IN_PORT[]),output:patch-int
+12 3         20  0     *                                                           resubmit(,22)
+13 3         22  0                                                                 strip_vlan,set_tunnel:0x2,output:gre-ac1da15f,output:gre-ac1da15d
+14 0         22  0     *                                                           drop
 ```
 
 ### addflow
@@ -283,6 +307,19 @@ chain=FORWARD
 9 0 0 ACCEPT all -- docker0 docker0 0.0.0.0/0 0.0.0.0/0
 ```
 
+### ns
+Check namespaces related operations
+`EasyOVS> ns list` will list all existing namespace names.
+`EasyOVS> ns show id_prefix` will show the information of namespace whose id has the prefix.
+`EasyOVS> ns find pattern` will find the namespace whose content has the pattern.
+
+```sh
+EasyOVS> ns show id
+# Namespace = id
+ID    Intf              Mac                 IPs
+12    tapd41cd120-62    fa:16:3e:75:01:0e   11.3.3.2/24, 169.254.169.254/16
+```
+
 ### query
 
 `EasyOVS> query vm_ip1, port_id...`
@@ -322,6 +359,56 @@ fixed_ips: [{u'subnet_id': u'94bf94c0-6568-4520-aee3-d12b5e472128', u'ip_address
 id: c4493802-4344-42bd-87a6-1b783f88609a
 security_groups: [u'7c2b801b-4590-4a1f-9837-1cceb7f6d1d0']
 device_id: 9365c842-9228-44a6-88ad-33d7389cda5f
+```
+
+### dvr
+*This feature is still experimental.*
+Check your local dvr configuration information, such as the virtual ports,
+namespaces, iptables, etc.
+
+`EasyOVS> dvr check [compute, net]` will check for the given node.
+
+```sh
+EasyOVS> dvr check
+# Checking DVR on compute node
+## Checking router port = qr-b0142af2-12
+# Namespace = qrouter-f046c591-7b59-4170-b7fc-dd31a2446883
+ID    Intf              Mac                 IPs
+32    qr-b0142af2-12    fa:16:3e:54:17:5e   11.3.3.1/24
+3     rfp-f046c591-7    7a:5c:82:e9:db:a2   169.254.31.28/31, 172.29.161.127/32, 172.29.161.126/32
+33    qr-8c41bfc7-56    fa:16:3e:3d:44:11   10.0.0.1/24
+### Checking rfp port rfp-f046c591-7
+Found associated floating ips : 172.29.161.127/32, 172.29.161.126/32
+### Checking associated fpr port fpr-f046c591-7
+# Namespace = fip-9e1c850d-e424-4379-8ebd-278ae995d5c3
+ID    Intf              Mac                 IPs
+3     fpr-f046c591-7    56:89:45:cc:bd:3e   169.254.31.29/31
+369   fg-a9b6d4a8-67    fa:16:3e:94:45:38   172.29.161.128/18
+### Check related fip_ns=fip-9e1c850d-e424-4379-8ebd-278ae995d5c3
+Bridging in the same subnet
+fg port is attached to br-ex
+floating ip 172.29.161.127 match fg subnet
+floating ip 172.29.161.126 match fg subnet
+Checking chain rule number: neutron-postrouting-bottom...Passed
+Checking chain rule number: OUTPUT...Passed
+Checking chain rule number: neutron-l3-agent-snat...Passed
+Checking chain rules: neutron-postrouting-bottom...Passed
+Checking chain rules: PREROUTING...Passed
+Checking chain rules: OUTPUT...Passed
+Checking chain rules: POSTROUTING...Passed
+Checking chain rules: POSTROUTING...Passed
+Checking chain rules: neutron-l3-agent-POSTROUTING...Passed
+Checking chain rules: neutron-l3-agent-PREROUTING...Passed
+Checking chain rules: neutron-l3-agent-OUTPUT...Passed
+DNAT for incomping: 172.29.161.127 --> 10.0.0.3 passed
+Checking chain rules: neutron-l3-agent-float-snat...Passed
+SNAT for outgoing: 10.0.0.3 --> 172.29.161.127 passed
+Checking chain rules: neutron-l3-agent-OUTPUT...Passed
+DNAT for incomping: 172.29.161.126 --> 10.0.0.216 passed
+Checking chain rules: neutron-l3-agent-float-snat...Passed
+SNAT for outgoing: 10.0.0.216 --> 172.29.161.126 passed
+## Checking router port = qr-8c41bfc7-56
+Checking passed already
 ```
 
 ### sh
@@ -384,18 +471,6 @@ Set verbosity level.
 
 ### --version
 Show the version information.
-
-# Features
-* Support OpenvSwitch version 1.4.6 ~ 2.0.0.
-* Support most popular Linux distributions, e.g., Ubuntu,Debian, CentOS and Fedora.
-* Format the output to make it clear and easy to compare.
-* Show the OpenStack information with the bridge port (In OpenStack environment).
-* Delete a flow with its id.
-* Show formatted iptables rules with given vm IPs.
-* Smart command completion, try tab everywhere.
-* Support colorful output.
-* Support run local system commands.
-* Support run individual command with `-m 'cmd'`
 
 #Credits
 Thanks to the [OpenvSwitch](http://openvswitch.org) Team, [Mininet](http://mininet.org) Team and [OpenStack](http://openstack.org) Team, who gives helpful implementation example and useful tools.

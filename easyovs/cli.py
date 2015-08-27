@@ -16,8 +16,10 @@ from easyovs.bridge_ctrl import br_addflow, br_delbr, br_addbr, br_delflow, \
 from easyovs.common import CMDS_ONE, CMDS_BR, CMDS_OTHER
 from easyovs.iptables import IPtables
 from easyovs.log import info, output, error, debug, warn
-from easyovs.neutron import show_port_info
+from easyovs.neutron import query_info
 from easyovs.util import color_str, fmt_flow_str
+from easyovs.namespaces import NameSpaces
+from easyovs.dvr import DVR
 
 
 PROMPT_KW = 'EasyOVS> '
@@ -48,15 +50,16 @@ class CLI(Cmd):
     def __init__(self, stdin=sys.stdin, foreground=True):
         self.bridge = None  # default bridge
         self.ipt = IPtables()
+        self.nss = NameSpaces()
+        self.dvr = DVR()
         if foreground:
-            output('EasyOVS %s, type help for information\n' % VERSION)
             self.prompt = color_str(PROMPT_KW, 'g')
             self.stdin = stdin
             self.in_poller = poll()
             self.in_poller.register(stdin)
             Cmd.__init__(self)
-            output("***\n Welcome to EasyOVS,"
-                   "type help to see available commands.\n***\n")
+            output("***\n Welcome to EasyOVS %s, "
+                   "type help to see available cmds.\n***\n" % VERSION)
             info('*** Starting CLI:\n')
             debug("==Loading credentials==\n")
             debug("auth_url = %s\n" % os.getenv('OS_AUTH_URL') or
@@ -144,9 +147,7 @@ class CLI(Cmd):
         """
         delbr br1, br2
         Delete a bridge
-
         """
-
         brs = arg.replace(',', ' ').split()
         if len(brs) < 1:
             output('Not enough parameters are given, use like ')
@@ -204,6 +205,34 @@ class CLI(Cmd):
         if line is '':
             output(self.helpStr)
 
+    def do_dvr(self, arg):
+        """
+        Check the dvr rules
+        dvr [check]
+        dvr check compute
+        dvr check net
+        """
+        args = arg.split()
+        if len(args) > 2:  # only 1 is valid
+            warn("Not correct parameters, use as:\n")
+            warn("dvr [check]\n")
+            warn("dvr check compute\n")
+            warn("dvr check net\n")
+            return
+        if len(args) == 0:  # default cmd for ns
+            args.insert(0, 'check')
+        cmd = args[0]
+        if not hasattr(self.dvr, '%s' % cmd):
+            error('Unsupported cmd=%s\n' % cmd)
+            return
+        if cmd == 'check':
+            if len(args) == 1:  # only check cmd is given
+                debug('run self.dvr.%s()\n' % cmd)
+                getattr(self.dvr, '%s' % cmd)()
+            else:  # node parameter is given
+                debug('run self.dvr.%s(%s)\n' % (cmd, args[1]))
+                getattr(self.dvr, '%s' % cmd)(args[1])
+
     def do_ipt(self, arg):
         """
         Show the iptables rules, e.g.,
@@ -221,39 +250,82 @@ class CLI(Cmd):
         if not hasattr(self.ipt, '%s' % cmd):
             error('Unsupported cmd=%s\n' % cmd)
             return
-        self.ipt.load()  # load all chains
         if cmd == 'vm':
             if len(args) == 1:
                 error('No vm ip is given\n')
                 return
             else:
                 for vm_ip in args[1:]:
-                    debug('run self.ipt.%s(...)\n' % cmd)
+                    debug('run self.ipt.%s(%s)\n' % (cmd, vm_ip))
                     getattr(self.ipt, '%s' % cmd)(vm_ip)
         elif cmd in ['check', 'show']:
+            ns = None
+            if args[-1] in NameSpaces().get_ids():
+                ns = args.pop()
             if len(args) == 1:  # show
-                debug('run self.ipt.%s()\n' % cmd)
-                getattr(self.ipt, '%s' % cmd)()
+                debug('run self.ipt.%s(ns=%s)\n' % (cmd, ns))
+                getattr(self.ipt, '%s' % cmd)(ns=ns)
+                return
             elif len(args) == 2:  # filter|INPUT
                 if args[1] in self.ipt.get_valid_tables():  # filter
-                    debug('run self.ipt.%s(table=%s)\n' % (cmd, args[1]))
-                    getattr(self.ipt, '%s' % cmd)(table=args[1])
+                    debug('run self.ipt.%s(table=%s,ns=%s)\n' % (cmd,
+                                                                 args[1], ns))
+                    getattr(self.ipt, '%s' % cmd)(table=args[1], ns=ns)
                 else:  # INPUT
-                    debug('run self.ipt.%s(chain=%s)\n' % (cmd, args[1]))
-                    getattr(self.ipt, '%s' % cmd)(chain=args[1])
+                    debug('run self.ipt.%s(chain=%s, ns=%s)\n'
+                          % (cmd, args[1], ns))
+                    getattr(self.ipt, '%s' % cmd)(chain=args[1], ns=ns)
             elif len(args) == 3:
                 if args[1] in self.ipt.get_valid_tables():  # filter INPUT
-                    debug('run self.ipt.%s(table=%s, chain=%s\n)'
-                          % (cmd, args[1], args[2]))
-                    getattr(self.ipt, '%s' % cmd)(table=args[1], chain=args[2])
+                    debug('run self.ipt.%s(table=%s, chain=%s, ns=%s\n)'
+                          % (cmd, args[1], args[2], ns))
+                    getattr(self.ipt, '%s' % cmd)(table=args[1],
+                                                  chain=args[2], ns=ns)
                 else:
                     warn("Unknown table, table=%s\n" % args[1])
+
+    def do_ns(self, arg):
+        """
+        Show the network namespace content, e.g.,
+        ns list
+        ns show id_prefix
+        ns find pattern
+        """
+        args = arg.split()
+        if len(args) > 2:  # only 1-2 is valid
+            warn("Not correct parameters, use as:\n")
+            warn("ns [list]\n")
+            warn("ns show id_prefix (lo intf is ignored)\n")
+            warn("ns find pattern\n")
+            return
+        if len(args) == 0:  # default cmd for ns
+            args.insert(0, 'list')
+        cmd = args[0]
+        if not hasattr(self.nss, '%s' % cmd):
+            error('Unsupported cmd=%s\n' % cmd)
+            return
+        if cmd == 'list':
+            if len(args) != 1:
+                error('No param should be given\n')
+                return
+            else:
+                debug('run self.nss.%s(...)\n' % cmd)
+                getattr(self.nss, '%s' % cmd)()
+        elif cmd in ['show', 'find', 'route']:
+            if len(args) == 2:  #
+                debug('run self.nss.%s(%s)\n' % (cmd, args[1]))
+                getattr(self.nss, '%s' % cmd)(args[1])
+            else:
+                warn("Invalid param number, no reach here, %s\n" % arg)
+                return
+        else:
+            error("Unknown cmd, cmd= %s\n" % arg)
 
     def do_query(self, line):
         """
         Show the port information of given keywords.
         """
-        show_port_info(line)
+        query_info(line)
 
     def do_list(self, _arg=None):
         """

@@ -31,7 +31,7 @@ class Bridge(object):
     def __init__(self, name):
         self.bridge = name
         self.flows = []
-        self.flows_db = '/tmp/tmp_%s_flows' % self.bridge
+        self.flows_db = '/tmp/tmp_%s.flows' % self.bridge
 
     def exists(self):
         if not self.bridge:
@@ -134,15 +134,16 @@ class Bridge(object):
     def load_flows(self, db=False):
         """
         Load the OpenvSwitch table rules into self.flows, and to db if enabled.
+        self.flows will be a list of Flow objects
         """
         debug('load_flows():\n')
         cmd = "ovs-ofctl dump-flows %s" % self.bridge
         flows, f = [], None
         if db:
             f = open(self.flows_db, 'w')
-        result, error = \
+        result, err = \
             Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
-        if error:
+        if err:
             return
         for l in result.split('\n'):
             l = l.strip()
@@ -164,7 +165,7 @@ class Bridge(object):
     @check_exist
     def get_flows(self):
         """
-        Return a dict of flows in the bridge.
+        Return a dict of flows in the bridge in order of table:priority.
         """
         debug('Bridge:get_flow()\n')
         self.load_flows()
@@ -203,7 +204,7 @@ class Bridge(object):
                                 match.replace('in_port=%u'
                                               % port_no, 'in_port=%s' % intf)
                 elif field.startswith('actions='):
-                    actions = field.replace('actions=', '').rstrip('\n')
+                    actions = self._process_actions(field)
             if priority is None:  # There is no priority= field
                 match = line.split()[len(line.split()) - 2]
             if len(match) >= 30:
@@ -212,6 +213,41 @@ class Bridge(object):
             return Flow(self.bridge, table, packet, priority, match, actions)
         else:
             return None
+
+    def dump_flows(self):
+        """
+        Dump out the flows of this bridge
+        :return:
+        """
+        self.load_flows()
+        debug('br_dump: len flows=%u\n' % len(self.flows))
+        table = 0
+        if self.flows:
+            Flow.banner_output()
+            for f in self.flows:
+                if f.table != table:
+                    output('\n')
+                    table = f.table
+                f.fmt_output()
+
+
+    def _process_actions(self, actions_str):
+        """
+        Process the actions fields to make it more readable
+        :param actions_str: input action string
+        :return: The converted string.
+        """
+        actions = actions_str.replace('actions=', '').rstrip('\n')
+        for act in actions_str.split(','):
+            if act.startswith('output:'):
+                port_no = get_num_after(act, 'output:')
+                if isinstance(port_no, int):
+                    intf = self._get_port_intf(port_no)
+                    if intf:
+                        actions = \
+                            actions.replace('output:%u'
+                                            % port_no, 'output:%s' % intf)
+        return actions
 
     def _get_port_intf(self, port_no):
         """
