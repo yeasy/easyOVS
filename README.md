@@ -3,16 +3,28 @@ easyOVS [![Build Status](https://travis-ci.org/yeasy/easyOVS.svg?style=flat-squa
 
 Provide smarter and powerful operation on OpenvSwitch bridges in OpenStack.
 
-version 0.4
+version 0.5
 
 # What is easyOVS
 easyOVS provides a more convenient and fluent way to operate your 
-[OpenvSwitch](http://openvswitch.org) bridges in OpenStack platform,
-such as list their ports, dump their flows and add/del some flows in a smart 
+[OpenvSwitch](http://openvswitch.org) bridges, iptables in OpenStack platform,
+such as list the rules or validate the configurations in a smart
 style with color!
 
-If using in OpenStack environment (Currently tested from the Havana to the Juno 
-release), easyOVS will associate the ports with the vm MAC/IP and VLAN Tag information, and the iptables rules for vm.
+If using in OpenStack environment (Currently tested from the Havana to the Kilo
+release), easyOVS will automatically associate the virtual ports with the vm
+MAC/IP, VLAN Tag and namespace information, and the iptables rules for vm.
+
+# Features
+* Support OpenvSwitch version 1.4.6 ~ 2.1.0.
+* Support most popular Linux distributions, e.g., Ubuntu,Debian, CentOS and Fedora.
+* Format the output and use color to make it clear and easy to compare.
+* Associate the OpenStack information (e.g., vm ip) on the virtual port or rule
+* Query openvswitch,iptables,namespace information in smart way.
+* Check if the DVR configuration is correct.
+* Smart command completion, try tab everywhere.
+* Support runing local system commands.
+* Support runing individual command with `-m 'cmd'` and quit.
 
 # Installation and Usage
 
@@ -349,6 +361,56 @@ security_groups: [u'7c2b801b-4590-4a1f-9837-1cceb7f6d1d0']
 device_id: 9365c842-9228-44a6-88ad-33d7389cda5f
 ```
 
+### dvr
+*This feature is still experimental.*
+Check your local dvr configuration information, such as the virtual ports,
+namespaces, iptables, etc.
+
+`EasyOVS> dvr check [compute, net]` will check for the given node.
+
+```sh
+EasyOVS> dvr check
+# Checking DVR on compute node
+## Checking router port = qr-b0142af2-12
+# Namespace = qrouter-f046c591-7b59-4170-b7fc-dd31a2446883
+ID    Intf              Mac                 IPs
+32    qr-b0142af2-12    fa:16:3e:54:17:5e   11.3.3.1/24
+3     rfp-f046c591-7    7a:5c:82:e9:db:a2   169.254.31.28/31, 172.29.161.127/32, 172.29.161.126/32
+33    qr-8c41bfc7-56    fa:16:3e:3d:44:11   10.0.0.1/24
+### Checking rfp port rfp-f046c591-7
+Found associated floating ips : 172.29.161.127/32, 172.29.161.126/32
+### Checking associated fpr port fpr-f046c591-7
+# Namespace = fip-9e1c850d-e424-4379-8ebd-278ae995d5c3
+ID    Intf              Mac                 IPs
+3     fpr-f046c591-7    56:89:45:cc:bd:3e   169.254.31.29/31
+369   fg-a9b6d4a8-67    fa:16:3e:94:45:38   172.29.161.128/18
+### Check related fip_ns=fip-9e1c850d-e424-4379-8ebd-278ae995d5c3
+Bridging in the same subnet
+fg port is attached to br-ex
+floating ip 172.29.161.127 match fg subnet
+floating ip 172.29.161.126 match fg subnet
+Checking chain rule number: neutron-postrouting-bottom...Passed
+Checking chain rule number: OUTPUT...Passed
+Checking chain rule number: neutron-l3-agent-snat...Passed
+Checking chain rules: neutron-postrouting-bottom...Passed
+Checking chain rules: PREROUTING...Passed
+Checking chain rules: OUTPUT...Passed
+Checking chain rules: POSTROUTING...Passed
+Checking chain rules: POSTROUTING...Passed
+Checking chain rules: neutron-l3-agent-POSTROUTING...Passed
+Checking chain rules: neutron-l3-agent-PREROUTING...Passed
+Checking chain rules: neutron-l3-agent-OUTPUT...Passed
+DNAT for incomping: 172.29.161.127 --> 10.0.0.3 passed
+Checking chain rules: neutron-l3-agent-float-snat...Passed
+SNAT for outgoing: 10.0.0.3 --> 172.29.161.127 passed
+Checking chain rules: neutron-l3-agent-OUTPUT...Passed
+DNAT for incomping: 172.29.161.126 --> 10.0.0.216 passed
+Checking chain rules: neutron-l3-agent-float-snat...Passed
+SNAT for outgoing: 10.0.0.216 --> 172.29.161.126 passed
+## Checking router port = qr-8c41bfc7-56
+Checking passed already
+```
+
 ### sh
 `EasyOVS> sh cmd`
 
@@ -409,18 +471,6 @@ Set verbosity level.
 
 ### --version
 Show the version information.
-
-# Features
-* Support OpenvSwitch version 1.4.6 ~ 2.0.0.
-* Support most popular Linux distributions, e.g., Ubuntu,Debian, CentOS and Fedora.
-* Format the output to make it clear and easy to compare.
-* Show the OpenStack information with the bridge port (In OpenStack environment).
-* Delete a flow with its id.
-* Show formatted iptables rules with given vm IPs.
-* Smart command completion, try tab everywhere.
-* Support colorful output.
-* Support run local system commands.
-* Support run individual command with `-m 'cmd'`
 
 #Credits
 Thanks to the [OpenvSwitch](http://openvswitch.org) Team, [Mininet](http://mininet.org) Team and [OpenStack](http://openstack.org) Team, who gives helpful implementation example and useful tools.

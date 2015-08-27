@@ -16,12 +16,12 @@ class NameSpace(object):
         self.id = id
         self.ns_cmd = 'ip netns'
         self.intfs = {}
+        self._load()
 
     def is_empty(self):
         """
         Check if this namespace is empty or only has lo
         """
-        self._load()
         return not self.intfs or \
                (len(self.intfs.values())==1 and
                 self.intfs.values()[0].get('intf') == 'lo')
@@ -30,7 +30,6 @@ class NameSpace(object):
         """
         Check if this namespace has the intf.
         """
-        self._load()
         for i in self.intfs:
             if self.intfs[i]['intf'] == intf_name:
                 return True
@@ -40,17 +39,25 @@ class NameSpace(object):
         """
         Return the first matched {'intf': eth0, 'ip': [ip1, ip2], 'mac': xxx }
         """
-        self._load()
         for i in self.intfs:
             if pattern in self.intfs[i]['intf']:
                 return self.intfs[i]
         return None
 
+    def find_intfs(self, pattern):
+        """
+        Return the matched list [{'intf': eth0, 'ip': [ip1, ip2], 'mac': xxx }]
+        """
+        result = []
+        for i in self.intfs:
+            if pattern in self.intfs[i]['intf']:
+                result.append(self.intfs[i])
+        return result
+
     def get_intf_by_name(self, name):
         """
         Return {'intf': eth0, 'ip': [ip1, ip2], 'mac': xxx }
         """
-        self._load()
         for i in self.intfs:
             if self.intfs[i]['intf'] == name:
                 return self.intfs[i]
@@ -60,14 +67,12 @@ class NameSpace(object):
         """
         Return {'1':{'intf': eth0, 'ip': [ip1, ip2], 'mac': xxx }}
         """
-        self._load()
         return self.intfs
 
     def get_ip_of_intf(self, name):
         """
         Return  the list of ips for the interface
         """
-        self._load()
         if self.intfs:
             for i in self.intfs:
                 if self.intfs[i]['intf'] == name:
@@ -145,7 +150,7 @@ class NameSpaces(object):
     def __init__(self):
         self.ns_cmd = 'ip netns'
 
-    def find_intf(self, intf_name):
+    def get_intf_by_name(self, intf_name):
         """
         Find the first namespace who has the interface
         :param intf_name:

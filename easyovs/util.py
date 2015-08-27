@@ -114,7 +114,25 @@ def fmt_flow_str(raw_str):
     return flow
 
 
+def r(raw_str):
+    return color_str(raw_str, 'r')
+
+
+def g(raw_str):
+    return color_str(raw_str, 'g')
+
+
+def b(raw_str):
+    return color_str(raw_str, 'b')
+
+
 def color_str(raw_str, color):
+    """
+    Render the string with color
+    :param raw_str:
+    :param color:
+    :return:
+    """
     if color == 'r':
         fore = 31
     elif color == 'g':
@@ -213,6 +231,18 @@ def networkMask(ip_str, bits):
     """
     "Convert a network address to a long integer"
     return dottedQuadToNum(ip_str) & makeMask(bits)
+
+def ipInNetworks(ip_str, networks):
+    """
+    10.0.0.1 in [10.0.0.0/24, 11.0.0.2/16]
+    :param ip_str:
+    :param networks:
+    :return:
+    """
+    for n in networks:
+        if ipInNetwork(ip_str, n):
+            return True
+    return False
 
 def ipInNetwork(ip_str, network):
     """

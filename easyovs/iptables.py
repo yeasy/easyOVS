@@ -3,48 +3,67 @@ __author__ = 'baohua'
 from subprocess import PIPE, Popen
 from easyovs.bridge_ctrl import find_br_ports
 from easyovs.log import debug, error, output, warn
-from easyovs.util import color_str
+from easyovs.util import b, r
 from easyovs.neutron import get_port_id_from_ip
 from easyovs.namespaces import NameSpaces
 
 
 # pkts in source out destination prot target other
-_format_str_iptables_rule_ = '\t%-10s%-10s%-20s%-8s%-20s%-6s%-20s%-20s\n'
+_format_str_iptables_rule_ = ' %-10s%-16s%-16s%-16s%-20s%-6s%-30s%-20s\n'
 
 class IPrule(object):
     """
     represent one rule
     INPUT: rule line splits
     """
-    def __init__(self, keys):
-        self.keys = keys  # rule keys + flags
-        self.len = len(self.keys)
-        self.content = {}  # {num:1,...}
+    def __init__(self, fields, rule=None):
+        self.fields = fields  # rule keys + flags
+        self.len = len(fields)
+        self.content = {}  # {num:1, 'target': SNAT, ...}
+        if rule:
+            self.load(rule)
 
     def load(self, rule):
+        """
+        load a string of rule into IPrule structure
+        """
         if not rule:
             return False
         rule_fmt = ' '.join(rule.split())
         segs = rule_fmt.split(' ', self.len - 1)  # have flags or not
         for i in range(len(segs)):
-            self.content[self.keys[i]] = segs[i]
+            self.content[self.fields[i]] = segs[i]
         if 'flags' not in self.content:
             self.content['flags'] = ''
-        return True
-
-    def show(self):
         r = self.content
         if r['source'] == '0.0.0.0/0':
             r['source'] = '*'
         if r['destination'] == '0.0.0.0/0':
             r['destination'] = '*'
+        if r['prot'] == 'all':
+            r['prot'] = '*'
+        return True
+
+    def show(self):
+        r = self.content
         output(_format_str_iptables_rule_
                % (r['pkts'], r['in'], r['source'], r['out'],
                   r['destination'], r['prot'], r['target'], r['flags']))
 
+    def is_match(self, rule_dic):
+        """
+        Compare the dict on each field
+        """
+        for k in rule_dic:
+            if k not in self.fields or rule_dic[k] != self.content[k]:
+                return False
+        return True
+
     def get_content(self):
         return self.content
 
+    def get_flags(self):
+        return self.content.get('flags', '')
 
 class IPchain(object):
     """
@@ -68,10 +87,17 @@ class IPchain(object):
             if ipr.load(r):
                 self.rules.append(ipr)
 
+    def get_policy(self):
+        '''
+        Get the default policy
+        :return: the policy
+        '''
+        return self.policy
+
     def get_rules(self):
         '''
-        Get a list of rules in this chain, e.g., [{},{},{}]
-        :return:
+        Get a list of rules in this chain
+        :return: list of rule objects
         '''
         return self.rules
 
@@ -86,10 +112,27 @@ class IPchain(object):
         Print all rules in this chain
         :return:
         '''
-        output(color_str("chain=%s, policy=%s\n" % (self.name, self.policy),
-                         'b'))
+        output(b("chain=%s, policy=%s\n" % (self.name, self.policy)))
+        if len(self.rules) > 0:
+            output(b( _format_str_iptables_rule_ % (
+                'PKTS', 'IN', 'SOURCE', 'OUT', 'DESTINATION', 'PROT',
+                'TARGET', 'OTHER')))
+            for r in self.rules:
+                r.show()
+        else:
+            output('--- Empty ---\n')
+
+    def has_rule(self, rule_dic):
+        """
+        Check if some rule exists on the chain
+        """
         for r in self.rules:
-            r.show()
+            if r.is_match(rule_dic):
+                return True
+        return False
+
+    def get_rule_num(self):
+        return len(self.rules)
 
 
 class IPtable(object):
@@ -101,6 +144,7 @@ class IPtable(object):
         self.chains = {}
         self.run_cmd = 'iptables --line-numbers -nvL -t %s' % self.name
         self.ns = ns
+        self.load(ns=self.ns)
 
     def load(self, chain=None, ns=None):
         '''
@@ -115,19 +159,19 @@ class IPtable(object):
             run_cmd = self.run_cmd
         if ns:
             run_cmd = 'ip netns exec %s %s' % (ns, run_cmd)
-            self.ns = ns
         rules, err = Popen(run_cmd, stdout=PIPE, stderr=PIPE,
                            shell=True).communicate()
         if err:
             error("Failed to run %s, err=%s\n" % (run_cmd, err))
             return
+        self.chains, self.ns = {}, ns  # cleaning exiting rules
         chains = rules.split('\n\n')
         for chain in chains:  # some chain
             r = chain.splitlines()  # lines of rule
             #if not r:
             #    continue
             title = r[0].split()  # r[0] is the title row
-            if title[0] == 'Chain' and title[1] not in self.chains:  # title row
+            if title[0] == 'Chain' and title[1] not in self.chains:  # title
                 if 'DROP' in title:
                     self.chains[title[1]] = IPchain(title[1], 'DROP')
                 else:
@@ -144,10 +188,10 @@ class IPtable(object):
         :return:
         '''
         if self.ns:
-            output(color_str("===ns=%s, table=%s===\n" % (self.ns,
-                                                          self.name), 'r'))
+            output(b("===ns=%s, table=%s===\n" % (self.ns,
+                                                          self.name)))
         else:
-            output(color_str("===table=%s===\n" % self.name, 'r'))
+            output(b("===table=%s===\n" % self.name))
         for cn in self.chains:
             if not chain or cn.upper() == chain.upper():
                 self.chains[cn].show()
@@ -159,6 +203,15 @@ class IPtable(object):
         :return: the chain instance, None if failed
         '''
         return self.chains.get(chain, None)
+
+    def get_rule(self, chain, rule_dic):
+        """
+        Find a rule on the chain that has the key:value
+        """
+        for rule in self.get_rules(chain):
+            if rule.is_match(rule_dic):
+                return rule
+        return None
 
     def get_rules(self, chain=None):
         '''
@@ -173,28 +226,37 @@ class IPtable(object):
         else:
             for cn in self.chains:
                 if cn.upper() == chain.upper():
-                    self.chains[cn].get_rules()
-        return None
+                    return self.chains[cn].get_rules()
+        return []
 
-    def check(self):
-        pass
+    def has_rule_in_chain(self, chain, rule_dic):
+        """
+        Check if some rule exists on some chain
+        """
+        c = self.get_chain(chain)
+        if not c:
+            return False
+        else:
+            return c.has_rule(rule_dic)
 
 
 class IPtables(object):
     """
     represent a iptables object, which can handle the table rules
     """
-    def __init__(self):
+    def __init__(self, ns=None):
         self.valid_tables = ['raw', 'nat', 'filter', 'mangle', 'security']
         self.tables = {}
         self.nss = NameSpaces()
+        self.ns = ns
         for tb in self.valid_tables:
-            self.tables[tb] = IPtable(tb)
+            self.tables[tb] = IPtable(tb, ns)
+        self._load(ns=self.ns)
 
     def get_valid_tables(self):
         return self.valid_tables
 
-    def load(self, table=None, chain=None, ns=None):
+    def _load(self, table=None, chain=None, ns=None):
         '''
         Load the rules from system.
         If given table name, then only load that table.
@@ -203,11 +265,12 @@ class IPtables(object):
         :param ns: which ns to load, None for root
         :return:
         '''
+        _ns = ns or self.ns
         if table in self.valid_tables:
-            self.tables[table].load(chain, ns)
+            self.tables[table].load(chain, _ns)
         else:
             for tb in self.valid_tables:
-                self.tables[tb].load(chain, ns)
+                self.tables[tb].load(chain, _ns)
 
     def show(self, table='filter', chain=None, ns=None):
         '''
@@ -217,7 +280,7 @@ class IPtables(object):
         :return:
         '''
         debug("Show table=%s, chain=%s, ns=%s\n" % (table, chain, ns))
-        self.load(table, chain, ns)
+        #self._load(table, chain, ns)
         if table in self.valid_tables:
             self.tables[table].show(chain)
 
@@ -237,17 +300,30 @@ class IPtables(object):
         if not br_port:
             warn('No br port is found for ip=%s\n' % ip)
             return
-        output(color_str('## IP = %s, port = %s\n' % (ip, br_port), 'r'))
+        output(r('## IP = %s, port = %s\n' % (ip, br_port)))
         rules_dic = self._query_port_rules(br_port)
         if rules_dic:
-            output(color_str( _format_str_iptables_rule_ % (
+            output(b( _format_str_iptables_rule_ % (
                 'PKTS', 'IN', 'SOURCE', 'OUT', 'DESTINATION', 'PROT',
-                'TARGET', 'OTHER'), 'b'))
-            for r in rules_dic:
-                output(color_str('%s:\n' % r, 'b'))
-                self._fmt_show_rules(rules_dic[r])
+                'TARGET', 'OTHER')))
+            for rule in rules_dic:
+                output(b('%s:\n' % rule))
+                self._fmt_show_rules(rules_dic[rule])
 
-    def check(self, table='filter', chain='INPUT', ns=None):
+    def has_rule(self, table='filter', chain='INPUT', rule_dic=None, ns=None):
+        """
+        Whether the table/chain has the rule
+        :param table:
+        :param chain:
+        :param rule_dic:
+        :param ns:
+        :return:
+        """
+        t = self.get_table(table)
+        if not t:
+            return False
+        else:
+            return t.has_rule(chain, rule_dic)
         pass
 
     def get_table(self, table='filter'):
@@ -268,7 +344,7 @@ class IPtables(object):
         if tb:
             return tb.get_chain(chain)
 
-    def get_rules(self, table='filter', chain='INPUT'):
+    def _get_rules(self, table='filter', chain='INPUT', ns=None):
         '''
         Get the rule list of a given chain
         :param table:
@@ -277,7 +353,7 @@ class IPtables(object):
         '''
         ch = self.get_chain(table, chain)
         if ch:
-            return ch.get_rules()
+            return ch._get_rules()
         else:
             return None
 
@@ -292,13 +368,13 @@ class IPtables(object):
         results = {}
         if br_port.startswith('qvo'):  # vm port
             debug('qvo should be vm port\n')
-            self.load(table='filter')
+            #self._load(table='filter')
             chain_tag = br_port[3:13]
-            i_rules = self.get_rules(chain='neutron-openvswi-i' +
+            i_rules = self._get_rules(chain='neutron-openvswi-i' +
                                            chain_tag)
-            out = self.get_rules(chain='neutron-openvswi-o' +
+            out = self._get_rules(chain='neutron-openvswi-o' +
                                            chain_tag)
-            filter = self.get_rules(chain='neutron-openvswi-s' +
+            filter = self._get_rules(chain='neutron-openvswi-s' +
                                            chain_tag)
             if i_rules:
                 results['IN'] = i_rules
@@ -308,22 +384,22 @@ class IPtables(object):
                 results['SRC_FILTER'] = filter
         else:  # maybe at Network Node
             debug('Should be network function port\n')
-            ns = self.nss.find_intf(br_port)
+            ns = self.nss.get_intf_by_name(br_port)
             if not ns:
                 warn("port %s not in namespaces\n" % br_port)
             else:
                 output('ns=%s\n' % ns)
-            self.load(table='nat', ns=ns)
+            self._load(table='nat', ns=ns)
             if br_port.startswith('tap'):  # dhcp
                 return None
             elif br_port.startswith('qr-') or br_port.startswith('qg-'):
-                pre = self.get_rules(table='nat',
+                pre = self._get_rules(table='nat',
                                      chain='neutron-l3-agent-PREROUTING')
-                out = self.get_rules(table='nat',
+                out = self._get_rules(table='nat',
                                      chain='neutron-l3-agent-OUTPUT')
-                float_snat = self.get_rules(table='nat',
+                float_snat = self._get_rules(table='nat',
                                        chain='neutron-l3-agent-float-snat')
-                snat = self.get_rules(table='nat',
+                snat = self._get_rules(table='nat',
                                       chain='neutron-l3-agent-snat')
                 if pre:
                     results['PRE'] = pre
@@ -346,6 +422,5 @@ class IPtables(object):
 
 if __name__ == '__main__':
     f = IPtables()
-    f.load('filter')
     f.show('filter', 'input')
     f.show('filter', 'FORWARD')

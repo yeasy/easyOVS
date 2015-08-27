@@ -209,11 +209,15 @@ class CLI(Cmd):
         """
         Check the dvr rules
         dvr [check]
+        dvr check compute
+        dvr check net
         """
         args = arg.split()
-        if len(args) > 1:  # only 1 is valid
+        if len(args) > 2:  # only 1 is valid
             warn("Not correct parameters, use as:\n")
             warn("dvr [check]\n")
+            warn("dvr check compute\n")
+            warn("dvr check net\n")
             return
         if len(args) == 0:  # default cmd for ns
             args.insert(0, 'check')
@@ -222,12 +226,12 @@ class CLI(Cmd):
             error('Unsupported cmd=%s\n' % cmd)
             return
         if cmd == 'check':
-            if len(args) != 1:
-                error('No param should be given\n')
-                return
-            else:
-                debug('run self.dvr.%s(...)\n' % cmd)
+            if len(args) == 1:  # only check cmd is given
+                debug('run self.dvr.%s()\n' % cmd)
                 getattr(self.dvr, '%s' % cmd)()
+            else:  # node parameter is given
+                debug('run self.dvr.%s(%s)\n' % (cmd, args[1]))
+                getattr(self.dvr, '%s' % cmd)(args[1])
 
     def do_ipt(self, arg):
         """
