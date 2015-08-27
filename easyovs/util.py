@@ -2,6 +2,8 @@ __author__ = 'baohua'
 
 from subprocess import Popen, PIPE
 import re
+import socket
+import struct
 
 from easyovs.log import debug, info
 
@@ -39,7 +41,7 @@ def get_numstr_after(line, field):
 def get_num_after(line, field):
     """
     Return the Number value after given field or None
-    >>> get_numstr_after("abc=19,xx","abc=") == 19
+    >>> get_num_after("abc=19,xx","abc=") == 19
     True
     """
     result = get_numstr_after(line, field)
@@ -193,22 +195,36 @@ def get_all_bridges():
                 brs[br]['Port'][phy_port]['type'] = l.replace('type: ', '')
     return brs
 
+def makeMask(n):
+    "return a mask of n bits as a long integer"
+    return (2L<<int(n)-1) - 1
 
-#deprecated
-def find_ns(key):
-    ns_list, err = Popen('ip netns list', stdout=PIPE, stderr=PIPE,
-                         shell=True).communicate()
-    if err:
-        return None
-    ns_list = ns_list.splitlines()
-    for ns in ns_list:  # qrouter-03266ec4-a03b-41b2-897b-c18ae3279933
-        if Popen('ip netns exec %s ip addr | grep %s' % (ns, key),
-                 stdout=PIPE, stderr=PIPE,
-                 shell=True) .communicate()[0]:
-            return ns
-    return None
+def dottedQuadToNum(ip_str):
+    "convert decimal dotted quad string to long integer"
+    s = map(lambda x:int(x), ip_str.split('.'))
+    return s[3] + s[2] << 8 + s[1] << 16 + s[0] << 24
 
+def networkMask(ip_str, bits):
+    """
+    '10.0.0.1', '24'
+    :param ip_str:
+    :param bits:
+    :return:
+    """
+    "Convert a network address to a long integer"
+    return dottedQuadToNum(ip_str) & makeMask(bits)
+
+def ipInNetwork(ip_str, network):
+    """
+    10.0.0.1 in 10.0.0.0/24
+    :param ip_str:
+    :param network:
+    :return:
+    """
+    ip_network, mask = network.split('/')
+    return  networkMask(ip_str, mask) == networkMask(ip_network, mask)
 
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+    print dottedQuadToNum('169.254.31.28')

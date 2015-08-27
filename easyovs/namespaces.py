@@ -36,6 +36,55 @@ class NameSpace(object):
                 return True
         return False
 
+    def find_intf(self, pattern):
+        """
+        Return the first matched {'intf': eth0, 'ip': [ip1, ip2], 'mac': xxx }
+        """
+        self._load()
+        for i in self.intfs:
+            if pattern in self.intfs[i]['intf']:
+                return self.intfs[i]
+        return None
+
+    def get_intf_by_name(self, name):
+        """
+        Return {'intf': eth0, 'ip': [ip1, ip2], 'mac': xxx }
+        """
+        self._load()
+        for i in self.intfs:
+            if self.intfs[i]['intf'] == name:
+                return self.intfs[i]
+        return None
+
+    def get_intfs(self):
+        """
+        Return {'1':{'intf': eth0, 'ip': [ip1, ip2], 'mac': xxx }}
+        """
+        self._load()
+        return self.intfs
+
+    def get_ip_of_intf(self, name):
+        """
+        Return  the list of ips for the interface
+        """
+        self._load()
+        if self.intfs:
+            for i in self.intfs:
+                if self.intfs[i]['intf'] == name:
+                    return self.intfs[i]['ip']
+        return None
+
+    def show_routes(self):
+        """
+        """
+        run_cmd = '%s exec %s route -en' % (self.ns_cmd, self.id)
+        result, err = Popen(run_cmd, stdout=PIPE, stderr=PIPE,
+                             shell=True).communicate()
+        if err:
+            error("Failed to run %s, err=%s\n" % (run_cmd, err))
+        else:
+            output(result)
+
     def show(self, test_content=None):
         """
         Show the namespace content in format
@@ -77,7 +126,7 @@ class NameSpace(object):
                 else:
                     id = intf_line[0].strip()
                     intf = intf_line[1].strip()
-                    intfs[id] = {'intf': intf, 'ip': [] }
+                    intfs[id] = {'intf': intf, 'ip': [], 'mac': '*' }
             else:  # some content line
                 cons = l.split()
                 if len(cons) < 2:
@@ -120,6 +169,20 @@ class NameSpaces(object):
         else:
             self.show(ns)
 
+    def route(self, id_pattern):
+        """
+        Show routes of a namespace whose id matched
+        :param id_pattern: id pattern to match
+        :return: N/A
+        """
+        ns_list = self.get_ids()
+        if not ns_list:
+            warn('No namespace exists\n')
+            return
+        for s in ns_list:
+            if id_pattern in s:
+                NameSpace(s).show_routes()
+
     def list(self):
         """
         List existing namespaces in the system
@@ -138,10 +201,10 @@ class NameSpaces(object):
         if ns_list_empty:
             output('%s\n' % '\t'.join(ns_list))
 
-    def show(self, id_prefix):
+    def show(self, id_pattern):
         """
-        Show the content of specific id or id_prefix
-        :param id_prefix: id of namespace to show
+        Show the content of specific id or id_pattern
+        :param id_pattern: id of namespace to show
         :return:
         """
         ns_list = self.get_ids()
@@ -149,7 +212,7 @@ class NameSpaces(object):
             warn('No namespace exists\n')
             return
         for s in ns_list:
-            if id_prefix in s:
+            if id_pattern in s:
                 NameSpace(s).show()
                 return
 

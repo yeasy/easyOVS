@@ -19,6 +19,7 @@ from easyovs.log import info, output, error, debug, warn
 from easyovs.neutron import query_info
 from easyovs.util import color_str, fmt_flow_str
 from easyovs.namespaces import NameSpaces
+from easyovs.dvr import DVR
 
 
 PROMPT_KW = 'EasyOVS> '
@@ -50,6 +51,7 @@ class CLI(Cmd):
         self.bridge = None  # default bridge
         self.ipt = IPtables()
         self.nss = NameSpaces()
+        self.dvr = DVR()
         if foreground:
             self.prompt = color_str(PROMPT_KW, 'g')
             self.stdin = stdin
@@ -145,9 +147,7 @@ class CLI(Cmd):
         """
         delbr br1, br2
         Delete a bridge
-
         """
-
         brs = arg.replace(',', ' ').split()
         if len(brs) < 1:
             output('Not enough parameters are given, use like ')
@@ -204,6 +204,30 @@ class CLI(Cmd):
         Cmd.do_help(self, line)
         if line is '':
             output(self.helpStr)
+
+    def do_dvr(self, arg):
+        """
+        Check the dvr rules
+        dvr [check]
+        """
+        args = arg.split()
+        if len(args) > 1:  # only 1 is valid
+            warn("Not correct parameters, use as:\n")
+            warn("dvr [check]\n")
+            return
+        if len(args) == 0:  # default cmd for ns
+            args.insert(0, 'check')
+        cmd = args[0]
+        if not hasattr(self.dvr, '%s' % cmd):
+            error('Unsupported cmd=%s\n' % cmd)
+            return
+        if cmd == 'check':
+            if len(args) != 1:
+                error('No param should be given\n')
+                return
+            else:
+                debug('run self.dvr.%s(...)\n' % cmd)
+                getattr(self.dvr, '%s' % cmd)()
 
     def do_ipt(self, arg):
         """
@@ -283,7 +307,7 @@ class CLI(Cmd):
             else:
                 debug('run self.nss.%s(...)\n' % cmd)
                 getattr(self.nss, '%s' % cmd)()
-        elif cmd in ['show', 'find']:
+        elif cmd in ['show', 'find', 'route']:
             if len(args) == 2:  #
                 debug('run self.nss.%s(%s)\n' % (cmd, args[1]))
                 getattr(self.nss, '%s' % cmd)(args[1])
