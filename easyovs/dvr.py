@@ -116,7 +116,7 @@ class DVR(object):
                                                   rule_expect):
                     return False
                 else:
-                    output(g('DNAT for incomping: %s --> %s passed\n'
+                    output(g('DNAT for incoming: %s --> %s passed\n'
                              % (dip, sip)))
                 rule_expect = {'in': '*', 'source': sip, 'out': '*',
                                'destination': '*', 'target': 'SNAT',
