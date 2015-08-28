@@ -384,7 +384,7 @@ class IPtables(object):
                 results['SRC_FILTER'] = filter
         else:  # maybe at Network Node
             debug('Should be network function port\n')
-            ns = self.nss.get_intf_by_name(br_port)
+            ns = self.nss.get_ns_by_port(br_port)
             if not ns:
                 warn("port %s not in namespaces\n" % br_port)
             else:

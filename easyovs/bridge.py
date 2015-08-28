@@ -268,6 +268,13 @@ class Bridge(object):
         return name in self.get_ports()
 
     @check_exist
+    def has_port_start_with(self, name):
+        for p in self.get_ports():
+            if p.startswith(name):
+                return True
+        return False
+
+    @check_exist
     def get_ports(self):
         """
         Return a dict of the ports (port, addr, tag, type) on the bridge, like

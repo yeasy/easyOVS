@@ -304,12 +304,12 @@ class CLI(Cmd):
         if not hasattr(self.nss, '%s' % cmd):
             error('Unsupported cmd=%s\n' % cmd)
             return
-        if cmd == 'list':
+        if cmd in ['list', 'clean']:
             if len(args) != 1:
                 error('No param should be given\n')
                 return
             else:
-                debug('run self.nss.%s(...)\n' % cmd)
+                debug('run self.nss.%s()\n' % cmd)
                 getattr(self.nss, '%s' % cmd)()
         elif cmd in ['show', 'find', 'route']:
             if len(args) == 2:  #

@@ -1,7 +1,7 @@
 __author__ = 'baohua'
 from subprocess import PIPE, Popen
 from easyovs.log import debug, error, output, warn
-from easyovs.util import color_str
+from easyovs.util import color_str, b, r
 
 # id intf mac ips
 _format_str_ns_intf_ = '%-6s%-18s%-20s%-20s\n'
@@ -22,8 +22,8 @@ class NameSpace(object):
         """
         Check if this namespace is empty or only has lo
         """
-        return not self.intfs or \
-               (len(self.intfs.values())==1 and
+        return (not self.intfs) or \
+               (len(self.intfs) == 1 and
                 self.intfs.values()[0].get('intf') == 'lo')
 
     def has_intf(self, intf_name):
@@ -95,8 +95,8 @@ class NameSpace(object):
         Show the namespace content in format
         """
         self._load(test_content)
-        output(color_str("# Namespace = %s\n" % self.id, 'b'))
-        if len(self.intfs) == 1 and 'lo' == self.intfs.values()[0].get('intf'):
+        output(b("# Namespace = %s\n" % self.id))
+        if self.is_empty():
             output('Only lo interface existed\n')
             return
         output(_format_str_ns_intf_ %('ID', 'Intf', 'Mac', 'IPs'))
@@ -149,8 +149,9 @@ class NameSpaces(object):
     """
     def __init__(self):
         self.ns_cmd = 'ip netns'
+        self.ns_ids = []
 
-    def get_intf_by_name(self, intf_name):
+    def get_ns_by_port(self, intf_name):
         """
         Find the first namespace who has the interface
         :param intf_name:
@@ -188,6 +189,25 @@ class NameSpaces(object):
             if id_pattern in s:
                 NameSpace(s).show_routes()
 
+    def clean(self):
+        """
+        Clean all empty namespaces
+        :return:
+        """
+        output('Cleaning empty namespaces...\n')
+        num_empty = 0
+        for ns in self.get_ids():
+            if NameSpace(ns).is_empty():
+                run_cmd = '%s delete %s' % (self.ns_cmd, ns)
+                spaces, err = Popen(run_cmd, stdout=PIPE, stderr=PIPE,
+                                    shell=True).communicate()
+                if err:
+                    error("Failed to run %s, err=%s\n" % (run_cmd, err))
+                else:
+                    num_empty += 1
+        output('%d empty namespaces cleaned\n' % num_empty)
+
+
     def list(self):
         """
         List existing namespaces in the system
@@ -195,16 +215,20 @@ class NameSpaces(object):
         """
         ns_list = self.get_ids()
         if not ns_list:
-            warn('No namespace exists\n')
+            output('No namespace exists\n')
             return
-
-        output(color_str('%d namespaces:\n ' % len(ns_list), 'b'))
+        output(b('%d namespaces:\n' % len(ns_list)))
         ns_list_valid = filter(lambda x: not NameSpace(x).is_empty(), ns_list)
-        ns_list_empty = filter(lambda x: NameSpace(x).is_empty(), ns_list)
         if ns_list_valid:
-            output(color_str('%s\n' % '\t'.join(ns_list), 'b'))
+            output(b('%d valid namespaces:\n' % len(ns_list_valid)))
+            output('%s\n' % '\t'.join(ns_list_valid))
+        ns_list_empty = [e for e in ns_list if e not in ns_list_valid]
         if ns_list_empty:
-            output('%s\n' % '\t'.join(ns_list))
+            output(b('%d empty namespaces:\n' % len(ns_list_empty)))
+            if len(ns_list_empty) > 4:
+                output(r('%s\n' % '\t'.join(ns_list_empty[:4])))
+            else:
+                output(r('%s\n' % '\t'.join(ns_list_empty)))
 
     def show(self, id_pattern):
         """
@@ -226,16 +250,19 @@ class NameSpaces(object):
         Get all ids of the namespaces
         :return: The list of namespace ids, e.g., ['red', 'blue']
         """
+        if self.ns_ids:
+            return self.ns_ids
         run_cmd = '%s list' % self.ns_cmd
         spaces, err = Popen(run_cmd, stdout=PIPE, stderr=PIPE,
                             shell=True).communicate()
         if err:
             error("Failed to run %s, err=%s\n" % (run_cmd, err))
-            return None
+            return []
         if not spaces:  # spaces == ''
-            return None
+            return []
         ns_list = spaces.rstrip('\n').split('\n')
         ns_list.sort()
+        self.ns_ids = ns_list
         return ns_list
 
     def _search_ns(self, pattern):

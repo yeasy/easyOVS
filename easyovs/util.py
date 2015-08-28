@@ -215,22 +215,34 @@ def get_all_bridges():
 
 def makeMask(n):
     "return a mask of n bits as a long integer"
-    return (2L<<int(n)-1) - 1
+    return ~((1L<<(32-int(n))) - 1)
 
-def dottedQuadToNum(ip_str):
+def ipStrToNum(ip_str):
     "convert decimal dotted quad string to long integer"
-    s = map(lambda x:int(x), ip_str.split('.'))
-    return s[3] + s[2] << 8 + s[1] << 16 + s[0] << 24
+    s = map(lambda x: int(x), ip_str.split('.'))
+    return s[3] + (s[2] << 8) + (s[1] << 16) + (s[0] << 24)
 
-def networkMask(ip_str, bits):
+def numToipStr(num):
+    "convert decimal dotted quad string to long integer"
+    if num >= 1<<32:
+        return None
+    n = [0, 0, 0, 0]
+    n[0] = ((255 << 24) & num) >> 24
+    n[1] = ((255 << 16) & num) >> 16
+    n[2] = ((255 << 8) & num) >> 8
+    n[3] = 255 & num
+    s = map(lambda x: str(x), n)
+    return '.'.join(s)
+
+def networkMask(ip_mask):
     """
     '10.0.0.1', '24'
     :param ip_str:
     :param bits:
-    :return:
+    :return: address of the network
     """
-    "Convert a network address to a long integer"
-    return dottedQuadToNum(ip_str) & makeMask(bits)
+    ip_str, bits = ip_mask.split('/')
+    return ipStrToNum(ip_str) & makeMask(bits)
 
 def ipInNetworks(ip_str, networks):
     """
@@ -252,7 +264,7 @@ def ipInNetwork(ip_str, network):
     :return:
     """
     ip_network, mask = network.split('/')
-    return  networkMask(ip_str, mask) == networkMask(ip_network, mask)
+    return  networkMask(ip_str +'/'+ mask) == networkMask(network)
 
 def fileHasLine(file, line):
     """
@@ -280,6 +292,6 @@ def fileHasLine(file, line):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-    print dottedQuadToNum('169.254.31.28')
+    print ipStrToNum('169.254.31.28')
 
     fileHasLine('/etc/sysctl.conf', 'net.ipv4.ip_forward=1')
