@@ -264,6 +264,10 @@ class Bridge(object):
         return None
 
     @check_exist
+    def has_port(self, name):
+        return name in self.get_ports()
+
+    @check_exist
     def get_ports(self):
         """
         Return a dict of the ports (port, addr, tag, type) on the bridge, like

@@ -5,7 +5,7 @@ import re
 import socket
 import struct
 
-from easyovs.log import debug, info
+from easyovs.log import debug, info, warn
 
 
 def sh(cmd):
@@ -254,7 +254,32 @@ def ipInNetwork(ip_str, network):
     ip_network, mask = network.split('/')
     return  networkMask(ip_str, mask) == networkMask(ip_network, mask)
 
+def fileHasLine(file, line):
+    """
+    Test if the file content has the line, will ignore the space among it
+    :param file:
+    :param line:
+    :return:
+    """
+    try:
+        f = open(file, 'r')
+    except IOError:
+        warn(r('Cannot open file', file))
+        return False
+    line = line.replace(' ','')
+    while True:
+        lines = f.readlines(1000)
+        lines = map(lambda x: x.strip('\n').replace(' ',''), lines)
+        if not lines:
+            break
+        for _line in lines:
+            if _line == line:
+                return True
+    return False
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
     print dottedQuadToNum('169.254.31.28')
+
+    fileHasLine('/etc/sysctl.conf', 'net.ipv4.ip_forward=1')

@@ -3,7 +3,8 @@ __author__ = 'baohua'
 from easyovs.bridge import Bridge
 from easyovs.namespaces import NameSpace, NameSpaces
 from easyovs.log import error, output, warn
-from easyovs.util import r, g, b, networkMask, ipInNetwork, ipInNetworks
+from easyovs.util import r, g, b, networkMask, ipInNetwork, ipInNetworks, \
+    fileHasLine, get_all_bridges
 from easyovs.bridge import Bridge
 from easyovs.iptables import IPtables
 
@@ -23,8 +24,7 @@ class DVR(object):
     def check(self, _node=None):
         node = _node or self.node
         if node in 'compute':
-            output(b('# Checking DVR on compute node\n'))
-            self._check_compute_node()
+            self._compute_node_check()
         elif node in 'network':
             output(b('# Checking DVR on network node\n'))
             self._check_network_node()
@@ -34,7 +34,7 @@ class DVR(object):
     def _check_chain_rule_num(self, table, c_name, num):
         """
         Check if the chain has given number of rules.
-        :param table:
+        :param table: table object
         :param c_name:
         :param num:
         :return:
@@ -63,7 +63,7 @@ class DVR(object):
             output(g('Passed\n'))
             return True
 
-    def _check_compute_node_nat_rules(self, qr_intfs, rfp_intfs, nat, ns_fip):
+    def _compute_check_nat_rules(self, qr_intfs, rfp_intfs, nat, ns_fip):
         """
         Check three chains rules match with each other
         :param nat: the nat table
@@ -122,7 +122,7 @@ class DVR(object):
                              % (sip, dip)))
         return True
 
-    def _check_compute_node_nat_table(self, ns_q, ns_fip):
+    def _compute_check_nat_table(self, ns_q, ns_fip):
         """
         Check the snat rules in the given ns
         :param ns_q:
@@ -195,22 +195,21 @@ class DVR(object):
                 return False
 
         qr_intfs = NameSpace(ns_q).find_intfs('qr-')
-        if not self._check_compute_node_nat_rules(qr_intfs, rfp_intfs, nat,
+        if not self._compute_check_nat_rules(qr_intfs, rfp_intfs, nat,
                                                   ns_fip):
             return False
 
         return True
 
 
-    def _check_compute_node_snat_ns(self, ns_router):
+    def _compute_check_snat_ns(self, ns_router):
         """
         Check the local router namespace on compute node
         :param ns_router:
         :return: list of the fip ns
         """
         if not ns_router:
-            return
-        self.nss.show(ns_router)
+            return False
         intfs = NameSpace(ns_router).get_intfs()
         rfp_ports = []  # list of {'intf':eth0, 'ip':[]}
         for i in intfs:  # check each intf in this ns
@@ -227,58 +226,68 @@ class DVR(object):
                 ns_fip = self.nss.get_intf_by_name('fpr-'+intfs[i]['intf'][4:])
                 if not ns_fip:
                     warn(r('Cannot find fip ns for %s\n' % q))
-                    return
-                self._check_compute_node_fip_ns(intfs[i], ns_fip)
-                self._check_compute_node_nat_table(ns_router, ns_fip)
+                    return False
+                if not self._compute_check_fip_ns(intfs[i], ns_fip):
+                    warn(r('Checking fip ns failed\n'))
+                    return False
+                if not self._compute_check_nat_table(ns_router, ns_fip):
+                    warn(r('Checking qrouter ns nat table failed\n'))
+                    return False
         if not rfp_ports:
             warn(r('Cannot find rfp port in ns %s\n' % ns_router))
+            return False
         elif len(rfp_ports) > 1:
             warn(r('More than 1 rfp ports in ns %s\n' % ns_router))
+            return False
+        return True
 
-    def _check_compute_node_fip_ns(self, rfp_port, ns_fip):
+    def _compute_check_fip_ns(self, rfp_port, ns_fip):
         """
         Check a fip namespace on compute node
         :param rfp_port:
-        :return:
+        :return: True or False
         """
         q = 'fpr-'+rfp_port['intf'][4:]
         output(b('### Checking associated fpr port %s\n' % q))
-        self.nss.show(ns_fip)
+        #self.nss.show(ns_fip)
         output(b('### Check related fip_ns=%s\n' % ns_fip))
         fpr_port = NameSpace(ns_fip).get_intf_by_name(q)
         if not fpr_port:
             warn(r('Cannot find fpr_port in fip ns %s\n' % ns_fip))
-            return
+            return False
         a_ip, a_mask = rfp_port['ip'][0].split('/')
         b_ip, b_mask = fpr_port['ip'][0].split('/')
         if networkMask(a_ip, a_mask) != networkMask(b_ip, b_mask):
             warn(r('Different subnets for %s and %s\n'
                  % (rfp_port['ip'][0], fpr_port['ip'][0])))
-            return
+            return False
         else:
             output(g('Bridging in the same subnet\n'))
         fg_port = NameSpace(ns_fip).find_intf('fg-')
         if not fg_port:
             warn('Cannot find fg_port in fip ns %s\n' % ns_fip)
-            return
+            return False
         if fg_port['intf'] in Bridge('br-ex').get_ports():
             output(g('fg port is attached to br-ex\n'))
         else:
             warn(g('fg port is NOT attached to br-ex\n'))
-            return
+            return False
         for float_ip in rfp_port['ip'][1:]:
             ip = float_ip.split('/')[0]
             if ipInNetwork(ip, fg_port['ip'][0]):
                 output(g('floating ip %s match fg subnet\n' % ip))
             else:
                 warn(r('floating ip %s No match the fg subnet' % ip))
+                return False
+        return True
 
-    def _check_compute_node(self):
+    def _compute_check_vports(self):
         """
-        Check the qrouter-***  fip-*** spaces in the compute node.
+        Check the vport related information and rules
         :return:
         """
         checked_ns = []
+        output(b('>>> Checking vports ...\n'))
         for port in self.br_int.get_ports():
             if port.startswith('qr-'):  # qrouter port
                 output(b('## Checking router port = %s\n' % port))
@@ -288,9 +297,143 @@ class DVR(object):
                     continue
                 else:
                     checked_ns.append(nsrouter)  # the names of the ns checked
-                    self._check_compute_node_snat_ns(nsrouter)
-                pass
-        pass
+                    if not self._compute_check_snat_ns(nsrouter):
+                        warn(r('<<< Checking vports failed\n'))
+                        return False
+        output(b('<<< Checking vports passed\n'))
+        return True
+
+    def _compute_check_config_files(self):
+        """
+        Check related configuration files
+        :return: True if no warning
+        """
+        warns = False
+        output(b('>>> Checking config files...\n'))
+        file = '/etc/sysctl.conf'
+        lines = [
+            'net.ipv4.ip_forward=1',
+            'net.ipv4.conf.default.rp_filter=0',
+            'net.ipv4.conf.all.rp_filter=0',
+            'net.bridge.bridge-nf-call-iptables=1',
+            'net.bridge.bridge-nf-call-ip6tables=1'
+        ]
+        output(b('# Checking file = %s...\n' % file))
+        for l in lines:
+            if not fileHasLine(file, l):
+                warn(r('file %s NOT has %s\n' % (file, l)))
+                warns = True
+
+        file = '/etc/neutron/neutron.conf'
+        lines = [
+            '[DEFAULT]',
+            #'router_distributed = True',
+            'core_plugin = neutron.plugins.ml2.plugin.Ml2Plugin',
+            'allow_overlapping_ips = True',
+        ]
+        output(b('# Checking file = %s...\n' % file))
+        for l in lines:
+            if not fileHasLine(file, l):
+                warn(r('file %s NOT has %s\n' % (file, l)))
+                warns = True
+
+        file = '/etc/neutron/plugins/ml2/ml2_conf.ini'
+        lines = [
+            '[agent]',
+            'l2_population = True',
+            'enable_distributed_routing = True',
+            'arp_responder = True',
+        ]
+        output(b('# Checking file = %s...\n' % file))
+        for l in lines:
+            if not fileHasLine(file, l):
+                warn(r('file %s Not has %s\n' % (file, l)))
+                warns = True
+
+        file = '/etc/neutron/l3_agent.ini'
+        lines = [
+            '[DEFAULT]',
+            'use_namespaces = True',
+            'router_delete_namespaces = True',
+            'agent_mode = dvr',
+        ]
+        output(b('# Checking file = %s...\n' % file))
+        for l in lines:
+            if not fileHasLine(file, l):
+                warn(r('file %s NOT has %s\n' % (file, l)))
+                warns = True
+        if not warns:
+            output(g('<<< Checking config files passed\n'))
+            return True
+        else:
+            warn(r('<<< Checking config files has warnings\n'))
+            return False
+
+    def _compute_check_bridges(self):
+        """
+        Check the bridge information
+        :return:
+        """
+        output(b('>>> Checking bridges...\n'))
+        bridges = get_all_bridges()
+        names = bridges.keys()
+        brvlan = [e for e in names
+                  if e not in ['br-int', 'br-ex', 'br-tun']]
+        if not brvlan:
+            warn(r('No vlan bridge is found\n'))
+            return False
+        brvlan = brvlan[0]
+        output(b('# Existing bridges are %s\n' % ', '.join(names)))
+        if 'br-int' not in names:
+            warn(r('No integration bridge is found\n'))
+            return False
+        else:
+            br = Bridge('br-int')
+            if not br.has_port('int-'+brvlan):
+                warn(r('port %s not found in br-int\n' % 'int-'+brvlan))
+                return False
+            if not br.has_port('patch-tun'):
+                warn(r('port %s not found in br-int\n' % 'patch-tun'))
+                return False
+
+        if 'br-ex' not in names:
+            warn(r('No external bridge is found\n'))
+            return False
+
+        if 'br-tun' not in names:
+            warn(r('No tunnel bridge is found\n'))
+            return False
+        else:
+            br = Bridge('br-tun')
+            if not br.has_port('patch-int'):
+                warn(r('port %s not found in br-tun\n' % 'patch-int'))
+                return False
+
+        br = Bridge(brvlan)
+        if not br.has_port('phy-'+brvlan):
+            warn(r('port %s not found in %s\n' % ('phy-'+brvlan, brvlan)))
+            return False
+
+        output(b('# Vlan bridge is at %s\n' % ', '.join(names)))
+        output(g('<<< Checking bridges passed\n'))
+        return True
+
+    def _compute_node_check(self):
+        """
+        Check the qrouter-***  fip-*** spaces in the compute node.
+        :return:
+        """
+        output(b('=== Checking DVR on compute node ===\n'))
+        flag = True
+        if not self._compute_check_config_files():
+            flag = False
+        output('\n')
+        if not self._compute_check_bridges():
+            flag = False
+        output('\n')
+        if not self._compute_check_vports():
+            flag = False
+        return flag
 
     def _check_network_node(self):
         """

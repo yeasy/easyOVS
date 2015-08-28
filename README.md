@@ -47,9 +47,12 @@ remove the ``:ro`` flag if you want to modify the ovs rules or net namespaces.
 docker run -it \
  --rm \
  --net='host' \
+ --pid='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
+ -v /etc/sysctl.conf:/etc/sysctl.conf:ro \
+ -v /etc/neutron/:/etc/neutron/:ro \
   yeasy/easyovs:latest
 ```
 
@@ -60,9 +63,12 @@ Replace the following openstack credentials with your own.
 docker run -it \
  --rm \
  --net='host' \
+ --pid='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
+ -v /etc/sysctl.conf:/etc/sysctl.conf:ro \
+ -v /etc/neutron/:/etc/neutron/:ro \
  -e OS_USERNAME=$OS_USERNAME \
  -e OS_PASSWORD=$OS_PASSWORD \
  -e OS_TENANT_NAME=$OS_TENANT_NAME \
@@ -85,9 +91,12 @@ export OS_AUTH_URL=http://127.0.0.1:5000/v2.0
 docker run -it \
  --rm \
  --net='host' \
+ --pid='host' \
  --privileged \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
+ -v /etc/sysctl.conf:/etc/sysctl.conf:ro \
+ -v /etc/neutron/:/etc/neutron/:ro \
  -e OS_USERNAME=$OS_USERNAME \
  -e OS_PASSWORD=$OS_PASSWORD \
  -e OS_TENANT_NAME=$OS_TENANT_NAME \
@@ -370,20 +379,26 @@ namespaces, iptables, etc.
 
 ```sh
 EasyOVS> dvr check
-# Checking DVR on compute node
+=== Checking DVR on compute node ===
+>>> Checking config files...
+# Checking file = /etc/sysctl.conf...
+# Checking file = /etc/neutron/neutron.conf...
+# Checking file = /etc/neutron/plugins/ml2/ml2_conf.ini...
+file /etc/neutron/plugins/ml2/ml2_conf.ini Not has [agent]
+file /etc/neutron/plugins/ml2/ml2_conf.ini Not has l2_population = True
+file /etc/neutron/plugins/ml2/ml2_conf.ini Not has enable_distributed_routing = True
+file /etc/neutron/plugins/ml2/ml2_conf.ini Not has arp_responder = True
+# Checking file = /etc/neutron/l3_agent.ini...
+<<< Checking config files has warnings
+>>> Checking bridges...
+# Existing bridges are br-tun, br-int, br-eno1, br-ex
+# Vlan bridge is at br-eno1
+<<< Checking bridges passed
+>>> Checking vports ...
 ## Checking router port = qr-b0142af2-12
-# Namespace = qrouter-f046c591-7b59-4170-b7fc-dd31a2446883
-ID    Intf              Mac                 IPs
-32    qr-b0142af2-12    fa:16:3e:54:17:5e   11.3.3.1/24
-3     rfp-f046c591-7    7a:5c:82:e9:db:a2   169.254.31.28/31, 172.29.161.127/32, 172.29.161.126/32
-33    qr-8c41bfc7-56    fa:16:3e:3d:44:11   10.0.0.1/24
 ### Checking rfp port rfp-f046c591-7
 Found associated floating ips : 172.29.161.127/32, 172.29.161.126/32
 ### Checking associated fpr port fpr-f046c591-7
-# Namespace = fip-9e1c850d-e424-4379-8ebd-278ae995d5c3
-ID    Intf              Mac                 IPs
-3     fpr-f046c591-7    56:89:45:cc:bd:3e   169.254.31.29/31
-369   fg-a9b6d4a8-67    fa:16:3e:94:45:38   172.29.161.128/18
 ### Check related fip_ns=fip-9e1c850d-e424-4379-8ebd-278ae995d5c3
 Bridging in the same subnet
 fg port is attached to br-ex
@@ -409,6 +424,7 @@ Checking chain rules: neutron-l3-agent-float-snat...Passed
 SNAT for outgoing: 10.0.0.216 --> 172.29.161.126 passed
 ## Checking router port = qr-8c41bfc7-56
 Checking passed already
+<<< Checking vports passed
 ```
 
 ### sh
