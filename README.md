@@ -377,8 +377,10 @@ namespaces, iptables, etc.
 
 `EasyOVS> dvr check [compute, net]` will check for the given node.
 
+If no node type is given, it will smartly guess on what node.
+
 ```sh
-EasyOVS> dvr check
+# No type given, guessing...compute node
 === Checking DVR on compute node ===
 >>> Checking config files...
 # Checking file = /etc/sysctl.conf...
@@ -390,10 +392,12 @@ file /etc/neutron/plugins/ml2/ml2_conf.ini Not has enable_distributed_routing = 
 file /etc/neutron/plugins/ml2/ml2_conf.ini Not has arp_responder = True
 # Checking file = /etc/neutron/l3_agent.ini...
 <<< Checking config files has warnings
+
 >>> Checking bridges...
 # Existing bridges are br-tun, br-int, br-eno1, br-ex
-# Vlan bridge is at br-eno1
+# Vlan bridge is at br-tun, br-int, br-eno1, br-ex
 <<< Checking bridges passed
+
 >>> Checking vports ...
 ## Checking router port = qr-b0142af2-12
 ### Checking rfp port rfp-f046c591-7
