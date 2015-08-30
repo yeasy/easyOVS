@@ -49,9 +49,9 @@ class CLI(Cmd):
 
     def __init__(self, stdin=sys.stdin, foreground=True):
         self.bridge = None  # default bridge
-        self.ipt = IPtables()
-        self.nss = NameSpaces()
-        self.dvr = DVR()
+        self.ipt = None
+        self.nss = None
+        self.dvr = None
         if foreground:
             self.prompt = color_str(PROMPT_KW, 'g')
             self.stdin = stdin
@@ -219,6 +219,7 @@ class CLI(Cmd):
             warn("dvr check compute\n")
             warn("dvr check net\n")
             return
+        self.dvr = DVR()
         if len(args) == 0:  # default cmd for ns
             args.insert(0, 'check')
         cmd = args[0]
@@ -246,6 +247,7 @@ class CLI(Cmd):
             warn("ipt vm vm_ip\n")
             warn("ipt show|check [filter] [INPUT]\n")
             return
+        self.ipt = IPtables()
         cmd = args[0]
         if not hasattr(self.ipt, '%s' % cmd):
             error('Unsupported cmd=%s\n' % cmd)
@@ -298,6 +300,7 @@ class CLI(Cmd):
             warn("ns show id_prefix (lo intf is ignored)\n")
             warn("ns find pattern\n")
             return
+        self.nss = NameSpaces()
         if len(args) == 0:  # default cmd for ns
             args.insert(0, 'list')
         cmd = args[0]

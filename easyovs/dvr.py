@@ -27,11 +27,11 @@ class DVR(object):
                 guess = 'network'
                 break
         if not _node:
-            output(b('# No type given, guessing...%s node\n' % guess))
+            output(b('# No node type given, guessing...%s node\n' % guess))
         else:  # given _node, will check if match
             if _node not in guess:
-                warn(r('given node %s not match the server\n' % _node))
-                return False
+                warn(r('# Given node type=%s not match the server\n' % _node))
+                guess = _node
         node = guess
         if node in 'compute':
             return self._compute_node_check()
@@ -449,7 +449,7 @@ class DVR(object):
             'neutron-metadata-agent',
             'neutron-openvswitch-agent',
             'neutron-l3-agent',
-            'neutron-ns-metadata-proxy',
+            #'neutron-ns-metadata-proxy',
             ]:
             if p not in result:
                 warn(r('%s service is not running\n' % p))
@@ -478,6 +478,10 @@ class DVR(object):
         output('\n')
         if not self._compute_check_vports():
             flag = False
+        if flag:
+            output(g('=== PASSED Checking DVR on compute node ===\n'))
+        else:
+            warn(r('=== FAILED Checking DVR on compute node ===\n'))
         return flag
 
     def _network_node_check(self):
@@ -498,6 +502,10 @@ class DVR(object):
         output('\n')
         if not self._network_check_vports():
             flag = False
+        if flag:
+            output(g('=== PASSED Checking DVR on network node ===\n'))
+        else:
+            warn(r('=== FAILED Checking DVR on network node ===\n'))
         return flag
 
     def _network_check_config_files(self):
@@ -610,7 +618,7 @@ class DVR(object):
             'neutron-metadata-agent',
             'neutron-openvswitch-agent',
             'neutron-l3-agent',
-            'neutron-ns-metadata-proxy',
+            #'neutron-ns-metadata-proxy',
             ]:
             if p not in result:
                 warn(r('%s service is not running\n' % p))
@@ -695,6 +703,12 @@ class DVR(object):
                 dhcp_ports.append(port)
             elif port.startswith('sg-'):  # qrouter port
                 sg_ports.append(port)
+        if not qr_ports:
+            output('# no qrouter port found\n')
+        if not dhcp_ports:
+            output('# no dhcp port found\n')
+        if not sg_ports:
+            output('# no sg port found\n')
         for port in qr_ports:
             output(b('## Checking router port = %s\n' % port))
             ns_router = self.nss.get_ns_by_port(port)
