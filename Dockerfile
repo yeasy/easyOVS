@@ -10,10 +10,8 @@ RUN apt-get install openvswitch-switch iptables -y
 RUN git clone https://github.com/yeasy/easyOVS.git -b dev  && \
 bash easyOVS/util/install.sh
 
-WORKDIR ["/code/easyOVS/"]
+WORKDIR /code/easyOVS/
 
-VOLUME ["/var/run/openvswitch/"]
-VOLUME ["/var/run/netns/"]
-VOLUME ["/etc/neutron/"]
+VOLUME ["/var/run/openvswitch/", "/var/run/netns/", "/etc/neutron/"]
 
 ENTRYPOINT [ "/usr/local/bin/easyovs" ]
