@@ -12,6 +12,7 @@ bash easyOVS/util/install.sh
 
 WORKDIR /code/easyOVS/
 
-VOLUME ["/var/run/openvswitch/", "/var/run/netns/", "/etc/neutron/"]
+VOLUME ["/var/run/openvswitch/", "/var/run/netns/", "/etc/neutron/",
+"/var/lib/neutron"]
 
 ENTRYPOINT [ "/usr/local/bin/easyovs" ]

@@ -786,8 +786,9 @@ class DVR(object):
         :param ns_router:
         :return: list of the fip ns
         """
-        output(b('### Checking dhcp ns = %s\n' % ns_dhcp))
-        if not ns_dhcp:
+        output(b('### Checking dhcp ns = %s...' % ns_dhcp))
+        if not ns_dhcp or not ns_dhcp.startswith('qdhcp-'):
+            warn(r('Given dhcp ns %s name is invalid\n' % ns_dhcp))
             return False
         warns = False
         intfs = NameSpace(ns_dhcp).get_intfs()
@@ -800,30 +801,45 @@ class DVR(object):
                 warn(r('Invalid port dhcp %s in %s\n' % (p, ns_dhcp)))
                 return False
             else:
-                output(b('### Checking dhcp port %s\n' % p))
                 dhcp_ports.append(p)
                 if not intfs[i]['ip']:
                     warn(r('No ip with dhcp port %s in %s\n' % (p, ns_dhcp)))
                     return False
-                else:
-                    for ip_m in intfs[i]['ip']:
-                        if ip_m.startswith('169.254'):
-                            continue
-                        net_addr = numToipStr(networkMask(ip_m))
-                        cmd = 'ps aux|grep dnsmasq|grep %s|grep -v grep'\
-                              % net_addr
-                        result, err = \
-                            Popen(cmd, stdout=PIPE, stderr=PIPE,
-                                  shell=True).communicate()
-                        if err:
-                            warn(r(err))
-                            return False
-                        if not result:
-                            warn(r('Invalid dnsmasq process\n'))
-                            return False
+                for ip_m in intfs[i]['ip']:
+                    if ip_m.startswith('169.254'):
+                        continue
+                    ip, mask = ip_m.split('/')
+                    intf = intfs[i]['intf']
+                    #  we do not checking the process here is because
+                    # subprocess.Popen can only get one line of each process,
+                    #  while dnsmasq process is of several lines.
+                    cmd = 'grep %s /var/lib/neutron/dhcp/%s/interface'\
+                          % (intf, ns_dhcp[6:])
+                    result, err = \
+                        Popen(cmd, stdout=PIPE, stderr=PIPE,
+                              shell=True).communicate()
+                    if err:
+                        warn(r(err))
+                        return False
+                    if not result:
+                        warn(r('Not found dhcp intf %s in cfg\n' % intf))
+                        return False
+                    cmd = 'grep %s /var/lib/neutron/dhcp/%s/host'\
+                          % (ip, ns_dhcp[6:])
+                    result, err = \
+                        Popen(cmd, stdout=PIPE, stderr=PIPE,
+                              shell=True).communicate()
+                    if err:
+                        warn(r(err))
+                        return False
+                    if not result:
+                        warn(r('Not found dhcp server addr %s in cfg\n' %
+                               ip))
+                        return False
         if not dhcp_ports:
             warn(r('Cannot find dhcp port in ns %s\n' % ns_dhcp))
             return False
+        output(g('Passed\n'))
         return True
 
     def _network_check_snat_ns(self, ns_snat, qr_ports_ips):

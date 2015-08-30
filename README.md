@@ -52,6 +52,7 @@ docker run -it \
  --cap-add ALL \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
+ -v /var/lib/neutron/:/var/lib/neutron/:ro \
  -v /etc/sysctl.conf:/etc/sysctl.conf:ro \
  -v /etc/neutron/:/etc/neutron/:ro \
   yeasy/easyovs:latest
@@ -69,6 +70,7 @@ docker run -it \
  --cap-add ALL \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
+ -v /var/lib/neutron/:/var/lib/neutron/:ro \
  -v /etc/sysctl.conf:/etc/sysctl.conf:ro \
  -v /etc/neutron/:/etc/neutron/:ro \
  -e OS_USERNAME=$OS_USERNAME \
@@ -98,6 +100,7 @@ docker run -it \
  --cap-add ALL \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
+ -v /var/lib/neutron/:/var/lib/neutron/:ro \
  -v /etc/sysctl.conf:/etc/sysctl.conf:ro \
  -v /etc/neutron/:/etc/neutron/:ro \
  -e OS_USERNAME=$OS_USERNAME \
