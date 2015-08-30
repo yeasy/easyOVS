@@ -49,7 +49,6 @@ docker run -it \
  --net='host' \
  --pid='host' \
  --privileged \
- --cap-add ALL \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
  -v /var/lib/neutron/:/var/lib/neutron/:ro \
@@ -67,7 +66,6 @@ docker run -it \
  --net='host' \
  --pid='host' \
  --privileged \
- --cap-add ALL \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
  -v /var/lib/neutron/:/var/lib/neutron/:ro \
@@ -97,7 +95,6 @@ docker run -it \
  --net='host' \
  --pid='host' \
  --privileged \
- --cap-add ALL \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
  -v /var/lib/neutron/:/var/lib/neutron/:ro \
