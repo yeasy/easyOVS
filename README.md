@@ -49,6 +49,7 @@ docker run -it \
  --net='host' \
  --pid='host' \
  --privileged \
+ --cap-add ALL \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
  -v /etc/sysctl.conf:/etc/sysctl.conf:ro \
@@ -65,6 +66,7 @@ docker run -it \
  --net='host' \
  --pid='host' \
  --privileged \
+ --cap-add ALL \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
  -v /etc/sysctl.conf:/etc/sysctl.conf:ro \
@@ -93,6 +95,7 @@ docker run -it \
  --net='host' \
  --pid='host' \
  --privileged \
+ --cap-add ALL \
  -v /var/run/openvswitch/:/var/run/openvswitch/:ro \
  -v /var/run/netns/:/var/run/netns/:ro \
  -v /etc/sysctl.conf:/etc/sysctl.conf:ro \
