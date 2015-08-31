@@ -66,7 +66,7 @@ class DVR(object):
         output(b('Checking chain rules: %s...' % c_name))
         c = table.get_chain(c_name)
         if not c.has_rule(rule):
-            warn(r("Defined rule not in %s\n" % c_name))
+            warn(r("Defined rule %s not in %s\n" % (rule, c_name)))
             return False
         else:
             output(g('Passed\n'))
@@ -200,8 +200,7 @@ class DVR(object):
                     'out': '!'+intf['intf'], 'destination': '*',
                     'target': 'ACCEPT', 'prot': '*',
                     'flags': '! ctstate DNAT'}
-            if not self._check_chain_has_rule(nat, c_name, rule):
-                return False
+            self._check_chain_has_rule(nat, c_name, rule)  # empty when no fip
 
         qr_intfs = NameSpace(ns_q).find_intfs('qr-')
         if not self._compute_check_nat_rules(qr_intfs, rfp_intfs, nat,
@@ -241,7 +240,8 @@ class DVR(object):
                     warn(r('Checking fip ns failed\n'))
                     return False
                 if not self._compute_check_nat_table(ns_router, ns_fip):
-                    warn(r('Checking qrouter ns nat table failed\n'))
+                    warn(r('Checking qrouter ns %s nat table failed\n'
+                           % ns_router))
                     return False
         if not rfp_ports:
             warn(r('Cannot find rfp port in ns %s\n' % ns_router))
