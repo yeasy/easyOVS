@@ -495,5 +495,9 @@ Set verbosity level.
 ### --version
 Show the version information.
 
+#Known Issues
+* Using Docker to run easyOVS, when local host's namespaces are changed during the running. easyOVS may complain access namespace error. This is possiblly due to the access privilege with Docker. Just restart it.
+* The DVR check feature can check pure network node or pure compute node, but does not support mixing those two types together at one node (This is not recommended in production environment).
+
 #Credits
 Thanks to the [OpenvSwitch](http://openvswitch.org) Team, [Mininet](http://mininet.org) Team and [OpenStack](http://openstack.org) Team, who gives helpful implementation example and useful tools.
