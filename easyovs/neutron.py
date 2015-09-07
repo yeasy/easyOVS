@@ -131,7 +131,7 @@ class NeutronHandler(object):
         try:
             result = self.neutron.list_ports().get('ports', [])
         except Exception:
-            return None
+            return []
 
         if result:  # only write in valid information
             cPickle.dump(result, open(cache_file, 'w'), True)
