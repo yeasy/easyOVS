@@ -27,7 +27,7 @@ like to contribute an installation script, we would welcome it!
    To install ALL of the software which is potentially useful software,
    you may use:
 
-        sudo easyovs/util/install.sh -a
+        sudo bash easyovs/util/install.sh -a
 
    The time depends on the network quality and your machine performance.
    This takes about 1 minutes on our test system.
@@ -35,7 +35,7 @@ like to contribute an installation script, we would welcome it!
    You can change the directory where the dependencies are installed using
    the -s <directory> flag.
 
-        sudo easyovs/util/install.sh -s <directory> -a
+        sudo bash easyovs/util/install.sh -s <directory> -a
 
 2. Installation on other Linux distributions
 
