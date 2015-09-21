@@ -1,7 +1,7 @@
 easyOVS [![Build Status](https://travis-ci.org/yeasy/easyOVS.svg?style=flat-square)](https://travis-ci.org/yeasy/easyOVS)
 ===
 
-Provide smarter and powerful operation on OpenvSwitch bridges in OpenStack.
+Provide insightful check and operations for OpenStack Neutron!
 
 version 0.5
 
