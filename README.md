@@ -448,7 +448,7 @@ drwxr-xr-x. 2 root root 4096 Apr  1 14:09 doc
 drwxr-xr-x. 4 root root 4096 Apr  1 14:56 easyovs
 -rw-r--r--. 1 root root  660 Apr  1 14:56 easyovs.1
 drwxr-xr-x. 2 root root 4096 Apr  1 14:56 easyovs.egg-info
--rw-r--r--. 1 root root 2214 Apr  1 14:53 INSTALL
+-rw-r--r--. 1 root root 2214 Apr  1 14:53 INSTALL.md
 -rw-r--r--. 1 root root 1194 Apr  1 14:53 Makefile
 -rw-r--r--. 1 root root 3836 Apr  1 14:53 README.md
 -rw-r--r--. 1 root root 1177 Apr  1 14:53 setup.py
