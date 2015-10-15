@@ -361,7 +361,7 @@ class DVR(object):
         file = '/etc/neutron/l3_agent.ini'
         lines = [
             '[DEFAULT]',
-            'use_namespaces = True',
+            'use_namespaces = True',  # optional
             'router_delete_namespaces = True',
             'agent_mode = dvr',
         ]
@@ -385,12 +385,17 @@ class DVR(object):
         output(b('>>> Checking bridges...\n'))
         bridges = get_all_bridges()
         names = bridges.keys()
-        brvlan = [e for e in names
+        brvlans = [e for e in names
                   if e not in ['br-int', 'br-ex', 'br-tun']]
-        if not brvlan:
+        if not brvlans:
             warn(r('No vlan bridge is found\n'))
-            return False
-        brvlan = brvlan[0]
+            tunnel_types = []
+        else:
+            tunnel_types = ['vlan']
+            brvlan = brvlans[0]
+        if 'br-tun' in names:
+            tunnel_types.append('gre')
+
         output(b('# Existing bridges are %s\n' % ', '.join(names)))
         #  check br-int
         if 'br-int' not in names:
@@ -398,12 +403,13 @@ class DVR(object):
             return False
         else:
             br = Bridge('br-int')
-            if not br.has_port('int-'+brvlan):
-                warn(r('port %s not found in br-int\n' % 'int-'+brvlan))
+            if 'vlan' in tunnel_types and not br.has_port('int-'+brvlan):
+                warn(r('tunnel port %s not found in br-int\n' %
+                       'int-'+brvlan))
                 return False
-            if not br.has_port('patch-tun'):
-                warn(r('port %s not found in br-int\n' % 'patch-tun'))
-                return False
+            if 'gre' in tunnel_types and not br.has_port('patch-tun'):
+                warn(r('tunnel port %s not found in br-int\n' %
+                       'patch-tun'))
 
         #  check br-ex
         if 'br-ex' not in names:
@@ -413,20 +419,22 @@ class DVR(object):
             br = Bridge('br-ex')
             if not br.has_port_start_with('fg-'):
                 warn(r('No fg port found in br-ex\n'))
+            if not br.has_port('phy-br-ex'):
+                warn(r('port %s not found in br-ex\n' % 'phy-br-ex'))
+                return False
 
-        if 'br-tun' not in names:
-            warn(r('No tunnel bridge is found\n'))
-            return False
-        else:
+        # check gre tunnel bridge
+        if 'gre' in tunnel_types:
             br = Bridge('br-tun')
             if not br.has_port('patch-int'):
                 warn(r('port %s not found in br-tun\n' % 'patch-int'))
                 return False
 
-        br = Bridge(brvlan)
-        if not br.has_port('phy-'+brvlan):
-            warn(r('port %s not found in %s\n' % ('phy-'+brvlan, brvlan)))
-            return False
+        # check vlan tunnel bridge
+        if 'vlan' in tunnel_types:
+            br = Bridge(brvlan)
+            if not br.has_port('phy-'+brvlan):
+                warn(r('port %s not found in %s\n' % ('phy-'+brvlan, brvlan)))
 
         output(b('# Vlan bridge is at %s\n' % ', '.join(names)))
         output(g('<<< Checking bridges passed\n'))
@@ -639,12 +647,12 @@ class DVR(object):
         output(b('>>> Checking bridges...\n'))
         bridges = get_all_bridges()
         names = bridges.keys()
-        brvlan = [e for e in names
+        brvlans = [e for e in names
                   if e not in ['br-int', 'br-ex', 'br-tun']]
-        if not brvlan:
+        if not brvlans:
             warn(r('No vlan bridge is found\n'))
             return False
-        brvlan = brvlan[0]
+        brvlan = brvlans[0]
         output(b('# Existing bridges are %s\n' % ', '.join(names)))
         # check br-int
         if 'br-int' not in names:
@@ -652,11 +660,11 @@ class DVR(object):
             return False
         else:
             br = Bridge('br-int')
-            if not br.has_port('int-'+brvlan):
-                warn(r('port %s not found in br-int\n' % 'int-'+brvlan))
-                return False
-            if not br.has_port('patch-tun'):
-                warn(r('port %s not found in br-int\n' % 'patch-tun'))
+            if not br.has_port('int-'+brvlan) and not br.has_port('patch-tun'):
+                if not br.has_port('int-'+brvlan):
+                    warn(r('port %s not found in br-int\n' % 'int-'+brvlan))
+                if not br.has_port('patch-tun'):
+                    warn(r('port %s not found in br-int\n' % 'patch-tun'))
                 return False
 
         # check br-ex
@@ -680,7 +688,6 @@ class DVR(object):
         br = Bridge(brvlan)
         if not br.has_port('phy-'+brvlan):
             warn(r('port %s not found in %s\n' % ('phy-'+brvlan, brvlan)))
-            return False
 
         output(b('# Vlan bridge is at %s\n' % ', '.join(names)))
         output(g('<<< Checking bridges passed\n'))
