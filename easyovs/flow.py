@@ -15,6 +15,8 @@ class Flow(object):
         self.table = table
         self.packet = packet
         self.priority = priority
+        if self.priority == '':
+            self.priority = 0
         self.match = match
         self.actions = actions
         self.id = flow_id
