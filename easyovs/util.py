@@ -188,7 +188,7 @@ def get_all_bridges():
                           shell=True).communicate()
     if error:
         return {}
-    for l in result.split('\n'):
+    for l in result.decode().split('\n'):
         l = l.strip().replace('"', '')
         if l.startswith('Bridge '):
             br = l.lstrip('Bridge ')
@@ -215,7 +215,7 @@ def get_all_bridges():
 
 def makeMask(n):
     "return a mask of n bits as a long integer"
-    return ~((1L<<(32-int(n))) - 1)
+    return ~((1<<(32-int(n))) - 1)
 
 def ipStrToNum(ip_str):
     "convert decimal dotted quad string to long integer"
@@ -292,6 +292,6 @@ def fileHasLine(file, line):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-    print ipStrToNum('169.254.31.28')
+    print(ipStrToNum('169.254.31.28'))
 
     fileHasLine('/etc/sysctl.conf', 'net.ipv4.ip_forward=1')

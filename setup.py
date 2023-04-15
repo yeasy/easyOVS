@@ -24,7 +24,7 @@ setup(
     description='Easy way to manage OpenvSwitch bridges',
     author='Baohua Yang',
     author_email='yangbaohua@gmail.com',
-    packages=find_packages(),
+    packages=find_packages(include=['easyovs']),
     long_description="""
         EasyOVS provides more convenient and fluent way to operation your OpenvSwitch bridges,
         such as list them, show the port, dump their flows and add/del some flows.
@@ -40,9 +40,9 @@ setup(
     keywords='Cloud OpenStack OpenvSwitch SDN',
     license='BSD',
     install_requires=[
-        'oslo.config>=1.0,<=1.15',
-        'python-keystoneclient>=1.0,<=1.6',
-        'python-neutronclient>=2.0,<=2.6',
+        'oslo.config>=1.0',
+        'python-keystoneclient>=1.0',
+        'python-neutronclient>=2.0',
         'setuptools>=3.6',
     ],
     scripts=scripts,

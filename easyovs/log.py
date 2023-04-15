@@ -130,6 +130,6 @@ def make_list_compatible(fn):
 info, output, warn, error, debug = (
     lg.info, lg.output, lg.warn, lg.error, lg.debug) = \
     [make_list_compatible(f) for f in
-     lg.info, lg.output, lg.warn, lg.error, lg.debug]
+     (lg.info, lg.output, lg.warn, lg.error, lg.debug)]
 
 setLogLevel = lg.set_log_level
