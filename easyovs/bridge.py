@@ -145,7 +145,7 @@ class Bridge(object):
             Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True).communicate()
         if err:
             return
-        for l in result.split('\n'):
+        for l in result.decode().split('\n'):
             l = l.strip()
             if l.startswith('cookie='):
                 debug('%s\n' % l)
@@ -295,7 +295,7 @@ class Bridge(object):
             return {}
         #output('%-8s%-16s%-16s\n' %('PORT','INTF','ADDR'))
         brs = get_all_bridges()
-        for l in result.split('\n'):
+        for l in result.decode().split('\n'):
             if l.startswith(' ') and l.find('(') >= 0 and l.find(')') >= 0:
                 l = l.strip()
                 port = get_str_before(l, '(')

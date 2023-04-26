@@ -13,7 +13,7 @@ import sys
 
 from os.path import exists, getmtime
 from time import time
-import cPickle
+import _pickle as cPickle
 
 from easyovs import config
 from easyovs.log import output, warn
